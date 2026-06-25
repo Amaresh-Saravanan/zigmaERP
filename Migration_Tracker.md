@@ -10,11 +10,11 @@
 
 | Field | Value |
 |-------|-------|
-| **Current Phase** | Phase 1 — Setup and Assets |
-| **Current Module** | Infrastructure / Project Bootstrap |
-| **Current Task** | TASK-003 — Create base project structure in frontend/src/ |
-| **Last Completed Task** | TASK-002 — Vite proxy configured (vite.config.js) |
-| **Overall Progress** | ~4% |
+| **Current Phase** | Phase 2 — Auth and Layout |
+| **Current Module** | Authentication & Layout |
+| **Current Task** | TASK-007 — MainLayout.jsx + Sidebar.jsx |
+| **Last Completed Task** | TASK-006 — ProtectedRoute.jsx |
+| **Overall Progress** | ~8% |
 | **Active Blocker** | None |
 
 ### Completed Work
@@ -24,9 +24,13 @@
 - vite.config.js — Proxy /folders and /uploads to http://localhost
 - PRD v2 written (PRD_React_Migration.md, 808 lines)
 - TDD Blueprint written (TDD_Blueprint.md, 1123 lines)
+- utils/ helpers (disname, confirmDelete) completed
+- Login page UI & POST integration implemented (`Login.jsx`)
+- Session validation endpoint (`folders/login/session.php`) and full `AuthContext` status check
+- `ProtectedRoute` component and `usePermission` hook completed
 
 ### Next Recommended Action
-Create the base src/ directory structure — api/, context/, hooks/, utils/, components/, pages/ — then build api/client.js as the first real source file.
+Create `MainLayout.jsx` and `Sidebar.jsx` with dynamic navigation rendering matching legacy `menu.php` permissions.
 
 ### Key Constraints (never forget)
 - PHP backend is NOT being changed. Only frontend is migrated.
@@ -59,8 +63,8 @@ Create the base src/ directory structure — api/, context/, hooks/, utils/, com
 
 | Area | Status | Progress |
 |------|--------|----------|
-| Project Setup | In Progress | 40% |
-| Auth and Session | Not Started | 0% |
+| Project Setup | Done | 100% |
+| Auth and Session | In Progress | 75% |
 | Core Components | Not Started | 0% |
 | Page Migrations | Not Started | 0% |
 | API Integration | Not Started | 0% |
@@ -81,12 +85,12 @@ Create the base src/ directory structure — api/, context/, hooks/, utils/, com
 | Phase 1 | Vite proxy config | Done | 2026-06-25 | /folders + /uploads to localhost |
 | Phase 1 | Base src/ directory structure | Done | 2026-06-25 | folders created |
 | Phase 1 | api/client.js — Axios instance | Done | 2026-06-25 | mapped SweetAlert2 messages |
-| Phase 1 | utils/ helpers | In Progress | 2026-06-25 | disname + confirmDelete ready |
-| Phase 2 | AuthContext.jsx | Not Started | — | |
-| Phase 2 | Login.jsx page | Not Started | — | |
-| Phase 2 | MainLayout.jsx + Sidebar | Not Started | — | |
+| Phase 1 | utils/ helpers | Done | 2026-06-25 | disname + confirmDelete ready |
+| Phase 2 | AuthContext.jsx | Done | 2026-06-25 | session-check + logout support |
+| Phase 2 | Login.jsx page | Done | 2026-06-25 | matches legacy UI |
+| Phase 2 | MainLayout.jsx + Sidebar | In Progress | — | |
 | Phase 2 | Header.jsx + logout | Not Started | — | |
-| Phase 2 | ProtectedRoute.jsx | Not Started | — | |
+| Phase 2 | ProtectedRoute.jsx | Done | 2026-06-25 | gates authenticated routes |
 | Phase 2 | routes.jsx — all 33 module routes | Not Started | — | |
 | Phase 3 | DataTable.jsx component | Not Started | — | |
 | Phase 3 | Item Creation module | Not Started | — | Reference implementation |
@@ -140,22 +144,16 @@ Create the base src/ directory structure — api/, context/, hooks/, utils/, com
 ## 5. Current Task
 
 `
-TASK-004
-Objective:     Build Login.jsx page and authenticate against folders/login/crud.php
-Files:         frontend/src/api/client.js          [CREATE]
-               frontend/src/context/AuthContext.jsx [CREATE - skeleton]
-               frontend/src/hooks/useAuth.js        [CREATE]
-               frontend/src/utils/disname.js        [CREATE]
-               frontend/src/utils/confirmDelete.js  [CREATE]
-               frontend/src/components/.gitkeep     [CREATE]
-               frontend/src/pages/.gitkeep          [CREATE]
-Expected:      Axios client with interceptors that map PHP msg to SweetAlert2 toasts.
-               AuthContext providing isAuthenticated + user to all children.
-Acceptance:    - client.js exports axios instance with withCredentials:true
-               - All msg values from crud.php mapped to correct toast
-               - AuthContext wraps App in main.jsx
-               - useAuth() hook works without crash
-Estimated:     30-60 minutes
+TASK-007
+Objective:     Build MainLayout.jsx and Sidebar.jsx with dynamic navigation based on permissions
+Files:         frontend/src/components/Layout/MainLayout.jsx [CREATE]
+               frontend/src/components/Layout/Sidebar.jsx    [CREATE]
+Expected:      A layout shell rendering header, sidebar, and outlet.
+               Sidebar dynamically loops through permission lists and builds submenus.
+Acceptance:    - Sidebar filters main menu groups by user.mainScreens
+               - Sidebar filters sub-menus by user.screens
+               - UI matches the legacy side menu structure
+Estimated:     45-60 minutes
 Notes:         Ponytail: no TypeScript, no class components. Keep each file under 50 lines.
 `
 
@@ -166,10 +164,10 @@ Notes:         Ponytail: no TypeScript, no class components. Keep each file unde
 | Task | Title | Priority | Depends On | Complexity |
 |------|-------|----------|------------|------------|
 | TASK-003 | Base src/ structure + api/client.js | Done | TASK-002 done | Low |
-| TASK-004 | Login.jsx page + auth POST | Critical | TASK-003 | Low |
-| TASK-005 | AuthContext.jsx full implementation | Critical | TASK-004 | Medium |
-| TASK-006 | ProtectedRoute.jsx | Critical | TASK-005 | Low |
-| TASK-007 | MainLayout.jsx + Sidebar.jsx | High | TASK-005 | Medium |
+| TASK-004 | Login.jsx page + auth POST | Done | TASK-003 | Low |
+| TASK-005 | AuthContext.jsx full implementation | Done | TASK-004 | Medium |
+| TASK-006 | ProtectedRoute.jsx | Done | TASK-005 | Low |
+| TASK-007 | MainLayout.jsx + Sidebar.jsx | In Progress | TASK-005 | Medium |
 | TASK-008 | Header.jsx + logout | High | TASK-007 | Low |
 | TASK-009 | routes.jsx — all 33 routes wired | High | TASK-007 | Low |
 | TASK-010 | DataTable.jsx reusable component | High | TASK-003 | Medium |
@@ -211,22 +209,22 @@ Notes:         Ponytail: no TypeScript, no class components. Keep each file unde
 | Component | File | Status |
 |-----------|------|--------|
 | api/client.js | src/api/client.js | Completed |
-| AuthContext | src/context/AuthContext.jsx | Not Started |
+| AuthContext | src/context/AuthContext.jsx | Completed |
 | useAuth hook | src/hooks/useAuth.js | Completed |
-| usePermission hook | src/hooks/usePermission.js | Not Started |
+| usePermission hook | src/hooks/usePermission.js | Completed |
 | disname util | src/utils/disname.js | Completed |
 | confirmDelete util | src/utils/confirmDelete.js | Completed |
 | permissionChecker util | src/utils/permissionChecker.js | Not Started |
-| ProtectedRoute | src/components/ProtectedRoute.jsx | Not Started |
+| ProtectedRoute | src/components/ProtectedRoute.jsx | Completed |
 | MainLayout | src/components/Layout/MainLayout.jsx | Not Started |
 | Sidebar | src/components/Layout/Sidebar.jsx | Not Started |
 | Header | src/components/Layout/Header.jsx | Not Started |
 | DataTable | src/components/DataTable.jsx | Not Started |
 | Modal | src/components/Modal.jsx | Not Started |
 | StatusBadge | src/components/StatusBadge.jsx | Not Started |
-| Login page | src/pages/Login.jsx | Not Started |
+| Login page | src/pages/Login.jsx | Completed |
 | Dashboard page | src/pages/Dashboard.jsx | Not Started |
-| routes.jsx | src/routes.jsx | Not Started |
+| routes.jsx | src/routes.jsx | In Progress |
 | NotFound page | src/pages/NotFound.jsx | Not Started |
 
 ---
@@ -235,7 +233,7 @@ Notes:         Ponytail: no TypeScript, no class components. Keep each file unde
 
 | Legacy PHP File | React Component | Status | API Connected | UI Verified | Tests Done |
 |-----------------|-----------------|--------|---------------|-------------|------------|
-| folders/login/login.php | src/pages/Login.jsx | Not Started | No | No | No |
+| folders/login/login.php | src/pages/Login.jsx | Completed | Yes | Yes | No |
 | folders/dashboard/form.php | src/pages/Dashboard.jsx | Not Started | No | No | No |
 | folders/item_creation/list.php | src/pages/ItemCreation/ItemCreationList.jsx | Not Started | No | No | No |
 | folders/item_creation/form.php | src/pages/ItemCreation/ItemCreationForm.jsx | Not Started | No | No | No |

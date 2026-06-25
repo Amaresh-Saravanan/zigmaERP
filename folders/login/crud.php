@@ -100,7 +100,17 @@ switch ($action) {
           "data"      => 1,
           "error"     => 0,
           "msg"       => "success_login",
-          "sql"       => $_SESSION["user_id"]
+          "sql"       => $_SESSION["user_id"],
+          "user"      => [
+            "userId" => $user_id,
+            "userName" => $user_name,
+            "userType" => $user['user_type_unique_id'],
+            "userImage" => $user_image,
+            "companyName" => $_SESSION['sess_company_name'],
+            "mainScreens" => $main_screens,
+            "sections" => $sections,
+            "screens" => $screens
+          ]
         ];
       } else {
         // Incorrect username and password handling 
