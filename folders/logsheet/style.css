@@ -1,0 +1,462 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+    --primary-color: #6366f1;
+    /* Indigo */
+    --primary-light: #818cf8;
+    --primary-dark: #4f46e5;
+    --secondary-color: #ec4899;
+    /* Pink gradient accent */
+    --accent-color: #10b981;
+    /* Emerald for success */
+    --warning-color: #f59e0b;
+    /* Amber */
+    --bg-main: #f3f4f6;
+    --card-bg: rgba(255, 255, 255, 0.85);
+    --text-dark: #1e293b;
+    --text-muted: #64748b;
+    --border-color: rgba(226, 232, 240, 0.8);
+    --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+body {
+    background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+    background-attachment: fixed;
+    color: var(--text-dark);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+/* Background decorative blobs */
+.bg-blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: -1;
+    opacity: 0.5;
+    animation: float 10s infinite ease-in-out;
+}
+
+.blob-1 {
+    top: -100px;
+    right: -100px;
+    width: 400px;
+    height: 400px;
+    background: rgba(236, 72, 153, 0.2);
+}
+
+.blob-2 {
+    bottom: -150px;
+    left: -100px;
+    width: 500px;
+    height: 500px;
+    background: rgba(99, 102, 241, 0.2);
+    animation-delay: -5s;
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(0) scale(1);
+    }
+
+    50% {
+        transform: translateY(30px) scale(1.05);
+    }
+
+    100% {
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* App Header */
+.app-header {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(12px);
+    border-bottom: var(--glass-border);
+    padding: 15px 30px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.brand-logo i {
+    font-size: 22px;
+    color: var(--primary-color);
+    -webkit-text-fill-color: initial;
+}
+
+/* Page Header */
+.page-header {
+    padding: 25px 0 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.page-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.page-subtitle {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+/* Cards */
+.card {
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    border: var(--glass-border);
+    border-radius: 16px;
+    box-shadow: var(--glass-shadow);
+    margin-bottom: 24px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-header {
+    background: rgba(255, 255, 255, 0.4);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    padding: 16px 20px;
+    font-weight: 700;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-radius: 16px 16px 0 0 !important;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* Stat Grid */
+.stat-box {
+    padding: 16px;
+    border-right: 1px dashed var(--border-color);
+    border-bottom: 1px dashed var(--border-color);
+    position: relative;
+}
+
+.stat-box:nth-child(3n) {
+    border-right: none;
+}
+
+.stat-box.no-bottom-border {
+    border-bottom: none;
+}
+
+.stat-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-dark);
+}
+
+.stat-value.highlight {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Info Groups */
+.info-group {
+    background: rgba(248, 250, 252, 0.5);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.info-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+}
+
+.info-value {
+    font-size: 14px;
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+/* Tables */
+.table {
+    margin-bottom: 0;
+    color: var(--text-dark);
+}
+
+.table th {
+    background: rgba(248, 250, 252, 0.7);
+    border-bottom: 1px solid var(--border-color);
+    border-top: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 12px 16px;
+}
+
+.table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Badges & Buttons */
+.badge-soft {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(129, 140, 248, 0.2));
+    color: var(--primary-dark);
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 30px;
+    font-size: 12px;
+}
+
+.badge-step {
+    background: var(--primary-color);
+    color: white;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.btn {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 8px;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    border: none;
+    color: white;
+}
+
+.btn-print {
+    background: linear-gradient(135deg, #10b981, #059669);
+    /* Beautiful Emerald Green */
+    border: none;
+    color: white;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.btn-print:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+    color: white;
+}
+
+/* Sections */
+.section-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin: 30px 0 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-title::before {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 20px;
+    background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+    border-radius: 10px;
+}
+
+.bg-light-gray {
+    background: rgba(248, 250, 252, 0.5) !important;
+}
+
+.border-color {
+    border-color: var(--border-color) !important;
+}
+
+/* 
+===========================================
+PRINT STYLES FOR PERFECT A4 PDF/PAPER EXPORT 
+===========================================
+*/
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 10mm;
+    }
+
+    body {
+        background: #ffffff !important;
+        font-size: 10pt !important;
+        color: #000 !important;
+    }
+
+    .bg-blob,
+    .app-header,
+    .btn,
+    .d-print-none {
+        display: none !important;
+    }
+
+    .container-fluid {
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+
+    .page-header {
+        padding: 0 0 15px 0 !important;
+        border-bottom: 2px solid #000 !important;
+        margin-bottom: 15px;
+    }
+
+    .page-title {
+        font-size: 18pt !important;
+        color: #000 !important;
+    }
+
+    .card {
+        background: transparent !important;
+        border: 1px solid #ddd !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        margin-bottom: 15px !important;
+        page-break-inside: avoid;
+    }
+
+    .card-header {
+        background: #f5f5f5 !important;
+        color: #000 !important;
+        border-bottom: 1px solid #ddd !important;
+        padding: 8px 12px !important;
+        font-size: 11pt !important;
+        border-radius: 0 !important;
+    }
+
+    .card-body {
+        padding: 10px !important;
+    }
+
+    .info-group {
+        border: none !important;
+        background: transparent !important;
+        padding: 0 0 5px 0 !important;
+        margin-bottom: 5px !important;
+    }
+
+    .info-label {
+        font-size: 9pt !important;
+        color: #555 !important;
+    }
+
+    .info-value {
+        font-size: 10pt !important;
+        color: #000 !important;
+    }
+
+    .stat-box {
+        padding: 8px !important;
+        border-color: #eee !important;
+    }
+
+    .stat-label {
+        font-size: 8pt !important;
+        color: #555 !important;
+    }
+
+    .stat-value {
+        font-size: 14pt !important;
+        color: #000 !important;
+        -webkit-text-fill-color: #000 !important;
+        background: none !important;
+    }
+
+    .table {
+        border-collapse: collapse !important;
+        width: 100% !important;
+    }
+
+    .table th,
+    .table td {
+        border: 1px solid #ddd !important;
+        padding: 6px 8px !important;
+        font-size: 9pt !important;
+        color: #000 !important;
+        background: transparent !important;
+    }
+
+    .table th {
+        background: #f8f9fa !important;
+        -webkit-print-color-adjust: exact;
+        font-weight: bold !important;
+    }
+
+    .section-title {
+        font-size: 14pt !important;
+        color: #000 !important;
+        margin: 20px 0 10px !important;
+        page-break-after: avoid;
+    }
+
+    .section-title::before {
+        background: #000 !important;
+        width: 3px !important;
+        height: 15px !important;
+    }
+
+    .badge-step {
+        background: #eee !important;
+        color: #000 !important;
+        border: 1px solid #ccc !important;
+    }
+
+    /* Force background colors to show in print (Chrome/Edge) */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}
