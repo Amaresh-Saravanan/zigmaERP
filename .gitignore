@@ -4,3 +4,4 @@ frontend/dist-ssr/
 .agents/
 error_log
 *.log
+PRD.md
