@@ -6,10 +6,14 @@ import './assets/css/app.min.css'
 import './assets/css/custom.min.css'
 import './index.css'
 import App from './App.jsx'
+import { AuthProvider } from './context/AuthContext'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <AuthProvider>
+      <App />
+    </AuthProvider>
   </StrictMode>,
 )
+
 
