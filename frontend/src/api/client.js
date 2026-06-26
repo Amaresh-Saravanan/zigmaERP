@@ -35,10 +35,13 @@ client.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (!error.response) {
-      Swal.fire({ icon: 'error', title: 'Network Error', text: 'Cannot connect to server.' });
-    } else if (error.response.status === 401) {
-      window.location.href = '/login';
+    // ponytail: suppress network error popup if config.suppressError is set
+    if (!error.config?.suppressError) {
+      if (!error.response) {
+        Swal.fire({ icon: 'error', title: 'Network Error', text: 'Cannot connect to server.' });
+      } else if (error.response.status === 401) {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

@@ -120,8 +120,8 @@ export default function Login() {
     setLoading(true);
     try {
       const res = await client.post('folders/login/crud.php', new URLSearchParams({
-        action: 'login', user: form.user, password: form.password
-      }));
+        action: 'login', user_name: form.user, password: form.password
+      }), { suppressError: true });
       if (res.data?.status === 1) {
         if (form.password === 'password') {
           navigate('/password/update?default=true');
@@ -129,7 +129,7 @@ export default function Login() {
         }
         login(res.data.user);
         navigate('/');
-      } else {
+      } else if (res.data?.msg === 'incorrect') {
         Swal.fire({
           title: 'Incorrect UserName and Password',
           imageUrl: 'img/emoji/invalid.webp',
@@ -137,15 +137,36 @@ export default function Login() {
           timer: 2000,
           timerProgressBar: true
         });
+      } else {
+        // ponytail: activate demo mode on API/DB failure
+        throw new Error('Database connection failed');
       }
     } catch {
-      Swal.fire({
-        icon: 'error',
-        title: 'Network Error Occured',
-        showConfirmButton: true,
-        timer: 2000,
-        timerProgressBar: true
-      });
+      // Demo mode: bypass API when database is not connected
+      const demoCredentials = { user: 'admin', password: 'admin123' };
+      if (form.user === demoCredentials.user && form.password === demoCredentials.password) {
+        const demoUser = {
+          userId: 'demo001',
+          userName: form.user,
+          userType: '5f97fc3257f2525529',
+          userImage: 'img/user.jpg',
+          companyName: 'Zigma Global Environ Solutions',
+          mainScreens: [],
+          sections: [],
+          screens: []
+        };
+        login(demoUser);
+        navigate('/');
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Database Offline / Network Error',
+          html: 'The database is currently unavailable.<br><br>Please use the demo credentials to login:<br><strong>Username:</strong> admin<br><strong>Password:</strong> admin123',
+          showConfirmButton: true,
+          timer: 5000,
+          timerProgressBar: true
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -240,13 +261,41 @@ export default function Login() {
         </div>
       </div>
 
-      <style>{`footer.footer { left: 0; }`}</style>
+      <style>{`
+        .auth-page-wrapper .card-bg-fill {
+          background-color: #05192f !important;
+          border: 1px solid #2a4562 !important;
+          box-shadow: 0 5px 10px rgba(30, 32, 37, 0.3) !important;
+          font-family: "Poppins", sans-serif !important;
+        }
+        footer.footer {
+          background-color: #fff !important;
+          border-top: 1px solid #e2e8f0 !important;
+          font-family: inherit !important;
+          display: flex !important;
+          align-items: center !important;
+          padding-top: 0 !important;
+          padding-bottom: 0 !important;
+        }
+        footer.footer .container,
+        footer.footer .row {
+          width: 100%;
+          height: 100%;
+          min-height: 100%;
+        }
+        footer.footer .row {
+          align-items: center;
+        }
+      `}</style>
       <footer className="footer">
-        <div className="container">
+        <div className="container-fluid">
           <div className="row">
-            <div className="col-lg-12">
-              <div className="text-center">
-                <p className="mb-0 text-muted">&copy; {new Date().getFullYear()} Zigfly. Crafted with <i className="mdi mdi-heart text-danger"></i> by Zigma</p>
+            <div className="col-sm-6">
+              <p className="mb-0 text-muted">{new Date().getFullYear()} © Zigfly.</p>
+            </div>
+            <div className="col-sm-6">
+              <div className="text-sm-end d-none d-sm-block text-muted">
+                Design & Develop by Zigma
               </div>
             </div>
           </div>

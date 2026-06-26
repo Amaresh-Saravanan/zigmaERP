@@ -2,3 +2,24 @@ body {
   margin: 0;
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
 }
+
+/* Login Page CSS Overrides to match PHP Reference */
+.auth-page-content .card.card-bg-fill {
+  background-color: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.125) !important;
+  box-shadow: 0 4px 24px 0 rgba(15, 34, 58, 0.12) !important;
+}
+
+.auth-page-content h5.text-primary {
+  color: #405189 !important;
+}
+
+.auth-page-content p.text-muted {
+  color: #878a99 !important;
+}
+
+.auth-page-content label.form-label {
+  color: #343a40 !important;
+  font-weight: 500;
+}
+

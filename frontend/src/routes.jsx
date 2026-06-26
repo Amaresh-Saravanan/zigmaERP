@@ -13,7 +13,14 @@ import PitCreationList from './pages/PitCreation/PitCreationList';
 import PitCreationForm from './pages/PitCreation/PitCreationForm';
 import SupplierCreationList from './pages/SupplierCreation/SupplierCreationList';
 import SupplierCreationForm from './pages/SupplierCreation/SupplierCreationForm';
-
+import UserList from './pages/User/UserList';
+import UserForm from './pages/User/UserForm';
+import UserTypeList from './pages/UserType/UserTypeList';
+import UserTypeForm from './pages/UserType/UserTypeForm';
+import UserScreenList from './pages/UserScreen/UserScreenList';
+import UserScreenForm from './pages/UserScreen/UserScreenForm';
+import UserPermissionList from './pages/UserPermission/UserPermissionList';
+import UserPermissionForm from './pages/UserPermission/UserPermissionForm';
 // ponytail: Using a single PlaceholderPage component for all unmigrated screens to avoid 30+ boilerplate files.
 const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
@@ -37,10 +44,14 @@ const router = createBrowserRouter([
       { path: 'supplier_creation/form', element: <SupplierCreationForm /> },
       { path: 'pit_creation/list', element: <PitCreationList /> },
       { path: 'pit_creation/form', element: <PitCreationForm /> },
-      { path: 'user/list', element: <PlaceholderPage /> },
-      { path: 'user_type/list', element: <PlaceholderPage /> },
-      { path: 'user_permission/list', element: <PlaceholderPage /> },
-      { path: 'user_screen/list', element: <PlaceholderPage /> },
+      { path: 'user/list', element: <UserList /> },
+      { path: 'user/form', element: <UserForm /> },
+      { path: 'user_type/list', element: <UserTypeList /> },
+      { path: 'user_type/form', element: <UserTypeForm /> },
+      { path: 'user_permission/list', element: <UserPermissionList /> },
+      { path: 'user_permission/form', element: <UserPermissionForm /> },
+      { path: 'user_screen/list', element: <UserScreenList /> },
+      { path: 'user_screen/form', element: <UserScreenForm /> },
       { path: 'screening_process/list', element: <PlaceholderPage /> },
       { path: 'egg_process/list', element: <PlaceholderPage /> },
       { path: 'culling_process/list', element: <PlaceholderPage /> },

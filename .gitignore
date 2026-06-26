@@ -5,3 +5,5 @@ frontend/dist-ssr/
 error_log
 *.log
 PRD.md
+auth.md
+Migration_Tracker.md

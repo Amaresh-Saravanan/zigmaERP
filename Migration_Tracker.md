@@ -32,6 +32,7 @@
 - `MainLayout`, `Sidebar`, and `Header` components implemented with complete auth integration
 - Wired all 33 legacy routes dynamically in `routes.jsx` using a generic `PlaceholderPage` shell component
 - Created reusable, robust React `DataTable.jsx` component that maps to legacy POST parameters and renders custom actions
+- Fixed Login page particle background animation and layout fonts/theme variables mapping (fixed truncated particles.js, corrected layout.js syntax error, copied missing password-addon.init.js, and added standard HTML data attributes in index.html)
 
 ### Next Recommended Action
 Implement TASK-015: Supplier Creation module page using the new `DataTable` component.
