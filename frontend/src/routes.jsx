@@ -44,6 +44,14 @@ import PitStatusForm from './pages/PitStatus/PitStatusForm';
 import FrpStatusUpdateList from './pages/FrpStatusUpdate/FrpStatusUpdateList';
 import FrpStatusUpdateForm from './pages/FrpStatusUpdate/FrpStatusUpdateForm';
 import LogsheetList from './pages/Logsheet/LogsheetList';
+import DCList from './pages/DC/DCList';
+import DCForm from './pages/DC/DCForm';
+import MeasurableList from './pages/Measurable/MeasurableList';
+import MeasurableForm from './pages/Measurable/MeasurableForm';
+import MeasurableReportList from './pages/MeasurableReport/MeasurableReportList';
+import Dashboard from './pages/Dashboard/Dashboard';
+import LoginHistoryList from './pages/LoginHistory/LoginHistoryList';
+import LoginHistoryView from './pages/LoginHistory/LoginHistoryView';
 // ponytail: Using a single PlaceholderPage component for all unmigrated screens to avoid 30+ boilerplate files.
 const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
@@ -55,7 +63,7 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <PlaceholderPage /> },
+      { path: '/', element: <Dashboard /> },
       { path: 'dashboard/form', element: <Navigate to="/" replace /> },
       { path: 'item_creation/list', element: <ItemCreationList /> },
       { path: 'item_creation/form', element: <ItemCreationForm /> },
@@ -98,10 +106,13 @@ const router = createBrowserRouter([
       { path: 'frp_status_update/list', element: <FrpStatusUpdateList /> },
       { path: 'frp_status_update/form', element: <FrpStatusUpdateForm /> },
       { path: 'logsheet/list', element: <LogsheetList /> },
-      { path: 'login_history/list', element: <PlaceholderPage /> },
-      { path: 'dc/list', element: <PlaceholderPage /> },
-      { path: 'measurable/list', element: <PlaceholderPage /> },
-      { path: 'measurable_report/list', element: <PlaceholderPage /> },
+      { path: 'login_history/list', element: <LoginHistoryList /> },
+      { path: 'login_history/view', element: <LoginHistoryView /> },
+      { path: 'dc/list', element: <DCList /> },
+      { path: 'dc/form', element: <DCForm /> },
+      { path: 'measurable/list', element: <MeasurableList /> },
+      { path: 'measurable/form', element: <MeasurableForm /> },
+      { path: 'measurable_report/list', element: <MeasurableReportList /> },
       { path: 'egg_process_report/list', element: <PlaceholderPage /> },
       { path: 'pit_status_report/list', element: <PlaceholderPage /> },
       { path: 'rejects_report/list', element: <PlaceholderPage /> },

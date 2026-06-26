@@ -192,10 +192,11 @@ Estimated:     2 hours
 | TASK-026 | FRP Tray Process | Done | TASK-013 | Medium |
 | TASK-027 | FRP Status Update | Done | TASK-026 | Medium |
 | TASK-028 | Logsheet | Done | TASK-017 | Medium |
-| TASK-029 | DC | Low | TASK-015 | Medium |
-| TASK-030 | Measurable | Low | TASK-010 | Low |
-| TASK-031 | Dashboard + Charts | Medium | TASK-005 | Medium |
-| TASK-032 | Login History | Low | TASK-005 | Low |
+| TASK-029 | DC | Done | TASK-015 | Medium |
+| TASK-030 | Measurable | Done | TASK-010 | Low |
+| TASK-030-BONUS | Measurable Report | Done | TASK-030 | Low |
+| TASK-031 | Dashboard + Charts | Done | TASK-005 | Medium |
+| TASK-032 | Login History | Done | TASK-005 | Low |
 | TASK-033 | All Report modules (5x) | Low | TASK-019..TASK-025 | Low |
 | TASK-034 | Rejects Image Upload | Low | TASK-019 | Medium |
 | TASK-035 | Main Screen Admin | Low | TASK-005 | Low |
