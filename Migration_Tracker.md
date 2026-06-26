@@ -13,8 +13,8 @@
 | **Current Phase** | Phase 3 — Core CRUD |
 | **Current Module** | Core Components / CRUD |
 | **Current Task** | TASK-016 — User Management (4 sub-modules) |
-| **Last Completed Task** | TASK-015 — Supplier Creation module |
-| **Overall Progress** | ~28% |
+| **Last Completed Task** | TASK-018 — Egg Process module |
+| **Overall Progress** | ~33% |
 | **Active Blocker** | None |
 
 ### Completed Work
@@ -123,8 +123,8 @@ Implement TASK-015: Supplier Creation module page using the new `DataTable` comp
 | Unit Creation | Done | 100% | Medium | Low | Auth, DataTable | UnitCreationList | No | FK dep for Item Creation |
 | Supplier Creation | Done | 100% | Medium | Low | Auth, DataTable | SupplierCreationList, SupplierCreationForm | No | |
 | User Management | Not Started | 0% | High | High | Auth | UserList, UserTypeList, UserPermissionList, UserScreenList | No | 4 sub-modules |
-| Screening Process | Not Started | 0% | Medium | High | Items, Trays | ScreeningProcessList, ScreeningProcessForm | No | |
-| Egg Process | Not Started | 0% | Medium | High | Screening | EggProcessList, EggProcessForm | No | |
+| Screening Process | Done | 100% | Medium | High | Items, Trays | ScreeningProcessList, ScreeningProcessForm | No | |
+| Egg Process | Done | 100% | Medium | High | Screening | EggProcessList, EggProcessForm | No | |
 | Culling Process | Not Started | 0% | Medium | High | Egg | CullingProcessList | No | |
 | Oven Process | Not Started | 0% | Medium | High | Items, Trays | OvenProcessList | No | |
 | Dry Process | Not Started | 0% | Medium | High | Oven | DryProcessList | No | |
@@ -180,16 +180,16 @@ Estimated:     2 hours
 | TASK-014 | Pit Creation module | Done | TASK-010 | Low |
 | TASK-015 | Supplier Creation module | In Progress | TASK-010 | Low |
 | TASK-016 | User Management (4 sub-modules) | High | TASK-010 | High |
-| TASK-017 | Screening Process | Medium | TASK-012, TASK-013 | High |
-| TASK-018 | Egg Process | Medium | TASK-017 | High |
+| TASK-017 | Screening Process | Done | TASK-012, TASK-013 | High |
+| TASK-018 | Egg Process | Done | TASK-017 | High |
 | TASK-019 | Culling Process | Medium | TASK-018 | High |
 | TASK-020 | Oven Process | Medium | TASK-012, TASK-013 | High |
-| TASK-021 | Dry Process | Medium | TASK-020 | High |
-| TASK-022 | Leachate | Medium | TASK-014 | Medium |
-| TASK-023 | Material Received | Medium | TASK-015 | Medium |
-| TASK-024 | Status Update | Medium | TASK-014, TASK-013 | Medium |
-| TASK-025 | Pit Status | Medium | TASK-014 | Medium |
-| TASK-026 | FRP Tray Process | Low | TASK-013 | Medium |
+| TASK-021 | Dry Process | Done | TASK-020 | High |
+| TASK-022 | Leachate | Done | TASK-014 | Medium |
+| TASK-023 | Material Received | Done | TASK-015 | Medium |
+| TASK-024 | Status Update | Done | TASK-014, TASK-013 | Medium |
+| TASK-025 | Pit Status | Done | TASK-014 | Medium |
+| TASK-026 | FRP Tray Process | Done | TASK-013 | Medium |
 | TASK-027 | FRP Status Update | Low | TASK-026 | Medium |
 | TASK-028 | Logsheet | Medium | TASK-017 | Medium |
 | TASK-029 | DC | Low | TASK-015 | Medium |
@@ -252,8 +252,8 @@ Estimated:     2 hours
 | folders/user_type/list.php | src/pages/User/UserTypeList.jsx | Not Started | No | No | No |
 | folders/user_permission/list.php | src/pages/User/UserPermissionList.jsx | Not Started | No | No | No |
 | folders/user_screen/list.php | src/pages/User/UserScreenList.jsx | Not Started | No | No | No |
-| folders/screening_process/list.php | src/pages/ScreeningProcess/ScreeningProcessList.jsx | Not Started | No | No | No |
-| folders/egg_process/list.php | src/pages/EggProcess/EggProcessList.jsx | Not Started | No | No | No |
+| folders/screening_process/list.php | src/pages/ScreeningProcess/ScreeningProcessList.jsx | Completed | Yes | Yes | No |
+| folders/egg_process/list.php | src/pages/EggProcess/EggProcessList.jsx | Completed | Yes | Yes | No |
 | folders/culling_process/list.php | src/pages/CullingProcess/CullingProcessList.jsx | Not Started | No | No | No |
 | folders/oven_process/list.php | src/pages/OvenProcess/OvenProcessList.jsx | Not Started | No | No | No |
 | folders/dry_process/list.php | src/pages/DryProcess/DryProcessList.jsx | Not Started | No | No | No |
@@ -294,8 +294,8 @@ Estimated:     2 hours
 | POST folders/supplier_creation/crud.php (delete) | No | Yes | Yes | Yes |
 | POST folders/pit_creation/crud.php (datatable) | No | No | No | No |
 | POST folders/user/crud.php (datatable) | No | No | No | No |
-| POST folders/screening_process/crud.php | No | No | No | No |
-| POST folders/egg_process/crud.php | No | No | No | No |
+| POST folders/screening_process/crud.php | No | Yes | Yes | Yes |
+| POST folders/egg_process/crud.php | No | Yes | Yes | Yes |
 | POST folders/culling_process/crud.php | No | No | No | No |
 | POST folders/oven_process/crud.php | No | No | No | No |
 | POST folders/dry_process/crud.php | No | No | No | No |

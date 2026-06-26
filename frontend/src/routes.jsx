@@ -21,6 +21,26 @@ import UserScreenList from './pages/UserScreen/UserScreenList';
 import UserScreenForm from './pages/UserScreen/UserScreenForm';
 import UserPermissionList from './pages/UserPermission/UserPermissionList';
 import UserPermissionForm from './pages/UserPermission/UserPermissionForm';
+import ScreeningProcessList from './pages/ScreeningProcess/ScreeningProcessList';
+import ScreeningProcessForm from './pages/ScreeningProcess/ScreeningProcessForm';
+import EggProcessList from './pages/EggProcess/EggProcessList';
+import EggProcessForm from './pages/EggProcess/EggProcessForm';
+import CullingProcessList from './pages/CullingProcess/CullingProcessList';
+import CullingProcessForm from './pages/CullingProcess/CullingProcessForm';
+import OvenProcessList from './pages/OvenProcess/OvenProcessList';
+import OvenProcessForm from './pages/OvenProcess/OvenProcessForm';
+import DryProcessList from './pages/DryProcess/DryProcessList';
+import DryProcessForm from './pages/DryProcess/DryProcessForm';
+import LeachateList from './pages/Leachate/LeachateList';
+import LeachateForm from './pages/Leachate/LeachateForm';
+import MaterialReceivedList from './pages/MaterialReceived/MaterialReceivedList';
+import MaterialReceivedForm from './pages/MaterialReceived/MaterialReceivedForm';
+import StatusUpdateList from './pages/StatusUpdate/StatusUpdateList';
+import StatusUpdateForm from './pages/StatusUpdate/StatusUpdateForm';
+import FrpTrayProcessList from './pages/FrpTrayProcess/FrpTrayProcessList';
+import FrpTrayProcessForm from './pages/FrpTrayProcess/FrpTrayProcessForm';
+import PitStatusList from './pages/PitStatus/PitStatusList';
+import PitStatusForm from './pages/PitStatus/PitStatusForm';
 // ponytail: Using a single PlaceholderPage component for all unmigrated screens to avoid 30+ boilerplate files.
 const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
@@ -52,16 +72,26 @@ const router = createBrowserRouter([
       { path: 'user_permission/form', element: <UserPermissionForm /> },
       { path: 'user_screen/list', element: <UserScreenList /> },
       { path: 'user_screen/form', element: <UserScreenForm /> },
-      { path: 'screening_process/list', element: <PlaceholderPage /> },
-      { path: 'egg_process/list', element: <PlaceholderPage /> },
-      { path: 'culling_process/list', element: <PlaceholderPage /> },
-      { path: 'oven_process/list', element: <PlaceholderPage /> },
-      { path: 'dry_process/list', element: <PlaceholderPage /> },
-      { path: 'leachate/list', element: <PlaceholderPage /> },
-      { path: 'material_received/list', element: <PlaceholderPage /> },
-      { path: 'status_update/form', element: <PlaceholderPage /> },
-      { path: 'pit_status/list', element: <PlaceholderPage /> },
-      { path: 'frp_tray_process/list', element: <PlaceholderPage /> },
+      { path: 'screening_process/list', element: <ScreeningProcessList /> },
+      { path: 'screening_process/form', element: <ScreeningProcessForm /> },
+      { path: 'egg_process/list', element: <EggProcessList /> },
+      { path: 'egg_process/form', element: <EggProcessForm /> },
+      { path: 'culling_process/list', element: <CullingProcessList /> },
+      { path: 'culling_process/form', element: <CullingProcessForm /> },
+      { path: 'oven_process/list', element: <OvenProcessList /> },
+      { path: 'oven_process/form', element: <OvenProcessForm /> },
+      { path: 'dry_process/list', element: <DryProcessList /> },
+      { path: 'dry_process/form', element: <DryProcessForm /> },
+      { path: 'leachate/list', element: <LeachateList /> },
+      { path: 'leachate/form', element: <LeachateForm /> },
+      { path: 'material_received/list', element: <MaterialReceivedList /> },
+      { path: 'material_received/form', element: <MaterialReceivedForm /> },
+      { path: 'status_update/list', element: <StatusUpdateList /> },
+      { path: 'status_update/form', element: <StatusUpdateForm /> },
+      { path: 'pit_status/list', element: <PitStatusList /> },
+      { path: 'pit_status/form', element: <PitStatusForm /> },
+      { path: 'frp_tray_process/list', element: <FrpTrayProcessList /> },
+      { path: 'frp_tray_process/form', element: <FrpTrayProcessForm /> },
       { path: 'frp_status_update/list', element: <PlaceholderPage /> },
       { path: 'logsheet/list', element: <PlaceholderPage /> },
       { path: 'login_history/list', element: <PlaceholderPage /> },
