@@ -190,8 +190,8 @@ Estimated:     2 hours
 | TASK-024 | Status Update | Done | TASK-014, TASK-013 | Medium |
 | TASK-025 | Pit Status | Done | TASK-014 | Medium |
 | TASK-026 | FRP Tray Process | Done | TASK-013 | Medium |
-| TASK-027 | FRP Status Update | Low | TASK-026 | Medium |
-| TASK-028 | Logsheet | Medium | TASK-017 | Medium |
+| TASK-027 | FRP Status Update | Done | TASK-026 | Medium |
+| TASK-028 | Logsheet | Done | TASK-017 | Medium |
 | TASK-029 | DC | Low | TASK-015 | Medium |
 | TASK-030 | Measurable | Low | TASK-010 | Low |
 | TASK-031 | Dashboard + Charts | Medium | TASK-005 | Medium |

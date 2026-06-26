@@ -41,6 +41,9 @@ import FrpTrayProcessList from './pages/FrpTrayProcess/FrpTrayProcessList';
 import FrpTrayProcessForm from './pages/FrpTrayProcess/FrpTrayProcessForm';
 import PitStatusList from './pages/PitStatus/PitStatusList';
 import PitStatusForm from './pages/PitStatus/PitStatusForm';
+import FrpStatusUpdateList from './pages/FrpStatusUpdate/FrpStatusUpdateList';
+import FrpStatusUpdateForm from './pages/FrpStatusUpdate/FrpStatusUpdateForm';
+import LogsheetList from './pages/Logsheet/LogsheetList';
 // ponytail: Using a single PlaceholderPage component for all unmigrated screens to avoid 30+ boilerplate files.
 const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
@@ -92,8 +95,9 @@ const router = createBrowserRouter([
       { path: 'pit_status/form', element: <PitStatusForm /> },
       { path: 'frp_tray_process/list', element: <FrpTrayProcessList /> },
       { path: 'frp_tray_process/form', element: <FrpTrayProcessForm /> },
-      { path: 'frp_status_update/list', element: <PlaceholderPage /> },
-      { path: 'logsheet/list', element: <PlaceholderPage /> },
+      { path: 'frp_status_update/list', element: <FrpStatusUpdateList /> },
+      { path: 'frp_status_update/form', element: <FrpStatusUpdateForm /> },
+      { path: 'logsheet/list', element: <LogsheetList /> },
       { path: 'login_history/list', element: <PlaceholderPage /> },
       { path: 'dc/list', element: <PlaceholderPage /> },
       { path: 'measurable/list', element: <PlaceholderPage /> },
