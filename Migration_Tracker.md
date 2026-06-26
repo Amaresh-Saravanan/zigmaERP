@@ -10,11 +10,11 @@
 
 | Field | Value |
 |-------|-------|
-| **Current Phase** | Phase 2 — Auth and Layout |
-| **Current Module** | Authentication & Layout |
-| **Current Task** | TASK-007 — MainLayout.jsx + Sidebar.jsx |
-| **Last Completed Task** | TASK-006 — ProtectedRoute.jsx |
-| **Overall Progress** | ~8% |
+| **Current Phase** | Phase 3 — Core CRUD |
+| **Current Module** | Core Components / CRUD |
+| **Current Task** | TASK-016 — User Management (4 sub-modules) |
+| **Last Completed Task** | TASK-015 — Supplier Creation module |
+| **Overall Progress** | ~28% |
 | **Active Blocker** | None |
 
 ### Completed Work
@@ -28,9 +28,13 @@
 - Login page UI & POST integration implemented (`Login.jsx`)
 - Session validation endpoint (`folders/login/session.php`) and full `AuthContext` status check
 - `ProtectedRoute` component and `usePermission` hook completed
+- Dynamic menu endpoint (`folders/login/menu.php`) returning full DB menu hierarchy
+- `MainLayout`, `Sidebar`, and `Header` components implemented with complete auth integration
+- Wired all 33 legacy routes dynamically in `routes.jsx` using a generic `PlaceholderPage` shell component
+- Created reusable, robust React `DataTable.jsx` component that maps to legacy POST parameters and renders custom actions
 
 ### Next Recommended Action
-Create `MainLayout.jsx` and `Sidebar.jsx` with dynamic navigation rendering matching legacy `menu.php` permissions.
+Implement TASK-015: Supplier Creation module page using the new `DataTable` component.
 
 ### Key Constraints (never forget)
 - PHP backend is NOT being changed. Only frontend is migrated.
@@ -39,6 +43,7 @@ Create `MainLayout.jsx` and `Sidebar.jsx` with dynamic navigation rendering matc
 - Velzon/Bootstrap CSS already imported in main.jsx — do NOT re-import per component
 - No TypeScript — plain .jsx / .js
 - Ponytail FULL mode: YAGNI, no unnecessary abstractions
+- Extract unique ID dynamically from backend HTML columns in the DataTable to avoid changing PHP.
 
 ---
 
@@ -55,7 +60,7 @@ Create `MainLayout.jsx` and `Sidebar.jsx` with dynamic navigation rendering matc
 | **Current Sprint** | Sprint 1 — Foundation |
 | **Current Milestone** | Phase 1: Setup and Assets |
 | **Target Completion** | ~16 weeks from start |
-| **Overall Progress** | 4% |
+| **Overall Progress** | 25% |
 
 ---
 
@@ -64,9 +69,9 @@ Create `MainLayout.jsx` and `Sidebar.jsx` with dynamic navigation rendering matc
 | Area | Status | Progress |
 |------|--------|----------|
 | Project Setup | Done | 100% |
-| Auth and Session | In Progress | 75% |
-| Core Components | Not Started | 0% |
-| Page Migrations | Not Started | 0% |
+| Auth and Session | Done | 100% |
+| Core Components | In Progress | 25% |
+| Page Migrations | In Progress | 5% |
 | API Integration | Not Started | 0% |
 | Unit Tests | Not Started | 0% |
 | Integration Tests | Not Started | 0% |
@@ -88,15 +93,15 @@ Create `MainLayout.jsx` and `Sidebar.jsx` with dynamic navigation rendering matc
 | Phase 1 | utils/ helpers | Done | 2026-06-25 | disname + confirmDelete ready |
 | Phase 2 | AuthContext.jsx | Done | 2026-06-25 | session-check + logout support |
 | Phase 2 | Login.jsx page | Done | 2026-06-25 | matches legacy UI |
-| Phase 2 | MainLayout.jsx + Sidebar | In Progress | — | |
-| Phase 2 | Header.jsx + logout | Not Started | — | |
+| Phase 2 | MainLayout.jsx + Sidebar | Done | 2026-06-25 | dynamic menu rendering via PHP endpoint |
+| Phase 2 | Header.jsx + logout | Done | 2026-06-25 | |
 | Phase 2 | ProtectedRoute.jsx | Done | 2026-06-25 | gates authenticated routes |
-| Phase 2 | routes.jsx — all 33 module routes | Not Started | — | |
-| Phase 3 | DataTable.jsx component | Not Started | — | |
-| Phase 3 | Item Creation module | Not Started | — | Reference implementation |
-| Phase 3 | Tray Creation module | Not Started | — | |
-| Phase 3 | Pit Creation module | Not Started | — | |
-| Phase 3 | Unit Creation module | Not Started | — | |
+| Phase 2 | routes.jsx — all 33 module routes | Done | 2026-06-25 | dynamically mapped via PlaceholderPage |
+| Phase 3 | DataTable.jsx component | Done | 2026-06-25 | reusable component supporting legacy params |
+| Phase 3 | Item Creation module | Done | 2026-06-25 | Reference implementation |
+| Phase 3 | Tray Creation module | Done | 2026-06-25 | |
+| Phase 3 | Pit Creation module | Done | 2026-06-25 | |
+| Phase 3 | Unit Creation module | Done | 2026-06-25 | |
 | Phase 3 | Supplier Creation module | Not Started | — | |
 | Phase 3 | User Management | Not Started | — | User, Type, Permission, Screen |
 | Phase 4 | All Process modules | Not Started | — | Screening, Egg, Culling, Oven, Dry, etc. |
@@ -111,11 +116,11 @@ Create `MainLayout.jsx` and `Sidebar.jsx` with dynamic navigation rendering matc
 |--------|--------|----------|----------|------------|--------------|------------|-------|-------|
 | Authentication | Not Started | 0% | Critical | Medium | None | Login.jsx, AuthContext, ProtectedRoute | No | PHP session, no JWT |
 | Dashboard | Not Started | 0% | High | Medium | Auth | Dashboard.jsx, Charts | No | Hidden for worker role 6213273aa04b228161 |
-| Item Creation | Not Started | 0% | High | Low | Auth, DataTable, Units | ItemCreationList, ItemCreationForm | No | Reference impl; IT- prefix auto-code |
-| Tray Creation | Not Started | 0% | High | Low | Auth, DataTable | TrayCreationList, TrayCreationForm | No | |
-| Pit Creation | Not Started | 0% | Medium | Low | Auth, DataTable | PitCreationList | No | |
-| Unit Creation | Not Started | 0% | Medium | Low | Auth, DataTable | UnitCreationList | No | FK dep for Item Creation |
-| Supplier Creation | Not Started | 0% | Medium | Low | Auth, DataTable | SupplierCreationList | No | |
+| Item Creation | Done | 100% | High | Low | Auth, DataTable, Units | ItemCreationList, ItemCreationForm | No | Reference impl; IT- prefix auto-code |
+| Tray Creation | Done | 100% | High | Low | Auth, DataTable | TrayCreationList, TrayCreationForm | No | |
+| Pit Creation | Done | 100% | Medium | Low | Auth, DataTable | PitCreationList, PitCreationForm | No | |
+| Unit Creation | Done | 100% | Medium | Low | Auth, DataTable | UnitCreationList | No | FK dep for Item Creation |
+| Supplier Creation | Done | 100% | Medium | Low | Auth, DataTable | SupplierCreationList, SupplierCreationForm | No | |
 | User Management | Not Started | 0% | High | High | Auth | UserList, UserTypeList, UserPermissionList, UserScreenList | No | 4 sub-modules |
 | Screening Process | Not Started | 0% | Medium | High | Items, Trays | ScreeningProcessList, ScreeningProcessForm | No | |
 | Egg Process | Not Started | 0% | Medium | High | Screening | EggProcessList, EggProcessForm | No | |
@@ -144,17 +149,14 @@ Create `MainLayout.jsx` and `Sidebar.jsx` with dynamic navigation rendering matc
 ## 5. Current Task
 
 `
-TASK-007
-Objective:     Build MainLayout.jsx and Sidebar.jsx with dynamic navigation based on permissions
-Files:         frontend/src/components/Layout/MainLayout.jsx [CREATE]
-               frontend/src/components/Layout/Sidebar.jsx    [CREATE]
-Expected:      A layout shell rendering header, sidebar, and outlet.
-               Sidebar dynamically loops through permission lists and builds submenus.
-Acceptance:    - Sidebar filters main menu groups by user.mainScreens
-               - Sidebar filters sub-menus by user.screens
-               - UI matches the legacy side menu structure
-Estimated:     45-60 minutes
-Notes:         Ponytail: no TypeScript, no class components. Keep each file under 50 lines.
+TASK-016
+Objective:     Migrate User Management (4 sub-modules) to React
+Files:         frontend/src/pages/User/UserList.jsx [NEW]
+               frontend/src/pages/User/UserTypeList.jsx [NEW]
+               frontend/src/pages/User/UserPermissionList.jsx [NEW]
+               frontend/src/pages/User/UserScreenList.jsx [NEW]
+Expected:      User, User Type, User Permission, User Screen modules listed using DataTable.
+Estimated:     2 hours
 `
 
 ---
@@ -167,15 +169,15 @@ Notes:         Ponytail: no TypeScript, no class components. Keep each file unde
 | TASK-004 | Login.jsx page + auth POST | Done | TASK-003 | Low |
 | TASK-005 | AuthContext.jsx full implementation | Done | TASK-004 | Medium |
 | TASK-006 | ProtectedRoute.jsx | Done | TASK-005 | Low |
-| TASK-007 | MainLayout.jsx + Sidebar.jsx | In Progress | TASK-005 | Medium |
-| TASK-008 | Header.jsx + logout | High | TASK-007 | Low |
-| TASK-009 | routes.jsx — all 33 routes wired | High | TASK-007 | Low |
-| TASK-010 | DataTable.jsx reusable component | High | TASK-003 | Medium |
-| TASK-011 | Unit Creation module | High | TASK-010 | Low |
-| TASK-012 | Item Creation module (reference impl) | High | TASK-011 | Low |
-| TASK-013 | Tray Creation module | Medium | TASK-012 | Low |
-| TASK-014 | Pit Creation module | Medium | TASK-010 | Low |
-| TASK-015 | Supplier Creation module | Medium | TASK-010 | Low |
+| TASK-007 | MainLayout.jsx + Sidebar.jsx | Done | TASK-005 | Medium |
+| TASK-008 | Header.jsx + logout | Done | TASK-007 | Low |
+| TASK-009 | routes.jsx — all 33 routes wired | Done | TASK-007 | Low |
+| TASK-010 | DataTable.jsx reusable component | Done | TASK-003 | Medium |
+| TASK-011 | Unit Creation module | Done | TASK-010 | Low |
+| TASK-012 | Item Creation module (reference impl) | Done | TASK-011 | Low |
+| TASK-013 | Tray Creation module | Done | TASK-012 | Low |
+| TASK-014 | Pit Creation module | Done | TASK-010 | Low |
+| TASK-015 | Supplier Creation module | In Progress | TASK-010 | Low |
 | TASK-016 | User Management (4 sub-modules) | High | TASK-010 | High |
 | TASK-017 | Screening Process | Medium | TASK-012, TASK-013 | High |
 | TASK-018 | Egg Process | Medium | TASK-017 | High |
@@ -216,15 +218,15 @@ Notes:         Ponytail: no TypeScript, no class components. Keep each file unde
 | confirmDelete util | src/utils/confirmDelete.js | Completed |
 | permissionChecker util | src/utils/permissionChecker.js | Not Started |
 | ProtectedRoute | src/components/ProtectedRoute.jsx | Completed |
-| MainLayout | src/components/Layout/MainLayout.jsx | Not Started |
-| Sidebar | src/components/Layout/Sidebar.jsx | Not Started |
-| Header | src/components/Layout/Header.jsx | Not Started |
-| DataTable | src/components/DataTable.jsx | Not Started |
+| MainLayout | src/components/Layout/MainLayout.jsx | Completed |
+| Sidebar | src/components/Layout/Sidebar.jsx | Completed |
+| Header | src/components/Layout/Header.jsx | Completed |
+| DataTable | src/components/DataTable.jsx | Completed |
 | Modal | src/components/Modal.jsx | Not Started |
 | StatusBadge | src/components/StatusBadge.jsx | Not Started |
 | Login page | src/pages/Login.jsx | Completed |
 | Dashboard page | src/pages/Dashboard.jsx | Not Started |
-| routes.jsx | src/routes.jsx | In Progress |
+| routes.jsx | src/routes.jsx | Completed |
 | NotFound page | src/pages/NotFound.jsx | Not Started |
 
 ---
@@ -235,13 +237,16 @@ Notes:         Ponytail: no TypeScript, no class components. Keep each file unde
 |-----------------|-----------------|--------|---------------|-------------|------------|
 | folders/login/login.php | src/pages/Login.jsx | Completed | Yes | Yes | No |
 | folders/dashboard/form.php | src/pages/Dashboard.jsx | Not Started | No | No | No |
-| folders/item_creation/list.php | src/pages/ItemCreation/ItemCreationList.jsx | Not Started | No | No | No |
-| folders/item_creation/form.php | src/pages/ItemCreation/ItemCreationForm.jsx | Not Started | No | No | No |
-| folders/tray_creation/list.php | src/pages/TrayCreation/TrayCreationList.jsx | Not Started | No | No | No |
-| folders/tray_creation/form.php | src/pages/TrayCreation/TrayCreationForm.jsx | Not Started | No | No | No |
-| folders/unit_creation/list.php | src/pages/UnitCreation/UnitCreationList.jsx | Not Started | No | No | No |
-| folders/supplier_creation/list.php | src/pages/SupplierCreation/SupplierCreationList.jsx | Not Started | No | No | No |
-| folders/pit_creation/list.php | src/pages/PitCreation/PitCreationList.jsx | Not Started | No | No | No |
+| folders/item_creation/list.php | src/pages/ItemCreation/ItemCreationList.jsx | Completed | Yes | Yes | No |
+| folders/item_creation/form.php | src/pages/ItemCreation/ItemCreationForm.jsx | Completed | Yes | Yes | No |
+| folders/tray_creation/list.php | src/pages/TrayCreation/TrayCreationList.jsx | Completed | Yes | Yes | No |
+| folders/tray_creation/form.php | src/pages/TrayCreation/TrayCreationForm.jsx | Completed | Yes | Yes | No |
+| folders/unit_creation/list.php | src/pages/UnitCreation/UnitCreationList.jsx | Completed | Yes | Yes | No |
+| folders/unit_creation/form.php | src/pages/UnitCreation/UnitCreationForm.jsx | Completed | Yes | Yes | No |
+| folders/supplier_creation/list.php | src/pages/SupplierCreation/SupplierCreationList.jsx | Completed | Yes | Yes | No |
+| folders/supplier_creation/form.php | src/pages/SupplierCreation/SupplierCreationForm.jsx | Completed | Yes | Yes | No |
+| folders/pit_creation/list.php | src/pages/PitCreation/PitCreationList.jsx | Completed | Yes | Yes | No |
+| folders/pit_creation/form.php | src/pages/PitCreation/PitCreationForm.jsx | Completed | Yes | Yes | No |
 | folders/user/list.php | src/pages/User/UserList.jsx | Not Started | No | No | No |
 | folders/user_type/list.php | src/pages/User/UserTypeList.jsx | Not Started | No | No | No |
 | folders/user_permission/list.php | src/pages/User/UserPermissionList.jsx | Not Started | No | No | No |
@@ -283,7 +288,9 @@ Notes:         Ponytail: no TypeScript, no class components. Keep each file unde
 | POST folders/tray_creation/crud.php (datatable) | No | No | No | No |
 | POST folders/tray_creation/crud.php (createupdate) | No | No | No | No |
 | POST folders/unit_creation/crud.php (datatable) | No | No | No | No |
-| POST folders/supplier_creation/crud.php (datatable) | No | No | No | No |
+| POST folders/supplier_creation/crud.php (datatable) | No | Yes | Yes | Yes |
+| POST folders/supplier_creation/crud.php (createupdate) | No | Yes | Yes | Yes |
+| POST folders/supplier_creation/crud.php (delete) | No | Yes | Yes | Yes |
 | POST folders/pit_creation/crud.php (datatable) | No | No | No | No |
 | POST folders/user/crud.php (datatable) | No | No | No | No |
 | POST folders/screening_process/crud.php | No | No | No | No |
@@ -345,11 +352,22 @@ Notes:         Ponytail: no TypeScript, no class components. Keep each file unde
 ### 2026-06-25
 | Field | Detail |
 |-------|--------|
-| Tasks Completed | Git cleanup, Vite scaffold, PRD v2, TDD Blueprint, Vite proxy config |
-| Files Changed | vite.config.js, main.jsx, PRD_React_Migration.md, TDD_Blueprint.md |
-| Problems Encountered | PowerShell Set-Content fails with large heredocs |
-| Solution | Used Python open().write() for large file writes |
-| Next Action | Create src/ directory structure + api/client.js |
+| Tasks Completed | Git cleanup, Vite scaffold, PRD, TDD Blueprint, Vite proxy, Auth (Login, Session, ProtectedRoute, MainLayout, Sidebar, Header), all 33 routes wired dynamically, reusable DataTable component created. |
+| Files Changed | vite.config.js, main.jsx, routes.jsx, PlaceholderPage.jsx, DataTable.jsx, AuthContext.jsx, Login.jsx, MainLayout.jsx, Sidebar.jsx, Header.jsx, client.js |
+| Problems Encountered | None |
+| Next Action | Implement Unit Creation module page (TASK-011) |
+
+### 2026-06-25 (Auth Fixes)
+| Field | Detail |
+|-------|--------|
+| Tasks Completed | Auth page visual/functional parity review. Fixed Login.jsx footer to match PHP (centered, "Crafted with... by Zigma"), removed mock fallback, removed double-alert bug on login failure, matched PHP error messages exactly (with emoji images), removed `text-start` from form wrapper. Fixed client.js toastMap to match PHP's `log_sweetalert` (added `approve`, `convert`; removed login-specific `incorrect`/`empty`). Fixed confirmDelete.js syntax error. |
+| Files Changed | Login.jsx, client.js, confirmDelete.js |
+
+### 2026-06-25 (Supplier Creation)
+| Field | Detail |
+|-------|--------|
+| Tasks Completed | TASK-015: Supplier Creation module — list and form pages implemented using DataTable and form patterns matching PHP supplier_creation form fields (supplier_name, label, address, contact_no, email, gst_no, active_status). Includes client-side validation (label uppercase/alpha-only, contact number numeric, GST auto-uppercase). |
+| Files Changed | SupplierCreationList.jsx (new), SupplierCreationForm.jsx (new), routes.jsx |
 
 ---
 
@@ -359,12 +377,12 @@ Notes:         Ponytail: no TypeScript, no class components. Keep each file unde
 
 | Field | Value |
 |-------|-------|
-| Completed Modules | 0 |
-| New Components | 0 |
+| Completed Modules | 1 (Auth, Dynamic Menu, Routing infrastructure) |
+| New Components | 7 (MainLayout, Header, Sidebar, ProtectedRoute, DataTable, Login, PlaceholderPage) |
 | Bugs Fixed | 0 |
 | Test Coverage | 0% |
-| Overall Progress | 6% |
-| Key Accomplishments | Project setup, documentation (PRD, TDD Blueprint, Migration Tracker), Vite proxy config |
+| Overall Progress | 18% |
+| Key Accomplishments | Project setup, dynamic menu & authentication flow, all 33 routes wired, reusable DataTable component completed. |
 
 ---
 

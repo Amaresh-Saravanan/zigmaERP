@@ -12,11 +12,19 @@ export function AuthProvider({ children }) {
       const res = await client.get('folders/login/session.php');
       if (res.data?.isAuthenticated) {
         setUser(res.data.user);
+        localStorage.setItem('auth_user', JSON.stringify(res.data.user));
       } else {
         setUser(null);
+        localStorage.removeItem('auth_user');
       }
     } catch {
-      setUser(null);
+      // ponytail: fallback to localStorage if backend is offline/502
+      try {
+        const saved = localStorage.getItem('auth_user');
+        setUser(saved ? JSON.parse(saved) : null);
+      } catch {
+        setUser(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -26,7 +34,10 @@ export function AuthProvider({ children }) {
     checkSession();
   }, []);
 
-  const login = (userData) => setUser(userData);
+  const login = (userData) => {
+    setUser(userData);
+    localStorage.setItem('auth_user', JSON.stringify(userData));
+  };
 
   const logout = async () => {
     try {
@@ -35,6 +46,7 @@ export function AuthProvider({ children }) {
       // Ignored
     } finally {
       setUser(null);
+      localStorage.removeItem('auth_user');
       window.location.href = '/login';
     }
   };

@@ -12,10 +12,10 @@ const toastMap = {
   create: { icon: 'success', title: 'Successfully Saved' },
   update: { icon: 'success', title: 'Successfully Updated' },
   success_delete: { icon: 'success', title: 'Deleted!' },
-  already: { icon: 'warning', title: 'Already Exists' },
-  error: { icon: 'error', title: 'Error Occurred' },
-  incorrect: { icon: 'error', title: 'Incorrect Credentials' },
-  empty: { icon: 'info', title: 'Please enter details' },
+  already: { icon: 'warning', title: 'Already Exist' },
+  error: { icon: 'error', title: 'Error Occured' },
+  approve: { icon: 'success', title: 'Successfully Approved' },
+  convert: { icon: 'success', title: 'Successfully Converted' },
 };
 
 client.interceptors.response.use(
