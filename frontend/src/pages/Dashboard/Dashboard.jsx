@@ -55,7 +55,8 @@ export default function Dashboard() {
             />
             <button 
               type="button" 
-              className="btn btn-primary rounded-end" 
+              className="btn rounded-end text-white" 
+              style={{ backgroundColor: '#1E3A5F' }}
               onClick={fetchDashboardData}
             >
               Go
@@ -74,7 +75,7 @@ export default function Dashboard() {
         <>
           <div className="card crm-widget mb-4">
             <div className="card-body p-0">
-              <div className="row row-cols-xxl-4 row-cols-md-2 row-cols-1 g-0">
+              <div className="row row-cols-xxl-6 row-cols-md-3 row-cols-2 g-0">
                 <KPICard title="Inward" value={data.kpi.inward} unit="Metric-Tons" icon="ri-space-ship-line" colorClass="text-muted" onClick={() => openDrillDown('inward')} />
                 <KPICard title="Inward Rejects" value={data.kpi.inward_rejects} unit="Metric-Tons" icon="ri-space-ship-line" colorClass="text-muted" onClick={() => openDrillDown('inward-rejects')} />
                 <KPICard title="Organic Waste in Pit" value={data.kpi.organic_waste} unit="Metric-Tons" icon="ri-leaf-fill" colorClass="text-success" onClick={() => openDrillDown('organic')} />
@@ -96,7 +97,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="row">
+          <div className="row mt-4 mb-4">
             <div className="col-xl-4">
               <OverallStatusChart data={data.overall} />
             </div>

@@ -38,7 +38,7 @@ export default function ItemCreationList() {
   return (
     <div className="container-fluid p-0">
       <div className="row">
-        <div className="col-2 mb-3">
+        <div className="col-12 col-sm-6 col-md-3 col-lg-2 mb-3">
           <label htmlFor="is_active">Active Status </label>
           <select name="active_status" id="active_status" className="form-control" required>
             <option value="">Select Status Type</option>
@@ -50,7 +50,7 @@ export default function ItemCreationList() {
       </div>
 
       <div className="row g-3 mb-3">
-        <div className="col-md-12 col-xxl-12">
+        <div className="col-12">
           <div className="card h-md-100 ecommerce-card-min-width">
             <div className="card-header pt-3 pb-2">
               <div className="row flex-between-end">

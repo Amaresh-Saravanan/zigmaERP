@@ -3,15 +3,23 @@ import React from 'react';
 export default function KPICard({ title, value, unit, icon, colorClass, onClick }) {
   return (
     <div className="col">
-      <div className="py-4 px-3 h-100" style={{ cursor: onClick ? 'pointer' : 'default' }} onClick={onClick}>
-        <h5 className="text-muted text-uppercase fs-13">{title}</h5>
+      <div
+        className="py-3 px-3 h-100 border-end"
+        style={{ cursor: onClick ? 'pointer' : 'default' }}
+        onClick={onClick}
+      >
+        <h6 className="text-muted text-uppercase fs-12 fw-semibold mb-2" style={{ letterSpacing: '0.5px' }}>
+          {title}
+        </h6>
         <div className="d-flex align-items-center">
           <div className="flex-shrink-0">
-            <i className={`${icon} display-6 ${colorClass} fs-2`}></i>
+            <i className={`${icon} ${colorClass}`} style={{ fontSize: '2rem' }}></i>
           </div>
-          <div className="flex-grow-1 ms-3 text-center">
-            <h2 className="mb-0 fs-3">{value ?? 0}</h2>
-            <span className="text-muted opacity-75" style={{ fontSize: '0.85em' }}>{unit}</span>
+          <div className="flex-grow-1 ms-3">
+            <h3 className="mb-0 fw-bold" style={{ fontSize: '1.75rem', lineHeight: 1.2 }}>
+              {value ?? 0}
+            </h3>
+            <span className="text-muted" style={{ fontSize: '0.8rem' }}>{unit}</span>
           </div>
         </div>
       </div>

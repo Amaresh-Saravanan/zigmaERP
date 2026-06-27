@@ -1,0 +1,18 @@
+[
+  {
+    "unique_id": "uid-admin",
+    "user_name": "testuser",
+    "password": "password123",
+    "user_type_unique_id": "5f97fc3257f2525529",
+    "main_screens": ["ms_inventory", "ms_process", "ms_admin"],
+    "screens": ["item_create", "item_edit", "item_delete", "tray_view", "user_create"]
+  },
+  {
+    "unique_id": "uid-limited",
+    "user_name": "limiteduser",
+    "password": "password123",
+    "user_type_unique_id": "6213273aa04b228161",
+    "main_screens": ["ms_inventory"],
+    "screens": ["item_view"]
+  }
+]

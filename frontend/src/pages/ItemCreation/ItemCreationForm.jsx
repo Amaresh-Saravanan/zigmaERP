@@ -95,7 +95,7 @@ export default function ItemCreationForm() {
 
   return (
     <div className="row g-3 mb-3">
-      <div className="col-md-12 col-xxl-12">
+      <div className="col-12">
         <div className="card h-md-100 ecommerce-card-min-width">
           <div className="card-header pb-0">
             <div className="row flex-between-end">
@@ -116,7 +116,7 @@ export default function ItemCreationForm() {
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
-                  <div className="col">
+                  <div className="col-12 col-md-6">
                     <label htmlFor="item_code">Item Code </label>
                     <input
                       type="text"
@@ -128,7 +128,7 @@ export default function ItemCreationForm() {
                       required
                     />
                   </div>
-                  <div className="col">
+                  <div className="col-12 col-md-6">
                     <label htmlFor="item_name">Item Name </label>
                     <input
                       type="text"
@@ -142,7 +142,7 @@ export default function ItemCreationForm() {
                   </div>
                 </div>
                 <div className="row">
-                  <div className="col">
+                  <div className="col-12 col-md-6">
                     <label htmlFor="unit" className="form-label">Unit </label>
                     <select
                       name="unit"
@@ -157,7 +157,7 @@ export default function ItemCreationForm() {
                       ))}
                     </select>
                   </div>
-                  <div className="col">
+                  <div className="col-12 col-md-6">
                     <label htmlFor="active_status">Active Status </label>
                     <select
                       name="active_status"
@@ -173,7 +173,7 @@ export default function ItemCreationForm() {
                   </div>
                 </div>
                 <div className="row mt-2">
-                  <div className="col-md-12 text-end">
+                  <div className="col-12 text-end mt-3">
                     <button type="button" onClick={() => navigate('/item_creation/list')} className="btn btn-danger me-2">
                       Cancel
                     </button>

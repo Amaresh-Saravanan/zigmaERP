@@ -117,7 +117,7 @@ export default function DCForm() {
         }
       `}</style>
 
-      <div className="col-md-12 col-xxl-12">
+      <div className="col-12">
         <div className="card h-md-100 ecommerce-card-min-width print-area">
           <div className="card-header pt-3 pb-2 d-print-none">
             <div className="row flex-between-end">
@@ -311,7 +311,7 @@ export default function DCForm() {
               </div>
 
               <div className="row mt-5 pt-5 d-print-none">
-                <div className="col-md-12 text-end">
+                <div className="col-12 text-end mt-3">
                   <button type="submit" className="btn btn-success btn-lg">
                     <i className="ri-save-3-line me-1"></i> Save DC Locally
                   </button>

@@ -52,6 +52,15 @@ import MeasurableReportList from './pages/MeasurableReport/MeasurableReportList'
 import Dashboard from './pages/Dashboard/Dashboard';
 import LoginHistoryList from './pages/LoginHistory/LoginHistoryList';
 import LoginHistoryView from './pages/LoginHistory/LoginHistoryView';
+
+import EggProcessReportList from './pages/EggProcessReport/EggProcessReportList';
+import PitStatusReportList from './pages/PitStatusReport/PitStatusReportList';
+import RejectsReportList from './pages/RejectsReport/RejectsReportList';
+import MainScreenList from './pages/MainScreen/MainScreenList';
+import MainScreenForm from './pages/MainScreen/MainScreenForm';
+import RejectsImageUploadList from './pages/RejectsImageUpload/RejectsImageUploadList';
+import RejectsImageUploadForm from './pages/RejectsImageUpload/RejectsImageUploadForm';
+
 // ponytail: Using a single PlaceholderPage component for all unmigrated screens to avoid 30+ boilerplate files.
 const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
@@ -113,11 +122,13 @@ const router = createBrowserRouter([
       { path: 'measurable/list', element: <MeasurableList /> },
       { path: 'measurable/form', element: <MeasurableForm /> },
       { path: 'measurable_report/list', element: <MeasurableReportList /> },
-      { path: 'egg_process_report/list', element: <PlaceholderPage /> },
-      { path: 'pit_status_report/list', element: <PlaceholderPage /> },
-      { path: 'rejects_report/list', element: <PlaceholderPage /> },
-      { path: 'rejects_image_upload/list', element: <PlaceholderPage /> },
-      { path: 'main_screen/list', element: <PlaceholderPage /> },
+      { path: 'egg_process_report/list', element: <EggProcessReportList /> },
+      { path: 'pit_status_report/list', element: <PitStatusReportList /> },
+      { path: 'rejects_report/list', element: <RejectsReportList /> },
+      { path: 'rejects_image_upload/list', element: <RejectsImageUploadList /> },
+      { path: 'rejects_image_upload/form', element: <RejectsImageUploadForm /> },
+      { path: 'main_screen/list', element: <MainScreenList /> },
+      { path: 'main_screen/form', element: <MainScreenForm /> },
       { path: '*', element: <PlaceholderPage /> },
     ],
   },

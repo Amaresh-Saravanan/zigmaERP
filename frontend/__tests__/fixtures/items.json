@@ -1,0 +1,5 @@
+[
+  { "unique_id": "uid-1", "item_code": "IT-001", "item_name": "Item A", "unit": "kg-uid", "is_active": 1, "is_delete": 0 },
+  { "unique_id": "uid-2", "item_code": "IT-002", "item_name": "Item B", "unit": "kg-uid", "is_active": 1, "is_delete": 0 },
+  { "unique_id": "uid-3", "item_code": "IT-003", "item_name": "Item C", "unit": "kg-uid", "is_active": 0, "is_delete": 0 }
+]

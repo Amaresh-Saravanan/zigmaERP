@@ -80,7 +80,7 @@ export default function UserTypeForm() {
 
   return (
     <div className="row g-3 mb-3">
-      <div className="col-md-12 col-xxl-12">
+      <div className="col-12">
         <div className="card h-md-100 ecommerce-card-min-width">
           <div className="card-header pt-3 pb-2">
             <div className="row flex-between-end">
@@ -131,7 +131,7 @@ export default function UserTypeForm() {
                 </div>
                 
                 <div className="row mt-2">
-                  <div className="col-md-12 text-end">
+                  <div className="col-12 text-end mt-3">
                     <button type="button" onClick={() => navigate('/user_type/list')} className="btn btn-danger me-2">
                       Cancel
                     </button>

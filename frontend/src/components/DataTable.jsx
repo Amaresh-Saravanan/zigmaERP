@@ -137,6 +137,26 @@ export default function DataTable({
     setDraw(prev => prev + 1);
   };
 
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisible = window.innerWidth < 768 ? 3 : 7;
+    
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push('...');
+      
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      
+      if (currentPage < totalPages - 2) pages.push('...');
+      pages.push(totalPages);
+    }
+    return pages;
+  };
+
   // ponytail: reusable DataTable component communicating with legacy PHP same-origin endpoints
   return (
     <div className="card">
@@ -149,6 +169,7 @@ export default function DataTable({
               style={{ width: '80px' }}
               value={length}
               onChange={handleLengthChange}
+              aria-label="Rows per page"
             >
               <option value="10">10</option>
               <option value="25">25</option>
@@ -166,6 +187,7 @@ export default function DataTable({
               style={{ width: '120px' }}
               value={activeStatus}
               onChange={handleActiveStatusChange}
+              aria-label="Filter by status"
             >
               <option value="1">Active</option>
               <option value="0">Inactive</option>
@@ -245,16 +267,16 @@ export default function DataTable({
                   Previous
                 </button>
               </li>
-              {Array.from({ length: totalPages }).map((_, idx) => (
+              {getPageNumbers().map((page, idx) => (
                 <li
                   key={idx}
-                  className={`page-item ${currentPage === idx + 1 ? 'active' : ''}`}
+                  className={`page-item ${currentPage === page ? 'active' : ''} ${page === '...' ? 'disabled' : ''}`}
                 >
                   <button
                     className="page-link"
-                    onClick={() => handlePageChange(idx + 1)}
+                    onClick={() => page !== '...' && handlePageChange(page)}
                   >
-                    {idx + 1}
+                    {page}
                   </button>
                 </li>
               ))}

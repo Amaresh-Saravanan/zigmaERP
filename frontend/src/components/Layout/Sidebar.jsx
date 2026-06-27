@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import client from '../../api/client';
+import zigFlyLogo from '../../assets/images/zig-fly-logo.png';
+import faviIcon from '../../assets/images/favi-icon.png';
 
 // ponytail: static fallback shown when menu.php is unavailable (IIS offline / demo mode)
 // unique_ids here match db_setup/menu_setup.sql so permissions work when DB is live
@@ -105,22 +107,22 @@ export default function Sidebar() {
       <div className="navbar-brand-box mt-2 pb-2">
         <a href="/" className="logo logo-dark" onClick={(e) => { e.preventDefault(); window.location.reload(); }}>
           <span className="logo-sm">
-            <img src="/assets/images/favi-icon.png" alt="Zigfly Logo Small" height="32" />
+            <img src={faviIcon} alt="Zigfly Logo Small" height="32" />
           </span>
           <span className="logo-lg">
-            <img src="/assets/images/zig-fly-logo.png" alt="Zigfly Logo" height="64" />
+            <img src={zigFlyLogo} alt="Zigfly Logo" height="64" />
           </span>
         </a>
         <a href="/" className="logo logo-light" onClick={(e) => { e.preventDefault(); window.location.reload(); }}>
           <span className="logo-sm">
-            <img src="/assets/images/favi-icon.png" alt="Zigfly Logo Small" height="32" />
+            <img src={faviIcon} alt="Zigfly Logo Small" height="32" />
           </span>
           <span className="logo-lg">
-            <img src="/assets/images/zig-fly-logo.png" alt="Zigfly Logo" height="64" />
+            <img src={zigFlyLogo} alt="Zigfly Logo" height="64" />
           </span>
         </a>
-        <button type="button" className="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover" id="vertical-hover">
-          <i className="ri-record-circle-line"></i>
+        <button type="button" className="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover" id="vertical-hover" aria-label="Toggle sidebar size">
+          <i className="ri-record-circle-line" aria-hidden="true"></i>
         </button>
       </div>
 

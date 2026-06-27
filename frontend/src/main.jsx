@@ -5,6 +5,7 @@ import './assets/css/icons.min.css'
 import './assets/css/app.min.css'
 import './assets/css/custom.min.css'
 import './index.css'
+import './responsive.css'
 import App from './App.jsx'
 import { AuthProvider } from './context/AuthContext'
 

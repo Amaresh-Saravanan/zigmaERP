@@ -5,7 +5,26 @@ export default function PitStatusChart({ data }) {
   if (!data || !data.categories) return null;
 
   const options = {
-    chart: { type: 'bar', height: 350, toolbar: { show: false } },
+    chart: {
+      type: 'bar',
+      height: 350,
+      toolbar: {
+        show: true,
+        tools: {
+          download: true,
+          selection: false,
+          zoom: false,
+          zoomin: false,
+          zoomout: false,
+          pan: false,
+          reset: false
+        }
+      }
+    },
+    grid: {
+      borderColor: '#f1f1f1',
+      strokeDashArray: 3
+    },
     plotOptions: {
       bar: { horizontal: true, barHeight: '50%', dataLabels: { position: 'top' } }
     },
@@ -21,7 +40,7 @@ export default function PitStatusChart({ data }) {
     colors: ['#49c1bf'],
     xaxis: {
       categories: data.categories,
-      title: { text: 'Batch Age (Days)' }
+      title: { text: 'Batch Age (days)' }
     },
     yaxis: { title: { text: 'Pit Name' } },
     tooltip: {

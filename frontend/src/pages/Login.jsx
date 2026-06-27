@@ -191,8 +191,8 @@ export default function Login() {
             <div className="col-lg-12">
               <div className="text-center mt-sm-5 mb-4 text-white-50">
                 <div>
-                  <a href="/" className="d-inline-block auth-logo">
-                    <img src={logoImg} alt="" height="100" />
+                  <a href="/" className="d-inline-block auth-logo" aria-label="Zigfly home">
+                    <img src={logoImg} alt="" aria-hidden="true" height="100" />
                   </a>
                 </div>
               </div>
@@ -237,8 +237,9 @@ export default function Login() {
                             className="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon material-shadow-none"
                             id="password-addon"
                             onClick={() => setShowPass(!showPass)}
+                            aria-label={showPass ? 'Hide password' : 'Show password'}
                           >
-                            <i className={showPass ? 'ri-eye-off-fill align-middle' : 'ri-eye-fill align-middle'}></i>
+                            <i className={showPass ? 'ri-eye-off-fill align-middle' : 'ri-eye-fill align-middle'} aria-hidden="true"></i>
                           </button>
                         </div>
                       </div>
