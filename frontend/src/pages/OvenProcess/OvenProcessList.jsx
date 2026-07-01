@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import client from '../../api/client';
 import DateInput from '../../components/DateInput';
 import DataTable from '../../components/DataTable';
-import DateInput from '../../components/DateInput';
 
 export default function OvenProcessList() {
   const navigate = useNavigate();
@@ -63,12 +62,20 @@ export default function OvenProcessList() {
             {/* Date range filters */}
             <div className="row mt-2 g-2">
               <div className="col-md-2">
-                <input type="date" name="from_date" className="form-control form-control-sm"
-                  value={filters.from_date} onChange={handleFilterChange} />
+                <DateInput
+                  name="from_date"
+                  value={filters.from_date}
+                  onChange={handleFilterChange}
+                  className="form-control form-control-sm"
+                />
               </div>
               <div className="col-md-2">
-                <input type="date" name="to_date" className="form-control form-control-sm"
-                  value={filters.to_date} onChange={handleFilterChange} />
+                <DateInput
+                  name="to_date"
+                  value={filters.to_date}
+                  onChange={handleFilterChange}
+                  className="form-control form-control-sm"
+                />
               </div>
             </div>
           </div>

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import client from '../../api/client';
 import DateInput from '../../components/DateInput';
 import DataTable from '../../components/DataTable';
-import DateInput from '../../components/DateInput';
 
 const now = new Date();
 const pad = (n) => n.toString().padStart(2, '0');
@@ -98,12 +97,22 @@ export default function MeasurableList() {
             {/* Filters */}
             <div className="row mt-2 g-2">
               <div className="col-md-2">
-                <input type="date" name="from_date" className="form-control form-control-sm" placeholder="From Date"
-                  value={filters.from_date} onChange={handleFilterChange} />
+                <DateInput
+                  name="from_date"
+                  value={filters.from_date}
+                  onChange={handleFilterChange}
+                  className="form-control form-control-sm"
+                  placeholder="From Date"
+                />
               </div>
               <div className="col-md-2">
-                <input type="date" name="to_date" className="form-control form-control-sm" placeholder="To Date"
-                  value={filters.to_date} onChange={handleFilterChange} />
+                <DateInput
+                  name="to_date"
+                  value={filters.to_date}
+                  onChange={handleFilterChange}
+                  className="form-control form-control-sm"
+                  placeholder="To Date"
+                />
               </div>
               <div className="col-md-3">
                 <select name="location" className="form-select form-select-sm" value={filters.location} onChange={handleFilterChange}>

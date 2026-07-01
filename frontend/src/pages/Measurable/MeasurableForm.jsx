@@ -104,9 +104,14 @@ export default function MeasurableForm() {
             <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
               <div className="row">
                 <div className="col-md-4 mb-3">
-                  <label htmlFor="entry_date">Entry Date</label>
-                  <input type="date" id="entry_date" name="entry_date" className="form-control"
-                    value={formData.entry_date} onChange={handleChange} required />
+                  <DateInput
+                    id="entry_date"
+                    name="entry_date"
+                    label="Entry Date"
+                    value={formData.entry_date}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
 
                 <div className="col-md-4 mb-3">
