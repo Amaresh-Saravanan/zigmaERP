@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import client from '../../api/client';
 import DateInput from '../../components/DateInput';
 import DataTable from '../../components/DataTable';
-import DateInput from '../../components/DateInput';
 
 const now = new Date();
 const pad = (n) => n.toString().padStart(2, '0');
