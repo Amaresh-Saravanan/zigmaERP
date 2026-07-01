@@ -681,15 +681,16 @@ export default function Login() {
           height: 46px;
           border-radius: 10px;
           font-size: 0.92rem;
-          border: 1.5px solid #d1d5db;
+          border: 1px solid #e5e7eb;
           transition: border-color 0.2s, box-shadow 0.2s, background-color 0.15s;
+          background-color: #fff;
         }
         .lp-input-wrap .form-control:hover {
-          border-color: #9ca3af;
+          border-color: #d1d5db;
         }
         .lp-input-wrap .form-control:focus {
-          border-color: #25a96b;
-          box-shadow: 0 0 0 4px rgba(37,169,107,0.2);
+          border-color: #d1d5db;
+          box-shadow: 0 0 0 3px rgba(37,169,107,0.15);
           background-color: #fafbfc;
         }
         [data-bs-theme='dark'] .lp-input-wrap .form-control {
@@ -697,9 +698,12 @@ export default function Login() {
           background-color: #0d1117;
           color: #f0f6fc;
         }
+        [data-bs-theme='dark'] .lp-input-wrap .form-control:hover {
+          border-color: #424752;
+        }
         [data-bs-theme='dark'] .lp-input-wrap .form-control:focus {
-          border-color: #25a96b;
-          box-shadow: 0 0 0 4px rgba(37,169,107,0.25);
+          border-color: #30363d;
+          box-shadow: 0 0 0 3px rgba(37,169,107,0.2);
           background-color: #161b22;
         }
         .lp-pass-toggle {
