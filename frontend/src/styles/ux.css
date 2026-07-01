@@ -860,3 +860,22 @@ button:focus-visible,
   .btn:active { transform: none; }
   * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
+
+/* ── 21. Static (fixed) sidebar — no SimpleBar JS is loaded, so Velzon's
+   base CSS has no overflow rule on #scrollbar; without it the sidebar's
+   content can push the whole panel along with page scroll. Pin the panel
+   to the viewport and let only its nav list scroll internally. ── */
+@media (min-width: 992px) {
+  .app-menu.navbar-menu {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    height: 100vh !important;
+  }
+
+  .app-menu #scrollbar {
+    height: calc(100vh - 70px);
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+}
