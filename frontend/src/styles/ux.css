@@ -5,56 +5,22 @@
    Zero JSX changes — pure CSS targeting Bootstrap + Velzon classes.
    ==================================================================== */
 
-/* ─────────────────────────────────────────────────────────────────
-   SPACING SCALE & RHYTHM SYSTEM
-   4px base scale: xs(4) sm(8) md(12) lg(16) xl(24) xxl(32) xxxl(48)
-   Used throughout for padding, gaps, margins - creates visual hierarchy
-   ───────────────────────────────────────────────────────────────── */
-
-:root {
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 12px;
-  --space-lg: 16px;
-  --space-xl: 24px;
-  --space-xxl: 32px;
-  --space-xxxl: 48px;
-  --space-section: 64px;
-}
-
-/* Section vertical spacing — creates rhythm */
-.container-fluid > .row:not(:last-child),
-.card:not(:last-child) {
-  margin-bottom: var(--space-section);
-}
-
-/* Grouping within cards — tight spacing for related items */
-.card-header {
-  padding: var(--space-xl) var(--space-lg);
-}
-
-.card-body {
-  padding: var(--space-xl) var(--space-lg);
-}
-
 /* ── 1. List page card header — title + action button row ── */
 
 .card-header .row.flex-between-end,
 .card-header [class*='row'] {
   align-items: center;
-  gap: var(--space-lg);
 }
 
-/* Page title in list/form cards — clear hierarchy */
+/* Page title in list/form cards */
 .card-header h5 {
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--vz-emphasis-color);
   margin: 0;
   display: flex;
   align-items: center;
-  gap: var(--space-md);
-  letter-spacing: -0.01em;
+  gap: 8px;
 }
 
 /* Subtle icon prefix on card titles — add it via ::before if needed */
@@ -93,14 +59,13 @@
 
 /* ── 2. Filter bar — visual grouping ── */
 
-/* Filter row container — visual grouping with spacing */
+/* Filter row container */
 .card-header .row.mt-2.g-2 {
   background: var(--vz-tertiary-bg, rgba(0,0,0,0.02));
   border-radius: 8px;
-  padding: var(--space-md);
-  margin-top: var(--space-xl) !important;
+  padding: 10px 8px;
+  margin-top: 12px !important;
   border: 1px solid var(--vz-border-color);
-  gap: var(--space-md) !important;
 }
 
 [data-bs-theme='dark'] .card-header .row.mt-2.g-2 {
@@ -394,15 +359,15 @@ input[type='month'].form-control {
 
 /* ── 12. Sidebar & Navigation — Enhanced styling ── */
 
-/* Main menu title — clear section boundary */
+/* Main menu title */
 .navbar-menu .menu-title {
   font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--vz-secondary-color);
-  padding: var(--space-xl) var(--space-md) var(--space-sm);
-  margin: var(--space-sm) 0 0;
+  padding: 16px 12px 8px;
+  margin: 8px 0 0;
 }
 
 /* Top-level menu item (main category) */
@@ -411,13 +376,13 @@ input[type='month'].form-control {
   color: var(--vz-body-color);
   font-size: 0.87rem;
   font-weight: 500;
-  padding: var(--space-md) var(--space-md) var(--space-md) calc(var(--space-md) * 3);
-  margin: var(--space-xs) var(--space-sm);
+  padding: 10px 12px 10px 38px;
+  margin: 4px 6px;
   border-radius: 8px;
   transition: all var(--anim-duration-fast) var(--anim-ease-out);
   display: flex;
   align-items: center;
-  gap: var(--space-md);
+  gap: 10px;
   outline: none;
 }
 
@@ -467,25 +432,24 @@ input[type='month'].form-control {
   pointer-events: none;
 }
 
-/* Submenu items container — grouping with subtle background */
+/* Submenu items container */
 .navbar-menu .nav-sm {
-  padding: var(--space-sm) 0;
+  padding: 8px 0;
   background-color: rgba(0, 0, 0, 0.02);
   border-radius: 6px;
-  margin: var(--space-sm);
-  gap: 0;
+  margin: 6px;
 }
 
 [data-bs-theme='dark'] .navbar-menu .nav-sm {
   background-color: rgba(255, 255, 255, 0.03);
 }
 
-/* Submenu item (nested link) — consistent tight spacing */
+/* Submenu item (nested link) */
 .navbar-menu .nav-sm .nav-link {
   font-size: 0.84rem;
   font-weight: 400;
-  padding: var(--space-sm) var(--space-md) var(--space-sm) calc(var(--space-md) * 3.5);
-  margin: var(--space-xs) var(--space-sm);
+  padding: 8px 12px 8px 44px;
+  margin: 2px 6px;
   color: var(--vz-secondary-color);
   border-left: none;
 }
@@ -525,59 +489,7 @@ input[type='month'].form-control {
   transform: rotate(180deg);
 }
 
-/* ── 13. Form layout — tight grouping with generous section spacing ── */
-
-/* Form sections - group related fields */
-.form-group,
-.mb-3 {
-  margin-bottom: var(--space-lg);
-}
-
-/* Form labels — clear hierarchy */
-.form-label {
-  margin-bottom: var(--space-sm);
-  font-weight: 500;
-}
-
-/* Form section dividers */
-.form-section-title {
-  margin-top: var(--space-xxxl);
-  margin-bottom: var(--space-lg);
-}
-
-/* Related form fields (stacked vertically) */
-.form-group + .form-group {
-  margin-top: var(--space-md);
-}
-
-/* ── 14. Data table layout — clear visual hierarchy ── */
-
-/* Table header spacing */
-.card-header {
-  margin-bottom: var(--space-lg);
-}
-
-/* Table rows — minimal internal spacing, clear separation */
-.dt-table tbody tr {
-  border-bottom: 1px solid var(--vz-border-color);
-}
-
-.dt-table td {
-  padding: var(--space-md) var(--space-lg);
-}
-
-.dt-table th {
-  padding: var(--space-lg);
-  font-weight: 600;
-}
-
-/* Pagination spacing */
-.d-flex.align-items-center.justify-content-between {
-  gap: var(--space-xl);
-  margin-top: var(--space-xl);
-}
-
-/* ── 15. Responsive tweaks ── */
+/* ── 13. Responsive tweaks ── */
 
 @media (max-width: 768px) {
   .card-header .row.flex-between-end {
