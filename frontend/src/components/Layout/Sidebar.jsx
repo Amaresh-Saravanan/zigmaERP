@@ -157,7 +157,7 @@ export default function Sidebar() {
               return (
                 <li className="nav-item" key={main.unique_id}>
                   <a
-                    className={`nav-link menu-link ${isActive ? 'active' : ''}`}
+                    className={`nav-link menu-link ${isOpen ? 'active' : ''}`}
                     href="#"
                     onClick={e => { e.preventDefault(); toggle(main.unique_id); }}
                     aria-expanded={isOpen}
