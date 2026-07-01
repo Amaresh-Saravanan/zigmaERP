@@ -164,7 +164,6 @@ export default function Sidebar() {
                   >
                     {main.icon_name && <i className={main.icon_name}></i>}
                     <span>{main.screen_main_name}</span>
-                    <i className={`ri-arrow-right-s-line ms-auto transition-transform ${isOpen ? 'rotate-90' : ''}`}></i>
                   </a>
 
                   {/* React-controlled collapse — no Bootstrap JS needed */}

@@ -1,113 +1,218 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import useTheme from '../../hooks/useTheme';
 import zigFlyLogo from '../../assets/images/zig-fly-logo.png';
 
+// Derive initials from a display name ("John Doe" → "JD", "admin" → "A")
+function getInitials(name = '') {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map(w => w[0]?.toUpperCase() ?? '')
+    .join('');
+}
+
 export default function Header() {
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const toggleSidebar = () => {
-    document.body.classList.toggle('vertical-sidebar-enable');
+    const next = !sidebarOpen;
+    setSidebarOpen(next);
+    document.body.classList.toggle('vertical-sidebar-enable', next);
     const size = document.documentElement.getAttribute('data-sidebar-size');
     document.documentElement.setAttribute('data-sidebar-size', size === 'sm' ? 'lg' : 'sm');
   };
 
-  const sidebarEnabled = document.body.classList.contains('vertical-sidebar-enable');
+  const initials = getInitials(user?.userName);
 
   return (
     <header id="page-topbar">
       <div className="layout-width">
         <div className="navbar-header">
-          <div className="d-flex">
+
+          {/* ── Left: hamburger + logo ── */}
+          <div className="d-flex align-items-center gap-2">
+            {/* Horizontal logo (shown when sidebar collapsed) */}
             <div className="navbar-brand-box horizontal-logo">
-              <Link to="/" className="logo logo-dark" aria-label="Zigfly home">
-                <span className="logo-sm">
-                  <img src={zigFlyLogo} alt="" height="62" aria-hidden="true" />
-                </span>
-                <span className="logo-lg">
-                  <img src={zigFlyLogo} alt="" height="47" aria-hidden="true" />
-                </span>
+              <Link to="/" aria-label="Zigfly home">
+                <img src={zigFlyLogo} alt="" height="40" aria-hidden="true" />
               </Link>
             </div>
+
+            {/* Hamburger — animated 3-bar → X */}
             <button
               onClick={toggleSidebar}
               type="button"
-              className="btn btn-sm px-3 fs-16 header-item vertical-menu-btn topnav-hamburger material-shadow-none"
+              className="btn btn-sm px-2 header-item vertical-menu-btn topnav-hamburger material-shadow-none"
               id="topnav-hamburger-icon"
-              aria-label="Toggle navigation"
+              aria-label={sidebarOpen ? 'Close navigation' : 'Open navigation'}
+              aria-expanded={sidebarOpen}
             >
-              <i className="ri-arrow-right-line fs-22" aria-hidden="true"></i>
+              <span className="hamburger-icon" data-open={sidebarOpen}>
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
             </button>
-            {sidebarEnabled && (
-              <div
-                className="sidebar-overlay"
-                onClick={toggleSidebar}
-                style={{
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  background: 'rgba(0,0,0,0.5)',
-                  zIndex: 999,
-                  display: window.innerWidth < 992 ? 'block' : 'none'
-                }}
-              />
-            )}
           </div>
 
-          <div className="d-flex align-items-center">
-            <div className="ms-1 header-item d-none d-sm-flex">
-              <button
-                type="button"
-                className="btn btn-icon btn-topbar material-shadow-none btn-ghost-secondary rounded-circle light-dark-mode"
-                onClick={toggleTheme}
-                aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-                title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-              >
-                <i
-                  className={`${isDark ? 'ri-sun-line' : 'ri-moon-line'} fs-22`}
-                  aria-hidden="true"
-                ></i>
-              </button>
+          {/* ── Centre: search bar (U-08) ── */}
+          <div className="search-bar flex-grow-1 d-none d-md-flex align-items-center mx-3" style={{ maxWidth: 380 }}>
+            <div className="position-relative w-100">
+              <i
+                className="ri-search-line"
+                style={{
+                  position: 'absolute', left: 12, top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: 'var(--vz-secondary-color)',
+                  fontSize: '1rem', pointerEvents: 'none'
+                }}
+              ></i>
+              <input
+                type="search"
+                className="form-control"
+                placeholder="Search screens, reports…"
+                aria-label="Search"
+                style={{ paddingLeft: 36, borderRadius: 8 }}
+              />
             </div>
+          </div>
 
-            <div className="dropdown ms-sm-3 header-item topbar-user">
+          {/* ── Right: theme toggle, bell, user ── */}
+          <div className="d-flex align-items-center gap-1">
+
+            {/* Theme toggle */}
+            <button
+              type="button"
+              className="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle light-dark-mode"
+              onClick={toggleTheme}
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              <i className={`${isDark ? 'ri-sun-line' : 'ri-moon-line'} fs-20`} aria-hidden="true"></i>
+            </button>
+
+            {/* Notification bell */}
+            <button
+              type="button"
+              className="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle position-relative"
+              aria-label="Notifications"
+              title="Notifications"
+            >
+              <i className="ri-notification-3-line fs-20" aria-hidden="true"></i>
+              {/* Green dot indicator */}
+              <span
+                aria-hidden="true"
+                style={{
+                  position: 'absolute', top: 7, right: 7,
+                  width: 7, height: 7, borderRadius: '50%',
+                  background: '#25a96b',
+                  border: '2px solid var(--vz-header-bg, #161b22)',
+                }}
+              ></span>
+            </button>
+
+            {/* User dropdown (U-09 — initials avatar) */}
+            <div className="dropdown ms-1" ref={dropdownRef}>
               <button
                 type="button"
-                className={`btn material-shadow-none ${isDropdownOpen ? 'show' : ''}`}
-                id="page-header-user-dropdown"
+                className="btn d-flex align-items-center gap-2 px-2 topbar-user material-shadow-none"
                 aria-haspopup="true"
-                aria-expanded={isDropdownOpen}
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                aria-expanded={dropdownOpen}
+                onClick={() => setDropdownOpen(o => !o)}
               >
-                <span className="d-flex align-items-center">
-                  <span style={{ width: '50px', height: '16px' }} className="ri-user-fill header-profile-user"></span>
-                  <span className="text-start ms-xl-2">
-                    <span className="d-none d-lg-inline-block ms-1 fw-medium user-name-text">
-                      {user?.userName || 'User'}
-                    </span>
-                    <span className="d-none d-lg-block ms-1 fs-12 user-name-sub-text">
-                      {user?.role || 'Role'}
-                    </span>
+                {/* Avatar initials badge */}
+                <span
+                  className="avatar-initials"
+                  aria-hidden="true"
+                  style={{
+                    width: 34, height: 34, borderRadius: '50%',
+                    background: 'rgba(37,169,107,0.15)',
+                    border: '1.5px solid rgba(37,169,107,0.4)',
+                    color: '#25a96b',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: '0.75rem', fontWeight: 700,
+                    flexShrink: 0,
+                  }}
+                >
+                  {initials || <i className="ri-user-line" style={{ fontSize: '1rem' }}></i>}
+                </span>
+
+                <span className="d-none d-lg-flex flex-column align-items-start" style={{ lineHeight: 1.2 }}>
+                  <span className="fw-medium" style={{ fontSize: '0.82rem', color: 'var(--vz-emphasis-color)' }}>
+                    {user?.userName || 'User'}
+                  </span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--vz-secondary-color)' }}>
+                    {user?.role || 'Role'}
                   </span>
                 </span>
-              </button>
-              <div className={`dropdown-menu dropdown-menu-end shadow ${isDropdownOpen ? 'show' : ''}`} style={{ position: 'absolute', right: 0, top: '100%' }}>
-                <h6 className="dropdown-header text-muted fs-12">Welcome {user?.userName || 'User'}!</h6>
-                <button className="dropdown-item" onClick={logout} style={{ border: 'none', background: 'none', width: '100%', textAlign: 'left' }}>
-                  <i className="ri-logout-box-r-line text-muted fs-16 align-middle me-1"></i>
-                  <span className="align-middle" data-key="t-logout">Logout</span>
-                </button>
-              </div>
-            </div>
 
+                <i className={`ri-arrow-down-s-line d-none d-lg-block ${dropdownOpen ? 'rotate-180' : ''}`}
+                   style={{ transition: 'transform 0.2s', color: 'var(--vz-header-item-sub-color)', fontSize: '1rem' }}
+                ></i>
+              </button>
+
+              {/* Dropdown menu */}
+              {dropdownOpen && (
+                <div
+                  className="dropdown-menu dropdown-menu-end shadow show"
+                  style={{ position: 'absolute', right: 0, top: 'calc(100% + 4px)', minWidth: 180 }}
+                >
+                  <div className="px-3 py-2" style={{ borderBottom: '1px solid var(--vz-border-color)' }}>
+                    <p className="mb-0 fw-semibold" style={{ fontSize: '0.82rem', color: 'var(--vz-emphasis-color)' }}>
+                      {user?.userName || 'User'}
+                    </p>
+                    <p className="mb-0" style={{ fontSize: '0.72rem', color: 'var(--vz-secondary-color)' }}>
+                      {user?.role || 'Role'}
+                    </p>
+                  </div>
+                  <button
+                    className="dropdown-item d-flex align-items-center gap-2 mt-1"
+                    onClick={() => { setDropdownOpen(false); logout(); }}
+                    style={{ border: 'none', background: 'none', width: '100%', textAlign: 'left', fontSize: '0.85rem' }}
+                  >
+                    <i className="ri-logout-box-r-line text-danger" style={{ fontSize: '1rem' }}></i>
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Mobile overlay (U-11) */}
+      {sidebarOpen && (
+        <div
+          className="sidebar-overlay d-lg-none"
+          onClick={toggleSidebar}
+          aria-hidden="true"
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.55)',
+            zIndex: 999,
+            backdropFilter: 'blur(2px)',
+          }}
+        />
+      )}
     </header>
   );
 }

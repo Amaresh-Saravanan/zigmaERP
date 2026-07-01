@@ -23,21 +23,4 @@ body {
   font-weight: 500;
 }
 
-/* Dark mode equivalents so the login surface stays consistent with the app */
-[data-theme-mode='dark'] .auth-page-content .card.card-bg-fill {
-  background-color: #1a2942 !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.45) !important;
-}
-
-[data-theme-mode='dark'] .auth-page-content h5.text-primary {
-  color: #7c8cff !important;
-}
-
-[data-theme-mode='dark'] .auth-page-content p.text-muted {
-  color: #9aa4b6 !important;
-}
-
-[data-theme-mode='dark'] .auth-page-content label.form-label {
-  color: #ced4da !important;
-}
+/* Dark mode login overrides live in darkmode.css */

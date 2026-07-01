@@ -1,6 +1,43 @@
 import { useState, useEffect } from 'react';
 import client from '../api/client';
 
+// Skeleton row — shown while loading (U-16)
+function SkeletonRows({ cols, rows = 5 }) {
+  return Array.from({ length: rows }).map((_, i) => (
+    <tr key={i} className="dt-skeleton-row">
+      {Array.from({ length: cols }).map((_, j) => (
+        <td key={j}>
+          <div
+            className="dt-skeleton-cell"
+            style={{ width: j === cols - 1 ? 80 : `${60 + ((i + j) % 3) * 15}%` }}
+          />
+        </td>
+      ))}
+    </tr>
+  ));
+}
+
+// Empty state — icon + message (U-15)
+function EmptyState({ cols, isFiltered }) {
+  return (
+    <tr>
+      <td colSpan={cols} className="text-center py-5">
+        <div className="dt-empty-state">
+          <i className={isFiltered ? 'ri-search-line' : 'ri-inbox-2-line'}></i>
+          <p className="dt-empty-title">
+            {isFiltered ? 'No results found' : 'No records yet'}
+          </p>
+          <p className="dt-empty-sub">
+            {isFiltered
+              ? 'Try adjusting your search or filter.'
+              : 'Records will appear here once added.'}
+          </p>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 export default function DataTable({
   columns,
   ajaxUrl,
@@ -28,14 +65,8 @@ export default function DataTable({
       params.append('start', start.toString());
       params.append('length', length.toString());
       params.append('search[value]', searchQuery);
-      if (showActiveFilter) {
-        params.append('active_status', activeStatus);
-      }
-      
-      // Append extra parameters dynamically
-      Object.entries(extraParams).forEach(([key, val]) => {
-        params.append(key, val);
-      });
+      if (showActiveFilter) params.append('active_status', activeStatus);
+      Object.entries(extraParams).forEach(([k, v]) => params.append(k, v));
 
       const response = await client.post(ajaxUrl, params);
       if (response.data) {
@@ -43,41 +74,23 @@ export default function DataTable({
         setTotalRecords(response.data.recordsFiltered || 0);
       }
     } catch (err) {
-      console.error('Error fetching datatable data:', err);
+      console.error('DataTable fetch error:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [length, start, searchQuery, activeStatus, draw]);
+  useEffect(() => { fetchData(); }, [length, start, searchQuery, activeStatus, draw]);
 
-  const handleSearchChange = (e) => {
-    setSearchQuery(e.target.value);
-    setStart(0);
-    setDraw(prev => prev + 1);
-  };
-
-  const handleLengthChange = (e) => {
-    setLength(Number(e.target.value));
-    setStart(0);
-    setDraw(prev => prev + 1);
-  };
-
-  const handleActiveStatusChange = (e) => {
-    setActiveStatus(e.target.value);
-    setStart(0);
-    setDraw(prev => prev + 1);
-  };
+  const handleSearchChange = (e) => { setSearchQuery(e.target.value); setStart(0); setDraw(d => d + 1); };
+  const handleLengthChange  = (e) => { setLength(Number(e.target.value)); setStart(0); setDraw(d => d + 1); };
+  const handleStatusChange  = (e) => { setActiveStatus(e.target.value); setStart(0); setDraw(d => d + 1); };
 
   const extractUniqueId = (row) => {
     for (const cell of row) {
       if (typeof cell === 'string') {
-        const hrefMatch = cell.match(/unique_id=([^"&'\s>]+)/);
-        if (hrefMatch) return hrefMatch[1];
-        const onclickMatch = cell.match(/_delete\(['"]([^'"]+)['"]\)/);
-        if (onclickMatch) return onclickMatch[1];
+        const m = cell.match(/unique_id=([^"&'\s>]+)/) || cell.match(/_delete\(['"]([^'"]+)['"]\)/);
+        if (m) return m[1];
       }
     }
     return null;
@@ -89,104 +102,80 @@ export default function DataTable({
 
     if (isActionsCol && uniqueId) {
       return (
-        <div className="hstack gap-2 flex-wrap justify-content-end">
+        <div className="hstack gap-1 justify-content-end">
           {onView && (
-            <button
-              onClick={() => onView(uniqueId)}
-              className="btn btn-sm btn-ghost-info waves-effect waves-light"
-              title="View"
-            >
-              <i className="ri-eye-line fs-15"></i>
+            <button onClick={() => onView(uniqueId)} className="dt-action-btn dt-action-view" title="View" aria-label="View">
+              <i className="ri-eye-line"></i>
             </button>
           )}
           {onEdit && (
-            <button
-              onClick={() => onEdit(uniqueId)}
-              className="btn btn-sm btn-ghost-success waves-effect waves-light"
-              title="Edit"
-            >
-              <i className="ri-edit-2-line fs-15"></i>
+            <button onClick={() => onEdit(uniqueId)} className="dt-action-btn dt-action-edit" title="Edit" aria-label="Edit">
+              <i className="ri-edit-2-line"></i>
             </button>
           )}
           {onDelete && (
-            <button
-              onClick={() => onDelete(uniqueId)}
-              className="btn btn-sm btn-ghost-danger waves-effect waves-light"
-              title="Delete"
-            >
-              <i className="ri-delete-bin-line fs-15"></i>
+            <button onClick={() => onDelete(uniqueId)} className="dt-action-btn dt-action-delete" title="Delete" aria-label="Delete">
+              <i className="ri-delete-bin-line"></i>
             </button>
           )}
         </div>
       );
     }
 
-    if (typeof cell === 'string' && (cell.includes('<span') || cell.includes('<a') || cell.includes('<button') || cell.includes('<div'))) {
+    if (typeof cell === 'string' && /<[a-z][\s\S]*>/i.test(cell)) {
       return <span dangerouslySetInnerHTML={{ __html: cell }} />;
     }
-
     return cell;
   };
 
   const currentPage = Math.floor(start / length) + 1;
-  const totalPages = Math.ceil(totalRecords / length) || 1;
+  const totalPages  = Math.ceil(totalRecords / length) || 1;
 
   const handlePageChange = (page) => {
     if (page < 1 || page > totalPages) return;
     setStart((page - 1) * length);
-    setDraw(prev => prev + 1);
+    setDraw(d => d + 1);
   };
 
   const getPageNumbers = () => {
-    const pages = [];
     const maxVisible = window.innerWidth < 768 ? 3 : 7;
-    
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      if (currentPage > 3) pages.push('...');
-      
-      const start = Math.max(2, currentPage - 1);
-      const end = Math.min(totalPages - 1, currentPage + 1);
-      for (let i = start; i <= end; i++) pages.push(i);
-      
-      if (currentPage < totalPages - 2) pages.push('...');
-      pages.push(totalPages);
-    }
+    if (totalPages <= maxVisible) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const pages = [1];
+    if (currentPage > 3) pages.push('…');
+    const lo = Math.max(2, currentPage - 1);
+    const hi = Math.min(totalPages - 1, currentPage + 1);
+    for (let i = lo; i <= hi; i++) pages.push(i);
+    if (currentPage < totalPages - 2) pages.push('…');
+    pages.push(totalPages);
     return pages;
   };
 
   // ponytail: reusable DataTable component communicating with legacy PHP same-origin endpoints
   return (
-    <div className="card">
-      <div className="card-header border-0 align-items-center d-flex flex-wrap gap-3">
-        <div className="flex-grow-1">
-          <div className="d-flex align-items-center gap-2">
-            <span className="text-muted text-nowrap">Show</span>
-            <select
-              className="form-select form-select-sm"
-              style={{ width: '80px' }}
-              value={length}
-              onChange={handleLengthChange}
-              aria-label="Rows per page"
-            >
-              <option value="10">10</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-              <option value="-1">All</option>
-            </select>
-            <span className="text-muted text-nowrap">entries</span>
-          </div>
+    <div className="card dt-card">
+
+      {/* ── Toolbar ── */}
+      <div className="card-header border-0 dt-toolbar">
+        <div className="d-flex align-items-center gap-2">
+          <span className="dt-label">Show</span>
+          <select
+            className="form-select form-select-sm dt-length-select"
+            value={length}
+            onChange={handleLengthChange}
+            aria-label="Rows per page"
+          >
+            {[10, 25, 50, 100].map(n => <option key={n} value={n}>{n}</option>)}
+            <option value="-1">All</option>
+          </select>
+          <span className="dt-label">entries</span>
         </div>
+
         <div className="hstack gap-2 flex-wrap">
           {showActiveFilter && (
             <select
-              className="form-select form-select-sm"
-              style={{ width: '120px' }}
+              className="form-select form-select-sm dt-status-select"
               value={activeStatus}
-              onChange={handleActiveStatusChange}
+              onChange={handleStatusChange}
               aria-label="Filter by status"
             >
               <option value="1">Active</option>
@@ -194,101 +183,93 @@ export default function DataTable({
               <option value="all">All</option>
             </select>
           )}
-          <div className="search-box">
+
+          {/* Table-level search */}
+          <div className="dt-search-wrap position-relative">
+            <i className="ri-search-line dt-search-icon"></i>
             <input
-              type="text"
-              className="form-control form-control-sm"
-              placeholder="Search..."
+              type="search"
+              className="form-control form-control-sm dt-search-input"
+              placeholder="Search table…"
               value={searchQuery}
               onChange={handleSearchChange}
+              aria-label="Search table"
             />
           </div>
         </div>
       </div>
-      <div className="card-body pt-0">
-        <div className="table-responsive table-card">
-          <table className="table align-middle table-nowrap mb-0">
-            <thead className="table-light">
+
+      {/* ── Table ── */}
+      <div className="card-body pt-0 px-0">
+        <div className="table-responsive">
+          <table className="table dt-table align-middle mb-0">
+
+            {/* Sticky header (U-12) */}
+            <thead className="dt-thead">
               <tr>
                 {columns.map((col, idx) => (
-                  <th key={idx} className={col.className || ''}>
+                  <th key={idx} className={`dt-th ${col.className || ''}`}>
                     {col.label}
                   </th>
                 ))}
               </tr>
             </thead>
+
             <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={columns.length} className="text-center py-4">
-                    <div className="spinner-border text-primary" role="status">
-                      <span className="visually-hidden">Loading...</span>
-                    </div>
-                  </td>
-                </tr>
-              ) : data.length === 0 ? (
-                <tr>
-                  <td colSpan={columns.length} className="text-center py-4 text-muted">
-                    No matching records found
-                  </td>
-                </tr>
-              ) : (
-                data.map((row, rIdx) => (
-                  <tr key={rIdx}>
-                    {columns.map((col, cIdx) => (
-                      <td key={cIdx} className={col.className || ''}>
-                        {col.render
-                          ? col.render(row[cIdx], row, extractUniqueId(row))
-                          : renderCell(row[cIdx], cIdx, row)}
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              )}
+              {loading
+                ? <SkeletonRows cols={columns.length} rows={length > 10 ? 8 : 5} />
+                : data.length === 0
+                  ? <EmptyState cols={columns.length} isFiltered={!!searchQuery} />
+                  : data.map((row, rIdx) => (
+                      <tr key={rIdx} className="dt-row">
+                        {columns.map((col, cIdx) => (
+                          <td key={cIdx} className={`dt-td ${col.className || ''}`}>
+                            {col.render
+                              ? col.render(row[cIdx], row, extractUniqueId(row))
+                              : renderCell(row[cIdx], cIdx, row)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+              }
             </tbody>
           </table>
         </div>
-        
+
+        {/* ── Pagination (U-17) ── */}
         {length !== -1 && totalRecords > 0 && (
-          <div className="align-items-center mt-4 pt-2 justify-content-between d-flex flex-wrap gap-2">
-            <div className="text-muted fs-13">
-              Showing <span className="fw-semibold">{start + 1}</span> to{' '}
-              <span className="fw-semibold">
-                {Math.min(start + length, totalRecords)}
-              </span>{' '}
-              of <span className="fw-semibold">{totalRecords}</span> entries
-            </div>
-            <ul className="pagination pagination-separated pagination-sm mb-0">
-              <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                <button
-                  className="page-link"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                >
-                  Previous
-                </button>
-              </li>
-              {getPageNumbers().map((page, idx) => (
-                <li
-                  key={idx}
-                  className={`page-item ${currentPage === page ? 'active' : ''} ${page === '...' ? 'disabled' : ''}`}
-                >
-                  <button
-                    className="page-link"
-                    onClick={() => page !== '...' && handlePageChange(page)}
-                  >
-                    {page}
+          <div className="dt-pagination-bar">
+            <span className="dt-count">
+              Showing <strong>{start + 1}</strong>–<strong>{Math.min(start + length, totalRecords)}</strong> of <strong>{totalRecords}</strong>
+            </span>
+
+            <nav aria-label="Table pagination">
+              <ul className="dt-pagination">
+                <li className={currentPage === 1 ? 'dt-page-item disabled' : 'dt-page-item'}>
+                  <button className="dt-page-btn" onClick={() => handlePageChange(currentPage - 1)} aria-label="Previous page">
+                    <i className="ri-arrow-left-s-line"></i>
                   </button>
                 </li>
-              ))}
-              <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                <button
-                  className="page-link"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                >
-                  Next
-                </button>
-              </li>
-            </ul>
+
+                {getPageNumbers().map((page, idx) => (
+                  <li key={idx} className={`dt-page-item ${page === currentPage ? 'active' : ''} ${page === '…' ? 'disabled' : ''}`}>
+                    <button
+                      className="dt-page-btn"
+                      onClick={() => page !== '…' && handlePageChange(page)}
+                      aria-current={page === currentPage ? 'page' : undefined}
+                    >
+                      {page}
+                    </button>
+                  </li>
+                ))}
+
+                <li className={currentPage === totalPages ? 'dt-page-item disabled' : 'dt-page-item'}>
+                  <button className="dt-page-btn" onClick={() => handlePageChange(currentPage + 1)} aria-label="Next page">
+                    <i className="ri-arrow-right-s-line"></i>
+                  </button>
+                </li>
+              </ul>
+            </nav>
           </div>
         )}
       </div>

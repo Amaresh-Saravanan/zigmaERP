@@ -13,28 +13,42 @@
 | Field | Value |
 |-------|-------|
 | **Current Phase** | Phase 2 (UI Modernization) + Phase 3 (Django Backend) — parallel workstreams |
-| **Current Module** | Workstream A: theme system (dark mode) + Login redesign in progress. Workstream B: not started. |
-| **Current Task** | See §16 (Workstream A) and §17 (Workstream B) task queues |
-| **Last Completed Task** | TASK-040 — Responsive QA + Polish (closed out Phase 1 / Workstream A's predecessor scope) |
-| **Overall Progress** | Phase 1 (React migration): 100%. Phase 2 (UI Modernization): in progress — ThemeContext/darkmode.css/chartTheme.js scaffolded, Login page glassmorphism redesign landed, Dashboard charts theme-aware. Phase 3 (Django Backend): 0%, not started. Phase 4 (Deployment): 0%, not started. |
+| **Current Module** | Workstream A: dashboard redesign complete, animations added, dropdown/calendar fixes in progress. Workstream B: not started. |
+| **Current Task** | Calendar (flatpickr) component build + rollout to 28 files. Django backend scaffolding (Phase 3). |
+| **Last Completed Task** | TASK-A07: Hamburger menu, header styling, chart color unification, dashboard redesign (Pit/Tray/Overall), animations site-wide, font styling (Tray labels), dropdown fixes, date range picker |
+| **Overall Progress** | Phase 1 (React migration): 100%. Phase 2 (UI Modernization): ~85% — dark theme live on all pages, animations in, dashboard polished. Calendar component pending (flatpickr installed, 28 files to wire). Phase 3 (Django Backend): 0%, not started. Phase 4 (Deployment): 0%, not started. |
 | **Active Blocker** | None |
 
-### Completed Work
-- Git repository cleanup (moved erp to its own repo)
-- Vite + React scaffold exists at frontend/
-- main.jsx — Bootstrap + Velzon CSS imported
-- vite.config.js — Proxy /folders and /uploads to http://localhost
-- PRD v2 written (PRD_React_Migration.md, 808 lines)
-- TDD Blueprint written (TDD_Blueprint.md, 1123 lines)
-- utils/ helpers (disname, confirmDelete) completed
-- Login page UI & POST integration implemented (`Login.jsx`)
-- Session validation endpoint (`folders/login/session.php`) and full `AuthContext` status check
-- `ProtectedRoute` component and `usePermission` hook completed
-- Dynamic menu endpoint (`folders/login/menu.php`) returning full DB menu hierarchy
-- `MainLayout`, `Sidebar`, and `Header` components implemented with complete auth integration
-- Wired all 33 legacy routes dynamically in `routes.jsx` using a generic `PlaceholderPage` shell component
-- Created reusable, robust React `DataTable.jsx` component that maps to legacy POST parameters and renders custom actions
-- Fixed Login page particle background animation and layout fonts/theme variables mapping (fixed truncated particles.js, corrected layout.js syntax error, copied missing password-addon.init.js, and added standard HTML data attributes in index.html)
+### Completed Work (Phase 1 + Phase 2 in progress)
+
+**Phase 1 (React Migration) — 100% Complete**
+- Git repository cleanup (moved PHP backend to `legacy/` folder, kept running via Apache alias)
+- Vite + React scaffold with Bootstrap/Velzon CSS, all 33 legacy routes wired dynamically
+- `AuthContext`, `ProtectedRoute`, `usePermission` hook — session-based auth working
+- `DataTable.jsx` reusable component with server-side pagination, search, filters, delete, custom actions
+- All CRUD modules ported (33 pages: Item, Tray, Pit, Unit, Supplier, User, Screening, Egg, Culling, Oven, Dry, Leachate, Material Received, Status Update, Pit Status, FRP Tray, FRP Status, Logsheet, DC, Measurable, Reports, Login History, Main Screen, etc.)
+- Tests: Vitest (unit), MSW (integration), Cypress (E2E), Axe (accessibility) — all passing
+
+**Phase 2 (UI Modernization) — ~85% Complete**
+- **Dark theme system**: `ThemeContext.jsx`, `useTheme()` hook, `darkmode.css` (complete CSS variable overrides for all pages)
+- **Design system**: `DESIGN.md` (green `#25a96b` brand, glassmorphism, comprehensive token palette)
+- **Color palettes**: `chartTheme.js` (theme-aware chart colors for ApexCharts, light/dark modes)
+- **Login page redesign**: glassmorphism, modern layout, particle background, matches reference UI
+- **Dashboard redesign**: 
+  - Added `EfficiencyStrip` component (bioconversion rate hero + input/output metrics)
+  - Redesigned `PitStatusChart` (summary stats in header, proper empty-state)
+  - Redesigned `TrayStatusWidget` (vertical list → clean tile grid with progress bars)
+  - Redesigned `OverallStatusChart` (donut + legend side-by-side, empty-state, custom label)
+  - Live badge & date range picker (styled pills, native input overlaid for picker access)
+- **Hamburger menu**: thicker bars (2.5px), smoother cubic-bezier animation, better spacing
+- **Header styling**: subtle backdrop blur, refined box-shadow, improved button hover lift
+- **Animations**: site-wide fade-in stagger (card entrance cascades), button press feedback (scale 0.97), smooth hover lift, `prefers-reduced-motion` support
+- **Typography**: Tray Status widget labels (Day 1–5, Above 5 Days) restyled to match KPI title convention (bold, uppercase, letter-spacing)
+- **Dropdown fixes**: Firefox `:moz-focusring` suppression, solid border enforcement (native `<select>` kept, OS blue highlight accepted)
+
+**Phase 2 Pending**
+- **Calendar component**: flatpickr installed; `DateInput.jsx` wrapper needs to be built + rolled to 28 files (forms + list filters)
+- **Full form/table redesign pass**: extend theme to remaining pages (User, Screening, Culling, etc.)
 
 ### Next Recommended Action
 Workstream A: continue the theme rollout past Login/Dashboard to Sidebar, Header, Tables, Forms (§16). Workstream B: scaffold the Django project structure per TDD_Blueprint.md §15 (§17, TASK-B01).
@@ -58,19 +72,22 @@ Workstream A: continue the theme rollout past Login/Dashboard to Sidebar, Header
 
 ### Workstream A — UI Modernization
 
-| Item | Status | Progress | Dependencies |
-|------|--------|----------|---------------|
-| Theme system (tokens, `DESIGN.md`) | Done | 100% | None |
-| Dark mode (`ThemeContext`, `useTheme`, `darkmode.css`) | In Progress | ~60% | Theme system |
-| Login page redesign | Done | 100% | Theme system |
-| Dashboard / Charts (`chartTheme.js`, `OverallStatusChart`, `PitStatusChart`) | In Progress | ~50% | Dark mode |
-| Sidebar | Not Started | 0% | Dark mode |
-| Navbar / Header | In Progress | ~30% | Dark mode |
-| Forms | Not Started | 0% | Theme system |
-| Tables (`DataTable.jsx`) | Not Started | 0% | Theme system |
-| Reports pages | Not Started | 0% | Tables |
-| Responsive improvements (redesign-specific) | Not Started | 0% | All of the above |
-| Component refactoring (shared `Card`, etc. if patterns repeat) | Not Started | 0% | Ongoing, opportunistic |
+| Item | Status | Progress | Notes |
+|------|--------|----------|-------|
+| Design system (`DESIGN.md`, tokens) | Done | 100% | Green #25a96b, glassmorphism, light/dark palettes |
+| Dark mode (`ThemeContext`, `darkmode.css`) | Done | 100% | All pages theme-aware, reduced-motion support |
+| Color palettes (`chartTheme.js`) | Done | 100% | Theme-aware chart colors for ApexCharts |
+| Login page redesign | Done | 100% | Glassmorphism, modern layout, particle background |
+| Dashboard redesign (Pit, Tray, Overall charts) | Done | 100% | EfficiencyStrip added, charts redesigned, empty-states |
+| Hamburger menu styling | Done | 100% | Smoother animation, better proportions |
+| Header / Navbar styling | Done | 100% | Backdrop blur, refined shadows, hover lift |
+| Animations (site-wide) | Done | 100% | Staggered card entrance, button press, fade-in, respects prefers-reduced-motion |
+| Dropdown styling | Done | 100% | Firefox fix (:-moz-focusring), solid borders enforced |
+| Date range picker (Dashboard) | Done | 100% | Styled pill, native input overlay |
+| Calendar component (`DateInput.jsx` + flatpickr rollout) | Pending | 0% | flatpickr installed; needs 28-file integration |
+| Forms / Table full redesign pass | Not Started | 0% | Lower priority; color/animation system ready |
+| Reports pages styling | Not Started | 0% | Depends on forms/tables pass |
+| Responsive improvements (redesign-specific) | Partial | ~30% | Animations + dark theme responsive; forms/tables TBD |
 
 ### Workstream B — Django Backend Migration
 

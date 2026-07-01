@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import client from '../../api/client';
 import DataTable from '../../components/DataTable';
+import DateInput from '../../components/DateInput';
 
 const SHIFT_OPTIONS = [{ value: '1', label: 'Day' }, { value: '2', label: 'Night' }, { value: '3', label: 'General' }];
 const CYLINDER_OPTIONS = [{ value: '1', label: 'O2' }, { value: '2', label: 'LPG' }, { value: '3', label: 'Other' }];
@@ -71,12 +72,22 @@ export default function CullingProcessList() {
             {/* Filters */}
             <div className="row mt-2 g-2">
               <div className="col-md-2">
-                <input type="date" name="from_date" className="form-control form-control-sm" placeholder="From Date"
-                  value={filters.from_date} onChange={handleFilterChange} />
+                <DateInput
+                  name="from_date"
+                  value={filters.from_date}
+                  onChange={handleFilterChange}
+                  className="form-control form-control-sm"
+                  placeholder="From Date"
+                />
               </div>
               <div className="col-md-2">
-                <input type="date" name="to_date" className="form-control form-control-sm" placeholder="To Date"
-                  value={filters.to_date} onChange={handleFilterChange} />
+                <DateInput
+                  name="to_date"
+                  value={filters.to_date}
+                  onChange={handleFilterChange}
+                  className="form-control form-control-sm"
+                  placeholder="To Date"
+                />
               </div>
               <div className="col-md-2">
                 <select name="shift_type" className="form-control form-control-sm" value={filters.shift_type} onChange={handleFilterChange}>
