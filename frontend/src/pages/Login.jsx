@@ -59,6 +59,7 @@ export default function Login() {
 
       // API returned but not a success — fall through to demo mode check below
       if (res.data?.msg === 'incorrect') {
+        setLoading(false);
         Swal.fire({
           title: 'Incorrect UserName and Password',
           imageUrl: 'img/emoji/invalid.webp',
@@ -69,7 +70,7 @@ export default function Login() {
         return;
       }
     } catch (err) {
-      console.error('Login API error:', err);
+      // API error — fall through to demo mode fallback
     }
 
     // API failed or no valid response — demo mode fallback
@@ -226,7 +227,7 @@ export default function Login() {
 
             <form onSubmit={handleSubmit} autoComplete="off">
               <div className="mb-3">
-                <label className="form-label" htmlFor="lp_user">Username</label>
+                <label className="form-label" htmlFor="lp_user">Username <span aria-label="required">*</span></label>
                 <div className="lp-input-wrap">
                   <i className="ri-user-line" aria-hidden="true" />
                   <input
@@ -237,13 +238,14 @@ export default function Login() {
                     placeholder="Enter your username"
                     value={form.user}
                     onChange={handleChange}
+                    required
                     autoFocus
                   />
                 </div>
               </div>
 
               <div className="mb-3">
-                <label className="form-label" htmlFor="lp_pass">Password</label>
+                <label className="form-label" htmlFor="lp_pass">Password <span aria-label="required">*</span></label>
                 <div className="lp-input-wrap">
                   <i className="ri-lock-2-line" aria-hidden="true" />
                   <input
@@ -254,6 +256,7 @@ export default function Login() {
                     placeholder="Enter your password"
                     value={form.password}
                     onChange={handleChange}
+                    required
                   />
                   <button
                     type="button"
@@ -312,6 +315,13 @@ export default function Login() {
           min-height: 100vh;
           background: #e8edf2;
           font-family: 'Inter', system-ui, -apple-system, sans-serif;
+          overflow: hidden;
+        }
+        [data-bs-theme='dark'] .lp-root {
+          background: #0d1117;
+        }
+        [data-bs-theme='dark'] body {
+          background: #0d1117;
         }
         .lp-split {
           display: flex;
@@ -329,6 +339,7 @@ export default function Login() {
           background-size: cover;
           background-position: center;
           overflow: hidden;
+          clip-path: inset(0);
         }
         /* Dark overlay - logo is transparent so shows well on any background
            bottom vignette fully opaque for status card; upper section shows texture */
@@ -388,7 +399,7 @@ export default function Login() {
           font-style: normal;
           text-shadow: 0 4px 16px rgba(0,0,0,0.5);
           letter-spacing: -0.015em;
-          overflow-wrap: break-word;
+          text-wrap: balance;
         }
         .lp-headline em {
           font-style: normal;
@@ -629,7 +640,13 @@ export default function Login() {
           color: #374151;
           letter-spacing: 0.01em;
         }
+        .lp-card .form-label span {
+          color: #ef4444;
+          margin-left: 2px;
+          font-weight: 600;
+        }
         [data-bs-theme='dark'] .lp-card .form-label { color: #8b949e; }
+        [data-bs-theme='dark'] .lp-card .form-label span { color: #ff6b6b; }
         .lp-card-title {
           font-size: 1.65rem;
           font-weight: 700;
@@ -639,6 +656,7 @@ export default function Login() {
           position: relative;
           z-index: 1;
           letter-spacing: -0.02em;
+          text-wrap: balance;
         }
         [data-bs-theme='dark'] .lp-card-title { color: #f0f6fc; }
         .lp-card-title span { color: #25a96b; }
@@ -684,6 +702,11 @@ export default function Login() {
           border: 1px solid #e5e7eb;
           transition: border-color 0.2s, box-shadow 0.2s, background-color 0.15s;
           background-color: #fff;
+          color: #0f172a;
+        }
+        .lp-input-wrap .form-control::placeholder {
+          color: #9ca3af;
+          opacity: 1;
         }
         .lp-input-wrap .form-control:hover {
           border-color: #d1d5db;
@@ -697,6 +720,10 @@ export default function Login() {
           border-color: #30363d;
           background-color: #0d1117;
           color: #f0f6fc;
+        }
+        [data-bs-theme='dark'] .lp-input-wrap .form-control::placeholder {
+          color: #6e7681;
+          opacity: 1;
         }
         [data-bs-theme='dark'] .lp-input-wrap .form-control:hover {
           border-color: #424752;
@@ -811,6 +838,22 @@ export default function Login() {
           margin: 0;
         }
         [data-bs-theme='dark'] .lp-footer-text { color: #8b949e; }
+
+        .form-check-input {
+          cursor: pointer;
+          transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+        }
+        .form-check-input:focus-visible {
+          box-shadow: 0 0 0 3px rgba(37,169,107,0.2);
+          border-color: #25a96b;
+        }
+        .form-check-label {
+          font-size: 0.84rem;
+          color: #374151;
+          cursor: pointer;
+          user-select: none;
+        }
+        [data-bs-theme='dark'] .form-check-label { color: #8b949e; }
 
         /* ── Responsive ── */
         @media (max-width: 991px) {
