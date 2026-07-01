@@ -357,7 +357,122 @@ input[type='month'].form-control {
   font-weight: 500;
 }
 
-/* ── 12. Responsive tweaks ── */
+/* ── 12. Sidebar & Navigation — Enhanced styling ── */
+
+/* Main menu title */
+.navbar-menu .menu-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--vz-secondary-color);
+  padding: 16px 12px 8px;
+  margin: 8px 0 0;
+}
+
+/* Top-level menu item (main category) */
+.navbar-menu .nav-link {
+  position: relative;
+  color: var(--vz-body-color);
+  font-size: 0.87rem;
+  font-weight: 500;
+  padding: 10px 12px 10px 38px;
+  margin: 4px 6px;
+  border-radius: 8px;
+  transition: all var(--anim-duration-fast) var(--anim-ease-out);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Menu icon sizing */
+.navbar-menu .nav-link i {
+  font-size: 1rem;
+  width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Menu item hover state */
+.navbar-menu .nav-link:hover {
+  background-color: rgba(37, 169, 107, 0.08);
+  color: #25a96b;
+}
+
+/* Active menu item — strong visual indicator */
+.navbar-menu .nav-link.active {
+  background-color: rgba(37, 169, 107, 0.15);
+  color: #25a96b;
+  border-left: 1px solid #25a96b;
+  padding-left: 37px;
+}
+
+[data-bs-theme='dark'] .navbar-menu .nav-link.active {
+  background-color: rgba(37, 169, 107, 0.2);
+}
+
+/* Submenu collapse — smooth height animation (Bootstrap handles it, we add opacity) */
+.navbar-menu .collapse {
+  transition: opacity var(--anim-duration-normal) var(--anim-ease-out);
+}
+
+.navbar-menu .collapse:not(.show) {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Submenu items container */
+.navbar-menu .nav-sm {
+  padding: 8px 0;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 6px;
+  margin: 6px;
+}
+
+[data-bs-theme='dark'] .navbar-menu .nav-sm {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* Submenu item (nested link) */
+.navbar-menu .nav-sm .nav-link {
+  font-size: 0.84rem;
+  font-weight: 400;
+  padding: 8px 12px 8px 44px;
+  margin: 2px 6px;
+  color: var(--vz-secondary-color);
+  border-left: none;
+}
+
+/* Submenu item hover */
+.navbar-menu .nav-sm .nav-link:hover {
+  color: #25a96b;
+  background-color: rgba(37, 169, 107, 0.08);
+}
+
+/* Submenu item active — green indicator */
+.navbar-menu .nav-sm .nav-link.active {
+  color: #25a96b;
+  background-color: rgba(37, 169, 107, 0.12);
+  border-left: 2px solid #25a96b;
+  padding-left: 42px;
+  font-weight: 500;
+}
+
+[data-bs-theme='dark'] .navbar-menu .nav-sm .nav-link.active {
+  background-color: rgba(37, 169, 107, 0.18);
+}
+
+/* Expand/collapse arrow rotation */
+.navbar-menu .nav-link[aria-expanded] i {
+  transition: transform var(--anim-duration-normal) var(--anim-ease-out);
+}
+
+.navbar-menu .nav-link[aria-expanded="true"] i {
+  transform: rotate(180deg);
+}
+
+/* ── 13. Responsive tweaks ── */
 
 @media (max-width: 768px) {
   .card-header .row.flex-between-end {
