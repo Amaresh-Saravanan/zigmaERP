@@ -221,7 +221,7 @@ export default function DataTable({
                 : data.length === 0
                   ? <EmptyState cols={columns.length} isFiltered={!!searchQuery} />
                   : data.map((row, rIdx) => (
-                      <tr key={rIdx} className="dt-row">
+                      <tr key={rIdx} className="dt-row" style={{ '--index': rIdx }}>
                         {columns.map((col, cIdx) => (
                           <td key={cIdx} className={`dt-td ${col.className || ''}`}>
                             {col.render

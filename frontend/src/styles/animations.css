@@ -1,0 +1,463 @@
+/* ====================================================================
+   Zigfly Animations — Professional transitions across the entire app
+   150-250ms timing, ease-out curves, task-focused motion.
+   Respects prefers-reduced-motion for accessibility.
+   ==================================================================== */
+
+/* ── Timing & Easing Tokens ── */
+:root {
+  --anim-duration-fast: 150ms;
+  --anim-duration-normal: 200ms;
+  --anim-duration-slow: 300ms;
+  --anim-ease-out: cubic-bezier(0.25, 1, 0.5, 1);
+  --anim-ease-out-snappy: cubic-bezier(0.22, 1, 0.36, 1);
+  --anim-ease-out-sharp: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ────────────────────────────────────────────────────────────────
+   1. FORM INTERACTIONS
+   ──────────────────────────────────────────────────────────────── */
+
+/* Input focus glow */
+.form-control:focus,
+.form-select:focus,
+.form-control-sm:focus,
+.form-select-sm:focus {
+  border-color: #25a96b;
+  box-shadow: 0 0 0 3px rgba(37, 169, 107, 0.15);
+  transition: border-color var(--anim-duration-fast) var(--anim-ease-out),
+              box-shadow var(--anim-duration-normal) var(--anim-ease-out),
+              background-color var(--anim-duration-fast) var(--anim-ease-out);
+}
+
+.form-control,
+.form-select {
+  transition: border-color var(--anim-duration-fast) var(--anim-ease-out),
+              box-shadow var(--anim-duration-fast) var(--anim-ease-out),
+              background-color var(--anim-duration-fast) var(--anim-ease-out);
+}
+
+/* Checkbox & radio smooth animation */
+.form-check-input {
+  transition: border-color var(--anim-duration-fast) var(--anim-ease-out),
+              background-color var(--anim-duration-fast) var(--anim-ease-out),
+              box-shadow var(--anim-duration-fast) var(--anim-ease-out);
+}
+
+.form-check-input:checked {
+  animation: checkmarkPulse var(--anim-duration-normal) var(--anim-ease-out) forwards;
+}
+
+@keyframes checkmarkPulse {
+  0% { transform: scale(0.8); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+/* Validation state transitions */
+.form-control.is-invalid,
+.form-select.is-invalid {
+  animation: invalidShake var(--anim-duration-normal) var(--anim-ease-out);
+  border-color: #dc3545;
+}
+
+@keyframes invalidShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.form-control.is-valid,
+.form-select.is-valid {
+  border-color: #28a745;
+  animation: validPulse var(--anim-duration-normal) var(--anim-ease-out) forwards;
+}
+
+@keyframes validPulse {
+  0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.3); }
+  100% { box-shadow: 0 0 0 8px rgba(40, 167, 69, 0); }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   2. BUTTON & ACTION FEEDBACK
+   ──────────────────────────────────────────────────────────────── */
+
+.btn {
+  transition: all var(--anim-duration-fast) var(--anim-ease-out);
+}
+
+/* Primary button hover */
+.btn-primary {
+  transition: background-color var(--anim-duration-fast) var(--anim-ease-out),
+              border-color var(--anim-duration-fast) var(--anim-ease-out),
+              box-shadow var(--anim-duration-fast) var(--anim-ease-out),
+              transform var(--anim-duration-fast) var(--anim-ease-out);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 169, 107, 0.2);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.55;
+}
+
+/* Button with loading state */
+.btn.btn-loading {
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   3. NAVIGATION & PAGE LAYOUT
+   ──────────────────────────────────────────────────────────────── */
+
+/* Sidebar smooth transitions — use transform instead of margin for performance */
+#layout-wrapper {
+  transition: transform var(--anim-duration-normal) var(--anim-ease-out);
+}
+
+.sidebar {
+  transition: transform var(--anim-duration-normal) var(--anim-ease-out),
+              opacity var(--anim-duration-normal) var(--anim-ease-out);
+}
+
+/* Menu item hover */
+.nav-link {
+  transition: color var(--anim-duration-fast) var(--anim-ease-out),
+              background-color var(--anim-duration-fast) var(--anim-ease-out),
+              padding-left var(--anim-duration-fast) var(--anim-ease-out);
+}
+
+.nav-link:hover {
+  padding-left: calc(1.5rem + 2px);
+}
+
+.nav-link.active {
+  background-color: rgba(37, 169, 107, 0.15);
+  color: #25a96b;
+  border-left: 1px solid #25a96b;
+  padding-left: calc(1.5rem - 1px);
+}
+
+/* Collapse/expand arrow rotation */
+.nav-link[aria-expanded] .fas,
+.nav-link[aria-expanded] .ri {
+  transition: transform var(--anim-duration-normal) var(--anim-ease-out);
+}
+
+.nav-link[aria-expanded="true"] .fas,
+.nav-link[aria-expanded="true"] .ri {
+  transform: rotate(180deg);
+}
+
+/* Submenu collapse animation — Bootstrap handles height, we animate opacity only */
+.collapse {
+  transition: opacity var(--anim-duration-normal) var(--anim-ease-out);
+}
+
+.collapse:not(.show) {
+  opacity: 0;
+}
+
+/* Breadcrumb link animation */
+.breadcrumb a {
+  transition: color var(--anim-duration-fast) var(--anim-ease-out);
+}
+
+/* ────────────────────────────────────────────────────────────────
+   4. LIST & CARD ANIMATIONS
+   ──────────────────────────────────────────────────────────────── */
+
+/* Card entrance animation with stagger support */
+.card {
+  animation: cardEntrance var(--anim-duration-normal) var(--anim-ease-out) forwards;
+  animation-delay: calc(var(--index, 0) * 50ms);
+  opacity: 0;
+}
+
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Smooth card hover */
+.card {
+  transition: box-shadow var(--anim-duration-normal) var(--anim-ease-out),
+              transform var(--anim-duration-normal) var(--anim-ease-out);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+[data-bs-theme='dark'] .card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* Table row hover animation */
+tbody tr {
+  transition: background-color var(--anim-duration-fast) var(--anim-ease-out);
+}
+
+tbody tr:hover {
+  background-color: rgba(37, 169, 107, 0.05);
+}
+
+[data-bs-theme='dark'] tbody tr:hover {
+  background-color: rgba(37, 169, 107, 0.1);
+}
+
+/* Badge and status animations */
+.badge {
+  transition: background-color var(--anim-duration-fast) var(--anim-ease-out),
+              color var(--anim-duration-fast) var(--anim-ease-out),
+              box-shadow var(--anim-duration-fast) var(--anim-ease-out);
+}
+
+.badge:hover {
+  box-shadow: 0 0 0 3px rgba(37, 169, 107, 0.2);
+}
+
+/* Status indicator pulse */
+.status-dot {
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(37, 169, 107, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(37, 169, 107, 0); }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   5. MODAL & DRAWER ANIMATIONS
+   ──────────────────────────────────────────────────────────────── */
+
+/* Modal backdrop fade */
+.modal-backdrop {
+  animation: backdropFade var(--anim-duration-normal) var(--anim-ease-out) forwards;
+}
+
+@keyframes backdropFade {
+  from { opacity: 0; }
+  to { opacity: 0.5; }
+}
+
+/* Modal content slide + fade */
+.modal-content {
+  animation: modalSlideIn var(--anim-duration-normal) var(--anim-ease-out) forwards;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-24px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   6. LOADING & SKELETON STATES
+   ──────────────────────────────────────────────────────────────── */
+
+/* Loading spinner */
+.spinner-border {
+  animation: spinnerRotate 1s linear infinite;
+}
+
+@keyframes spinnerRotate {
+  to { transform: rotate(360deg); }
+}
+
+/* Skeleton loading pulse */
+.skeleton {
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+  background: linear-gradient(90deg,
+    var(--vz-secondary-bg) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    var(--vz-secondary-bg) 100%);
+  background-size: 200% 100%;
+}
+
+@keyframes skeletonPulse {
+  0%, 100% { background-position: 200% 0; }
+  50% { background-position: 0 0; }
+}
+
+[data-bs-theme='dark'] .skeleton {
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.05) 100%);
+}
+
+/* ────────────────────────────────────────────────────────────────
+   7. CHART & METRIC ANIMATIONS
+   ──────────────────────────────────────────────────────────────── */
+
+/* Chart entrance */
+.chart-container {
+  animation: chartFade var(--anim-duration-slow) var(--anim-ease-out) forwards;
+  opacity: 0;
+}
+
+@keyframes chartFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* KPI value counter (for number animations) */
+.kpi-value {
+  animation: valuePulse var(--anim-duration-normal) var(--anim-ease-out) forwards;
+}
+
+@keyframes valuePulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   8. TOAST & ALERT ANIMATIONS
+   ──────────────────────────────────────────────────────────────── */
+
+/* Toast entrance */
+.toast {
+  animation: toastSlideIn var(--anim-duration-normal) var(--anim-ease-out) forwards;
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Alert entrance */
+.alert {
+  animation: alertFade var(--anim-duration-normal) var(--anim-ease-out) forwards;
+  opacity: 0;
+}
+
+@keyframes alertFade {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   9. ACCESSIBILITY: RESPECT PREFERS-REDUCED-MOTION
+   ──────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .card {
+    animation: none;
+    opacity: 1;
+  }
+
+  .sidebar {
+    transition: none;
+  }
+
+  .nav-link {
+    transition: none;
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    transition: none;
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   10. UTILITY CLASSES FOR ANIMATIONS
+   ──────────────────────────────────────────────────────────────── */
+
+/* Fade in */
+.fade-in {
+  animation: fadeInUtil var(--anim-duration-normal) var(--anim-ease-out) forwards;
+}
+
+@keyframes fadeInUtil {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Slide up */
+.slide-up {
+  animation: slideUpUtil var(--anim-duration-normal) var(--anim-ease-out) forwards;
+}
+
+@keyframes slideUpUtil {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scale in */
+.scale-in {
+  animation: scaleInUtil var(--anim-duration-normal) var(--anim-ease-out) forwards;
+}
+
+@keyframes scaleInUtil {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Pulse */
+.pulse {
+  animation: pulseUtil 2s ease-in-out infinite;
+}
+
+@keyframes pulseUtil {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

@@ -75,7 +75,7 @@ export default function Sidebar() {
   // When DB menu is empty (offline/demo), use static fallback
   const activeMenu = menu.length ? menu : DEMO_MENU;
 
-  // Auto-open matching category from fallback on first render
+  // Auto-expand the category containing the current page
   useEffect(() => {
     if (!openId) {
       const active = activeMenu.find(m =>

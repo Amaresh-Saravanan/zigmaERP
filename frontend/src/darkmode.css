@@ -572,7 +572,7 @@ body,
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   width: 24px;
   height: 24px;
   cursor: pointer;

@@ -178,14 +178,27 @@ export default function Dashboard() {
           <div className="card crm-widget mb-4">
             <div className="card-body p-0">
               <div className="row row-cols-xxl-6 row-cols-md-3 row-cols-2 g-0">
-                <KPICard title="Inward" value={data.kpi.inward} unit="Metric-Tons" icon="ri-truck-line" colorClass="text-info" onClick={() => openDrillDown('inward')} />
-                <KPICard title="Inward Rejects" value={data.kpi.inward_rejects} unit="Metric-Tons" icon="ri-close-circle-line" colorClass="text-warning" onClick={() => openDrillDown('inward-rejects')} />
-                <KPICard title="Organic Waste in Pit" value={data.kpi.organic_waste} unit="Metric-Tons" icon="ri-leaf-fill" colorClass="text-success" onClick={() => openDrillDown('organic')} />
-                <KPICard title="Egg Purchasing" value={data.kpi.egg_purchasing} unit="Kilo-Gram" icon="ri-coins-line" colorClass="text-primary" onClick={() => openDrillDown('purchasing')} />
-                <KPICard title="Egg Hatching" value={data.kpi.egg_hatching} unit="Kilo-Gram" icon="ri-temp-hot-line" colorClass="text-warning" onClick={() => openDrillDown('hatching')} />
-                <KPICard title="Larvae Harvested" value={data.kpi.larvae_harvested} unit="Metric-Tons" icon="ri-scales-3-line" colorClass="text-success" onClick={() => openDrillDown('larvae_harvested')} />
-                <KPICard title="Manure" value={data.kpi.manure} unit="Metric-Tons" icon="ri-recycle-line" colorClass="text-info" onClick={() => openDrillDown('manure')} />
-                <KPICard title="Processing Rejects" value={data.kpi.processing_rejects} unit="Metric-Tons" icon="ri-alert-line" colorClass="text-danger" onClick={() => openDrillDown('processing-rejects')} />
+                {[
+                  { title: 'Inward', value: data.kpi.inward, unit: 'Metric-Tons', icon: 'ri-truck-line', colorClass: 'text-info', key: 'inward' },
+                  { title: 'Inward Rejects', value: data.kpi.inward_rejects, unit: 'Metric-Tons', icon: 'ri-close-circle-line', colorClass: 'text-warning', key: 'inward-rejects' },
+                  { title: 'Organic Waste in Pit', value: data.kpi.organic_waste, unit: 'Metric-Tons', icon: 'ri-leaf-fill', colorClass: 'text-success', key: 'organic' },
+                  { title: 'Egg Purchasing', value: data.kpi.egg_purchasing, unit: 'Kilo-Gram', icon: 'ri-coins-line', colorClass: 'text-primary', key: 'purchasing' },
+                  { title: 'Egg Hatching', value: data.kpi.egg_hatching, unit: 'Kilo-Gram', icon: 'ri-temp-hot-line', colorClass: 'text-warning', key: 'hatching' },
+                  { title: 'Larvae Harvested', value: data.kpi.larvae_harvested, unit: 'Metric-Tons', icon: 'ri-scales-3-line', colorClass: 'text-success', key: 'larvae' },
+                  { title: 'Manure', value: data.kpi.manure, unit: 'Metric-Tons', icon: 'ri-recycle-line', colorClass: 'text-info', key: 'manure' },
+                  { title: 'Processing Rejects', value: data.kpi.processing_rejects, unit: 'Metric-Tons', icon: 'ri-alert-line', colorClass: 'text-danger', key: 'rejects' },
+                ].map((kpi, idx) => (
+                  <div key={kpi.key} style={{ '--index': idx }}>
+                    <KPICard
+                      title={kpi.title}
+                      value={kpi.value}
+                      unit={kpi.unit}
+                      icon={kpi.icon}
+                      colorClass={kpi.colorClass}
+                      onClick={() => openDrillDown(kpi.key)}
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           </div>

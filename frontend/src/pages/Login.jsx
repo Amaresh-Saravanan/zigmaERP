@@ -163,29 +163,6 @@ export default function Login() {
         {/* ── RIGHT: Form 55% ── */}
         <div className="lp-form-side">
 
-          {/* Organic wave — overlaps left panel's right edge, green stroke visible */}
-          <svg
-            className="lp-wave"
-            viewBox="0 0 80 800"
-            preserveAspectRatio="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-            <path
-              className="lp-wave-fill"
-              d="M80,0 C48,0 22,80 44,220 C66,360 18,450 46,570 C74,690 34,740 80,800 L80,0 Z"
-            />
-            <path
-              className="lp-wave-stroke"
-              d="M80,0 C48,0 22,80 44,220 C66,360 18,450 46,570 C74,690 34,740 80,800"
-              fill="none"
-              stroke="#25a96b"
-              strokeWidth="2"
-              strokeLinecap="round"
-              opacity="0.95"
-            />
-          </svg>
-
           {/* Theme toggle — top-right */}
           <div className="lp-theme-toggle" role="group" aria-label="Theme">
             <button
@@ -225,7 +202,7 @@ export default function Login() {
             <p className="lp-card-sub">Sign in to continue to Zigfly Admin Dashboard.</p>
             <div className="lp-card-rule" aria-hidden="true" />
 
-            <form onSubmit={handleSubmit} autoComplete="off">
+            <form onSubmit={handleSubmit} autoComplete="off" noValidate>
               <div className="mb-3">
                 <label className="form-label" htmlFor="lp_user">Username <span aria-label="required">*</span></label>
                 <div className="lp-input-wrap">
@@ -326,6 +303,7 @@ export default function Login() {
         .lp-split {
           display: flex;
           min-height: 100vh;
+          overflow: hidden;
         }
 
         /* ── LEFT HERO (45%) ── */
@@ -540,19 +518,6 @@ export default function Login() {
           background: #0d1117;
         }
 
-        /* Organic wave — fill matches panel bg, green stroke is the divider */
-        .lp-wave {
-          position: absolute;
-          left: -52px;
-          top: 0;
-          width: 76px;
-          height: 100%;
-          pointer-events: none;
-          z-index: 2;
-        }
-        .lp-wave-fill { fill: #e8edf2; }
-        [data-bs-theme='dark'] .lp-wave-fill { fill: #0d1117; }
-
         /* Theme toggle */
         .lp-theme-toggle {
           position: absolute;
@@ -702,7 +667,11 @@ export default function Login() {
           border: 1px solid #e5e7eb;
           transition: border-color 0.2s, box-shadow 0.2s, background-color 0.15s;
           background-color: #fff;
-          color: #0f172a;
+        }
+        .lp-input-wrap .form-control:invalid {
+          border-color: #e5e7eb !important;
+          box-shadow: none !important;
+          outline: none !important;
         }
         .lp-input-wrap .form-control::placeholder {
           color: #9ca3af;
@@ -720,6 +689,10 @@ export default function Login() {
           border-color: #30363d;
           background-color: #0d1117;
           color: #f0f6fc;
+        }
+        [data-bs-theme='dark'] .lp-input-wrap .form-control:invalid {
+          border-color: #30363d;
+          box-shadow: none;
         }
         [data-bs-theme='dark'] .lp-input-wrap .form-control::placeholder {
           color: #6e7681;
@@ -862,7 +835,6 @@ export default function Login() {
             flex: 1 1 100%;
             padding: 32px 20px;
           }
-          .lp-wave { display: none; }
           .lp-card {
             max-width: 440px;
             padding: 36px 28px;
