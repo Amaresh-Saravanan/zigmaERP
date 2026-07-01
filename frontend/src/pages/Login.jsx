@@ -681,30 +681,53 @@ export default function Login() {
           height: 46px;
           border-radius: 10px;
           font-size: 0.92rem;
+          border: 1.5px solid #d1d5db;
+          transition: border-color 0.2s, box-shadow 0.2s, background-color 0.15s;
+        }
+        .lp-input-wrap .form-control:hover {
+          border-color: #9ca3af;
         }
         .lp-input-wrap .form-control:focus {
           border-color: #25a96b;
-          box-shadow: 0 0 0 3px rgba(37,169,107,0.14);
+          box-shadow: 0 0 0 4px rgba(37,169,107,0.2);
+          background-color: #fafbfc;
+        }
+        [data-bs-theme='dark'] .lp-input-wrap .form-control {
+          border-color: #30363d;
+          background-color: #0d1117;
+          color: #f0f6fc;
+        }
+        [data-bs-theme='dark'] .lp-input-wrap .form-control:focus {
+          border-color: #25a96b;
+          box-shadow: 0 0 0 4px rgba(37,169,107,0.25);
+          background-color: #161b22;
         }
         .lp-pass-toggle {
           position: absolute;
           right: 12px;
-          background: none;
+          background: rgba(37,169,107,0);
           border: none;
           color: #94a3b8;
           font-size: 1rem;
           cursor: pointer;
-          padding: 4px;
+          padding: 6px;
           display: flex;
           align-items: center;
           z-index: 1;
-          transition: color 0.15s;
+          transition: all 0.15s;
+          border-radius: 6px;
         }
-        .lp-pass-toggle:hover { color: #475569; }
+        .lp-pass-toggle:hover {
+          color: #25a96b;
+          background: rgba(37,169,107,0.08);
+        }
+        .lp-pass-toggle:active {
+          transform: scale(0.95);
+        }
         .lp-pass-toggle:focus-visible {
           outline: 2px solid #25a96b;
           outline-offset: 2px;
-          border-radius: 4px;
+          background: rgba(37,169,107,0.12);
         }
 
         .lp-link {
@@ -712,8 +735,20 @@ export default function Login() {
           font-size: 0.85rem;
           font-weight: 500;
           text-decoration: none;
+          transition: all 0.15s;
+          position: relative;
         }
-        .lp-link:hover { text-decoration: underline; color: #1d8a56; }
+        .lp-link:hover {
+          color: #1d8a56;
+          text-decoration: underline;
+          text-decoration-thickness: 2px;
+          text-underline-offset: 4px;
+        }
+        .lp-link:focus-visible {
+          outline: 2px solid #25a96b;
+          outline-offset: 3px;
+          border-radius: 2px;
+        }
 
         /* Submit button */
         .lp-submit {
@@ -728,19 +763,24 @@ export default function Login() {
           align-items: center;
           justify-content: center;
           gap: 8px;
-          transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
           letter-spacing: 0.01em;
+          position: relative;
         }
         .lp-submit:hover:not(:disabled) {
-          opacity: 0.9;
-          transform: translateY(-1px);
-          box-shadow: 0 6px 20px rgba(20,92,56,0.4);
-          color: #fff;
+          opacity: 0.95;
+          transform: translateY(-2px);
+          box-shadow: 0 8px 28px rgba(20,92,56,0.45);
         }
-        .lp-submit:active:not(:disabled) { transform: translateY(0); }
-        .lp-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+        .lp-submit:active:not(:disabled) {
+          transform: translateY(-1px);
+        }
+        .lp-submit:disabled {
+          opacity: 0.55;
+          cursor: not-allowed;
+        }
         .lp-submit:focus-visible {
-          outline: 3px solid rgba(37,169,107,0.5);
+          outline: 3px solid rgba(37,169,107,0.6);
           outline-offset: 2px;
         }
 
