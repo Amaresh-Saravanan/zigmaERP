@@ -5,7 +5,7 @@ import useTheme from '../hooks/useTheme';
 import client from '../api/client';
 import Swal from 'sweetalert2';
 import heroBg from '../assets/images/auth-one-bg.jpg';
-import flyIcon from '../assets/images/favi-icon.png';
+import zigflyLogo from '../assets/images/zigfly-logo-transparent.png';
 
 export default function Login() {
   const [form, setForm] = useState({ user: '', password: '' });
@@ -104,11 +104,7 @@ export default function Login() {
 
           {/* TOP: branding */}
           <div className="lp-brand">
-            <div className="lp-brand-logo">
-              <img src={flyIcon} alt="" height="38" className="lp-fly-icon" />
-              <span className="lp-brand-name">Zigfly</span>
-            </div>
-            <span className="lp-tagline">Sustaining for Circularity</span>
+            <img src={zigflyLogo} alt="Zigfly" height="120" className="lp-brand-logo-full" />
           </div>
 
           {/* CENTER: headline */}
@@ -334,8 +330,8 @@ export default function Login() {
           background-position: center;
           overflow: hidden;
         }
-        /* Two-layer overlay: deeper, more saturated greens for bolder look
-           bottom vignette fully opaque for readability; upper section shows texture */
+        /* Dark overlay - logo is transparent so shows well on any background
+           bottom vignette fully opaque for status card; upper section shows texture */
         .lp-hero-overlay {
           position: absolute;
           inset: 0;
@@ -360,34 +356,15 @@ export default function Login() {
         .lp-brand {
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 0;
           position: relative;
           z-index: 1;
         }
-        .lp-brand-logo {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-        .lp-fly-icon {
+        .lp-brand-logo-full {
           display: block;
-          mix-blend-mode: screen;
-          flex-shrink: 0;
-        }
-        .lp-brand-name {
-          color: #fff;
-          font-size: 1.5rem;
-          font-weight: 700;
-          letter-spacing: -0.02em;
-          line-height: 1;
-        }
-        .lp-tagline {
-          color: rgba(255,255,255,0.48);
-          font-size: 0.67rem;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          font-weight: 500;
-          padding-left: 2px;
+          height: auto;
+          max-width: 220px;
+          filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
         }
 
         .lp-headline-wrap {
