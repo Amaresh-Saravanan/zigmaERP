@@ -496,13 +496,13 @@ input[type='month'].form-control {
   background-color: transparent;
 }
 
-/* Expand/collapse arrow rotation */
+/* Expand/collapse arrow — no rotation animation */
 .navbar-menu .nav-link[aria-expanded] i {
-  transition: transform var(--anim-duration-normal) var(--anim-ease-out);
+  transition: none;
 }
 
 .navbar-menu .nav-link[aria-expanded="true"] i {
-  transform: rotate(180deg);
+  transform: none;
 }
 
 /* ── 13. Responsive tweaks ── */
