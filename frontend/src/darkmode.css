@@ -167,7 +167,41 @@ body,
 }
 
 /* ------------------------------------------------------------------
-   5. Sidebar — clean dark panel, green active states
+   5A. Sidebar — Light Mode
+   ------------------------------------------------------------------ */
+[data-bs-theme='light'] .app-menu,
+[data-bs-theme='light'] .navbar-menu {
+  background-color: #f8f9fa !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 1px 0 2px rgba(0, 0, 0, 0.05);
+}
+
+[data-bs-theme='light'] .navbar-brand-box {
+  background-color: #f8f9fa !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-bs-theme='light'] .navbar-nav .nav-link.menu-link {
+  color: #495057;
+}
+
+[data-bs-theme='light'] .navbar-nav .nav-link.menu-link:hover {
+  color: #212529;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+[data-bs-theme='light'] .navbar-nav .nav-link.menu-link.active,
+[data-bs-theme='light'] .navbar-nav .nav-link.menu-link[aria-expanded='true'] {
+  color: #25a96b;
+  background-color: rgba(37, 169, 107, 0.08);
+}
+
+[data-bs-theme='light'] .sidebar-background {
+  background-color: rgba(37, 169, 107, 0.05);
+}
+
+/* ------------------------------------------------------------------
+   5B. Sidebar — Dark Mode
    ------------------------------------------------------------------ */
 [data-bs-theme='dark'] .app-menu,
 [data-bs-theme='dark'] .navbar-menu {
@@ -181,23 +215,8 @@ body,
   border-bottom: 1px solid #21262d !important;
 }
 
-/* Menu section title */
-[data-bs-theme='dark'] .menu-title span {
-  color: #6e7681;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-/* Parent nav links */
 [data-bs-theme='dark'] .navbar-nav .nav-link.menu-link {
   color: #8b949e;
-  border-radius: 6px;
-  margin: 1px 8px;
-  padding: 8px 12px;
-  font-size: 0.875rem;
-  font-weight: 500;
 }
 
 [data-bs-theme='dark'] .navbar-nav .nav-link.menu-link:hover {
@@ -211,31 +230,8 @@ body,
   background-color: rgba(37, 169, 107, 0.12);
 }
 
-[data-bs-theme='dark'] .navbar-nav .nav-link.menu-link i {
-  color: inherit;
-  font-size: 1.05rem;
-}
-
-/* Sub-menu items */
-[data-bs-theme='dark'] .nav-sm .nav-link {
-  color: #8b949e;
-  font-size: 0.83rem;
-  padding: 6px 12px 6px 40px;
-}
-
-[data-bs-theme='dark'] .nav-sm .nav-link:hover {
-  color: #e6edf3;
-}
-
-[data-bs-theme='dark'] .nav-sm .nav-link.active,
-[data-bs-theme='dark'] .nav-sm .nav-item.active .nav-link {
-  color: #25a96b;
-  font-weight: 500;
-}
-
-/* Active sub-item left indicator */
-[data-bs-theme='dark'] .nav-sm .nav-item.active .nav-link::before {
-  background-color: #25a96b;
+[data-bs-theme='dark'] .sidebar-background {
+  background-color: rgba(37, 169, 107, 0.08);
 }
 
 /* ------------------------------------------------------------------
