@@ -444,7 +444,7 @@ input[type='month'].form-control {
   background-color: rgba(255, 255, 255, 0.03);
 }
 
-/* Submenu item (nested link) */
+/* Submenu item (nested link) — with dot indicator */
 .navbar-menu .nav-sm .nav-link {
   font-size: 0.84rem;
   font-weight: 400;
@@ -452,6 +452,16 @@ input[type='month'].form-control {
   margin: 2px 6px;
   color: var(--vz-secondary-color);
   border-left: none;
+  position: relative;
+}
+
+/* Dot indicator for submenu items */
+.navbar-menu .nav-sm .nav-link::before {
+  content: '•';
+  position: absolute;
+  left: 20px;
+  color: #25a96b;
+  font-weight: bold;
 }
 
 /* Submenu item hover */
