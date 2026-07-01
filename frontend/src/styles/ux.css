@@ -455,13 +455,19 @@ input[type='month'].form-control {
   position: relative;
 }
 
-/* Dot indicator for submenu items */
+/* Dot indicator for submenu items — visible in all modes */
 .navbar-menu .nav-sm .nav-link::before {
   content: '•';
   position: absolute;
   left: 20px;
   color: #25a96b;
   font-weight: bold;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+[data-bs-theme='dark'] .navbar-menu .nav-sm .nav-link::before {
+  color: #5fd4a0;
 }
 
 /* Submenu item hover */
