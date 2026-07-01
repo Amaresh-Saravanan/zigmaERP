@@ -477,17 +477,17 @@ input[type='month'].form-control {
   background-color: rgba(37, 169, 107, 0.1);
 }
 
-/* Submenu item active — green indicator */
+/* Submenu item active — no background, just color change */
 .navbar-menu .nav-sm .nav-link.active {
   color: #25a96b;
-  background-color: rgba(37, 169, 107, 0.12);
-  border-left: 1px solid #25a96b;
-  padding-left: 43px;
+  background-color: transparent;
+  border-left: none;
+  padding-left: 44px;
   font-weight: 500;
 }
 
 [data-bs-theme='dark'] .navbar-menu .nav-sm .nav-link.active {
-  background-color: rgba(37, 169, 107, 0.18);
+  background-color: transparent;
 }
 
 /* Expand/collapse arrow rotation */
