@@ -4,106 +4,16 @@ import useAuth from '../hooks/useAuth';
 import useTheme from '../hooks/useTheme';
 import client from '../api/client';
 import Swal from 'sweetalert2';
-import logoImg from '../assets/images/logo-white.png';
-import bgImg from '../assets/images/bg-d.png';
-
-import { useEffect } from 'react';
+import heroBg from '../assets/images/auth-one-bg.jpg';
+import flyIcon from '../assets/images/favi-icon.png';
 
 export default function Login() {
-  // Load legacy scripts for layout and particle animations
-  useEffect(() => {
-    const loadScript = (src) => {
-      return new Promise((resolve, reject) => {
-        const s = document.createElement('script');
-        s.src = src;
-        s.onload = resolve;
-        s.onerror = reject;
-        document.body.appendChild(s);
-      });
-    };
-    // Load scripts sequentially to ensure proper initialization order
-    loadScript('/assets/js/layout.js')
-      .then(() => loadScript('/assets/libs/particles.js/particles.js'))
-      .then(() => {
-        if (window.particlesJS) {
-          // ponytail: load particle config directly here rather than fetching external particles.app.js
-          window.particlesJS("auth-particles", {
-            particles: {
-              number: { value: 90, density: { enable: true, value_area: 800 } },
-              color: { value: "#ffffff" },
-              shape: {
-                type: "circle",
-                stroke: { width: 0, color: "#000000" },
-                polygon: { nb_sides: 5 },
-                image: { src: "img/github.svg", width: 100, height: 100 }
-              },
-              opacity: {
-                value: 0.8,
-                random: true,
-                anim: { enable: true, speed: 1, opacity_min: 0, sync: false }
-              },
-              size: {
-                value: 4,
-                random: true,
-                anim: { enable: false, speed: 4, size_min: 0.2, sync: false }
-              },
-              line_linked: {
-                enable: false,
-                distance: 150,
-                color: "#ffffff",
-                opacity: 0.4,
-                width: 1
-              },
-              move: {
-                enable: true,
-                speed: 2,
-                direction: "none",
-                random: false,
-                straight: false,
-                out_mode: "out",
-                attract: { enable: false, rotateX: 600, rotateY: 1200 }
-              }
-            },
-            interactivity: {
-              detect_on: "canvas",
-              events: {
-                onhover: { enable: true, mode: "bubble" },
-                onclick: { enable: true, mode: "repulse" },
-                resize: true
-              },
-              modes: {
-                grab: { distance: 400, line_linked: { opacity: 1 } },
-                bubble: { distance: 400, size: 4, duration: 2, opacity: 0.8, speed: 3 },
-                repulse: { distance: 200 },
-                push: { particles_nb: 4 },
-                remove: { particles_nb: 2 }
-              }
-            },
-            retina_detect: true,
-            config_demo: {
-              hide_card: false,
-              background_color: "#b61924",
-              background_image: "",
-              background_position: "50% 50%",
-              background_repeat: "no-repeat",
-              background_size: "cover"
-            }
-          });
-        }
-      })
-      .then(() => loadScript('/assets/js/pages/password-addon.init.js'))
-      .catch(err => console.error('Failed to load script', err));
-    // Cleanup on unmount
-    return () => {
-      // Remove injected scripts if needed (optional)
-    };
-  }, []);
-
   const [form, setForm] = useState({ user: '', password: '' });
   const [showPass, setShowPass] = useState(false);
+  const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark, setTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -121,10 +31,22 @@ export default function Login() {
       return;
     }
     setLoading(true);
+    const demoUser = {
+      userId: 'demo001',
+      userName: 'admin',
+      userType: '5f97fc3257f2525529',
+      userImage: 'img/user.jpg',
+      companyName: 'Zigma Global Environ Solutions',
+      mainScreens: [],
+      sections: [],
+      screens: []
+    };
+
     try {
       const res = await client.post('folders/login/crud.php', new URLSearchParams({
         action: 'login', user_name: form.user, password: form.password
       }), { suppressError: true });
+
       if (res.data?.status === 1) {
         if (form.password === 'password') {
           navigate('/password/update?default=true');
@@ -132,7 +54,11 @@ export default function Login() {
         }
         login(res.data.user);
         navigate('/');
-      } else if (res.data?.msg === 'incorrect') {
+        return;
+      }
+
+      // API returned but not a success — fall through to demo mode check below
+      if (res.data?.msg === 'incorrect') {
         Swal.fire({
           title: 'Incorrect UserName and Password',
           imageUrl: 'img/emoji/invalid.webp',
@@ -140,378 +66,755 @@ export default function Login() {
           timer: 2000,
           timerProgressBar: true
         });
-      } else {
-        // ponytail: activate demo mode on API/DB failure
-        throw new Error('Database connection failed');
+        return;
       }
-    } catch {
-      // Demo mode: bypass API when database is not connected
-      const demoCredentials = { user: 'admin', password: 'admin123' };
-      if (form.user === demoCredentials.user && form.password === demoCredentials.password) {
-        const demoUser = {
-          userId: 'demo001',
-          userName: form.user,
-          userType: '5f97fc3257f2525529',
-          userImage: 'img/user.jpg',
-          companyName: 'Zigma Global Environ Solutions',
-          mainScreens: [],
-          sections: [],
-          screens: []
-        };
-        login(demoUser);
-        navigate('/');
-      } else {
-        Swal.fire({
-          icon: 'error',
-          title: 'Database Offline / Network Error',
-          html: 'The database is currently unavailable.<br><br>Please use the demo credentials to login:<br><strong>Username:</strong> admin<br><strong>Password:</strong> admin123',
-          showConfirmButton: true,
-          timer: 5000,
-          timerProgressBar: true
-        });
-      }
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.error('Login API error:', err);
     }
+
+    // API failed or no valid response — demo mode fallback
+    if (form.user === 'admin' && form.password === 'admin123') {
+      login(demoUser);
+      navigate('/');
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Database Offline / Network Error',
+        html: 'The database is currently unavailable.<br><br>Please use the demo credentials to login:<br><strong>Username:</strong> admin<br><strong>Password:</strong> admin123',
+        showConfirmButton: true,
+        timer: 5000,
+        timerProgressBar: true
+      });
+    }
+    setLoading(false);
   };
 
   const handleKey = (e) => { if (e.key === 'Enter') handleSubmit(); };
 
   return (
-      <div className="auth-page-wrapper pt-5" onKeyUp={handleKey}>
-      {/* Theme toggle — top-right, available before sign-in */}
-      <button
-        type="button"
-        className="auth-theme-toggle"
-        onClick={toggleTheme}
-        aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-        title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-      >
-        <i className={isDark ? 'ri-sun-line' : 'ri-moon-line'} aria-hidden="true"></i>
-      </button>
+    <div className="lp-root" onKeyUp={handleKey}>
+      <div className="lp-split">
 
-      {/* Background Particles & Shape */}
-      <div 
-        className="auth-one-bg-position auth-one-bg" 
-        id="auth-particles" 
-        style={{ backgroundImage: `url(${bgImg})` }}
-      >
-        <div className="bg-overlay"></div>
-        <div className="shape">
-          <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0 0 1440 120">
-            <path d="M 0,36 C 144,53.6 432,123.2 720,124 C 1008,124.8 1296,56.8 1440,40L1440 140L0 140z"></path>
-          </svg>
-        </div>
-      </div>
+        {/* ── LEFT: Hero 45% ── */}
+        <div className="lp-hero" style={{ backgroundImage: `url(${heroBg})` }}>
+          {/* Dark green overlay over the larvae photo */}
+          <div className="lp-hero-overlay" aria-hidden="true" />
+          {/* Sunrise glow effect */}
+          <div className="lp-hero-glow" aria-hidden="true" />
 
-      <div className="auth-page-content">
-        <div className="container">
-          <div className="row">
-            <div className="col-lg-12">
-              <div className="text-center mt-sm-5 mb-4 text-white-50">
-                <div>
-                  <a href="/" className="d-inline-block auth-logo" aria-label="Zigfly home">
-                    <img src={logoImg} alt="" aria-hidden="true" height="100" />
-                  </a>
-                </div>
-              </div>
+          {/* TOP: branding */}
+          <div className="lp-brand">
+            <div className="lp-brand-logo">
+              <img src={flyIcon} alt="" height="38" className="lp-fly-icon" />
+              <span className="lp-brand-name">Zigfly</span>
             </div>
+            <span className="lp-tagline">Sustaining for Circularity</span>
           </div>
 
-          <div className="row justify-content-center">
-            <div className="col-md-8 col-lg-6 col-xl-5">
-              <div className="card mt-4 card-bg-fill">
-                <div className="card-body p-4">
-                  <div className="text-center mt-2">
-                    <h5 className="text-primary">Welcome Back !</h5>
-                    <p className="text-muted">Sign in to continue to Zigfly.</p>
-                  </div>
-                  <div className="p-2 mt-4">
-                    <form onSubmit={handleSubmit}>
-                      <div className="mb-3">
-                        <label className="form-label" htmlFor="user_name">Username</label>
-                        <input
-                          className="form-control"
-                          id="user_name"
-                          name="user"
-                          type="text"
-                          value={form.user}
-                          onChange={handleChange}
-                          autoFocus
-                        />
-                      </div>
-                      <div className="mb-3">
-                        <label className="form-label" htmlFor="password">Password</label>
-                        <div className="position-relative auth-pass-inputgroup mb-3">
-                          <input
-                            type={showPass ? 'text' : 'password'}
-                            className="form-control pe-5 password-input"
-                            id="password"
-                            name="password"
-                            value={form.password}
-                            onChange={handleChange}
-                          />
-                          <button
-                            type="button"
-                            className="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon material-shadow-none"
-                            id="password-addon"
-                            onClick={() => setShowPass(!showPass)}
-                            aria-label={showPass ? 'Hide password' : 'Show password'}
-                          >
-                            <i className={showPass ? 'ri-eye-off-fill align-middle' : 'ri-eye-fill align-middle'} aria-hidden="true"></i>
-                          </button>
-                        </div>
-                      </div>
-                      <div className="mt-4">
-                        <button
-                          className="btn btn-success w-100"
-                          type="submit"
-                          id="login-submit"
-                          disabled={loading}
-                        >
-                          {loading ? 'Signing in...' : 'Sign In'}
-                        </button>
-                      </div>
-                    </form>
-                  </div>
+          {/* CENTER: headline */}
+          <div className="lp-headline-wrap">
+            <div className="lp-accent-bar" aria-hidden="true" />
+            <h1 className="lp-headline">
+              Sustainable Solutions<br />
+              for a <em>Better Tomorrow</em>
+            </h1>
+            <p className="lp-hero-desc">
+              Transforming organic waste into value through black soldier fly innovation.
+            </p>
+          </div>
+
+          {/* BOTTOM: status card + copyright */}
+          <div>
+            <div className="lp-status-card">
+              <div className="lp-status-head">
+                <span>System Status</span>
+                <span className="lp-status-live">
+                  <i className="lp-live-dot" aria-hidden="true" /> Operational
+                </span>
+              </div>
+              <div className="lp-status-row">
+                <div className="lp-status-icon"><i className="ri-refresh-line" aria-hidden="true" /></div>
+                <div className="lp-status-meta">
+                  <span>Live Sync</span>
+                  <span>Last sync: just now</span>
                 </div>
+                <span className="lp-status-pill">LIVE</span>
+              </div>
+              <div className="lp-status-row">
+                <div className="lp-status-icon"><i className="ri-stack-line" aria-hidden="true" /></div>
+                <div className="lp-status-meta">
+                  <span>Active Farms</span>
+                  <span>24 online</span>
+                </div>
+                <span className="lp-status-pill">ONLINE</span>
+              </div>
+              <div className="lp-status-row">
+                <div className="lp-status-icon"><i className="ri-line-chart-line" aria-hidden="true" /></div>
+                <div className="lp-status-meta">
+                  <span>Conversion Rate</span>
+                  <span>96.45%</span>
+                </div>
+                <span className="lp-status-pill lp-pill-up">↑ 3.4%</span>
               </div>
             </div>
+            <p className="lp-copyright">
+              <i className="ri-leaf-fill" aria-hidden="true" /> {new Date().getFullYear()} © Zigfly. All rights reserved.
+            </p>
+          </div>
+        </div>
+
+        {/* ── RIGHT: Form 55% ── */}
+        <div className="lp-form-side">
+
+          {/* Organic wave — overlaps left panel's right edge, green stroke visible */}
+          <svg
+            className="lp-wave"
+            viewBox="0 0 80 800"
+            preserveAspectRatio="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <path
+              className="lp-wave-fill"
+              d="M80,0 C48,0 22,80 44,220 C66,360 18,450 46,570 C74,690 34,740 80,800 L80,0 Z"
+            />
+            <path
+              className="lp-wave-stroke"
+              d="M80,0 C48,0 22,80 44,220 C66,360 18,450 46,570 C74,690 34,740 80,800"
+              fill="none"
+              stroke="#25a96b"
+              strokeWidth="2"
+              strokeLinecap="round"
+              opacity="0.95"
+            />
+          </svg>
+
+          {/* Theme toggle — top-right */}
+          <div className="lp-theme-toggle" role="group" aria-label="Theme">
+            <button
+              type="button"
+              className={`lp-theme-btn${!isDark ? ' active' : ''}`}
+              onClick={() => setTheme('light')}
+              aria-label="Light mode"
+              title="Light mode"
+            >
+              <i className="ri-sun-line" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className={`lp-theme-btn lp-theme-btn--moon${isDark ? ' active' : ''}`}
+              onClick={() => setTheme('dark')}
+              aria-label="Dark mode"
+              title="Dark mode"
+            >
+              <i className="ri-moon-line" aria-hidden="true" />
+            </button>
+          </div>
+
+          {/* Login card */}
+          <div className="lp-card">
+            {/* Dot grid decoration — top-right corner of card */}
+            <svg className="lp-card-dots" aria-hidden="true" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+              {Array.from({ length: 6 }, (_, row) =>
+                Array.from({ length: 6 }, (_, col) => (
+                  <circle key={`${row}-${col}`} cx={col * 14 + 5} cy={row * 14 + 5} r="1.5" fill="#25a96b" opacity="0.18" />
+                ))
+              )}
+            </svg>
+
+            <h2 className="lp-card-title">
+              Welcome Back, <span>Admin!</span>
+            </h2>
+            <p className="lp-card-sub">Sign in to continue to Zigfly Admin Dashboard.</p>
+            <div className="lp-card-rule" aria-hidden="true" />
+
+            <form onSubmit={handleSubmit} autoComplete="off">
+              <div className="mb-3">
+                <label className="form-label" htmlFor="lp_user">Username</label>
+                <div className="lp-input-wrap">
+                  <i className="ri-user-line" aria-hidden="true" />
+                  <input
+                    className="form-control"
+                    id="lp_user"
+                    name="user"
+                    type="text"
+                    placeholder="Enter your username"
+                    value={form.user}
+                    onChange={handleChange}
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label" htmlFor="lp_pass">Password</label>
+                <div className="lp-input-wrap">
+                  <i className="ri-lock-2-line" aria-hidden="true" />
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    className="form-control"
+                    id="lp_pass"
+                    name="password"
+                    placeholder="Enter your password"
+                    value={form.password}
+                    onChange={handleChange}
+                  />
+                  <button
+                    type="button"
+                    className="lp-pass-toggle"
+                    onClick={() => setShowPass(!showPass)}
+                    aria-label={showPass ? 'Hide password' : 'Show password'}
+                  >
+                    <i className={showPass ? 'ri-eye-off-line' : 'ri-eye-line'} aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="d-flex align-items-center justify-content-between mb-4">
+                <div className="form-check">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id="lp_remember"
+                    checked={remember}
+                    onChange={(e) => setRemember(e.target.checked)}
+                  />
+                  <label className="form-check-label" htmlFor="lp_remember">Remember me</label>
+                </div>
+                <a href="#" className="lp-link" onClick={(e) => e.preventDefault()}>Forgot password?</a>
+              </div>
+
+              <button
+                className="btn lp-submit w-100"
+                type="submit"
+                disabled={loading}
+              >
+                {loading ? 'Signing in…' : (
+                  <><span>Sign In</span><i className="ri-arrow-right-line" aria-hidden="true" /></>
+                )}
+              </button>
+            </form>
+
+            <div className="lp-divider" aria-hidden="true">
+              <span className="lp-divider-line" />
+              <i className="ri-shield-check-line" />
+              <span className="lp-divider-line" />
+            </div>
+
+            <p className="lp-footer-text">
+              Don't have an account?{' '}
+              <a href="#" className="lp-link" onClick={(e) => e.preventDefault()}>Contact Administrator</a>
+            </p>
           </div>
         </div>
       </div>
 
       <style>{`
-        body {
-          font-family: "Inter", sans-serif !important;
-          background-color: #ffffff;
-          transition: background-color 0.3s ease;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        .lp-root {
+          min-height: 100vh;
+          background: #e8edf2;
+          font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        .lp-split {
+          display: flex;
+          min-height: 100vh;
         }
 
-        /* Floating theme toggle on the auth screen */
-        .auth-theme-toggle {
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          z-index: 5;
-          width: 42px;
-          height: 42px;
+        /* ── LEFT HERO (45%) ── */
+        .lp-hero {
+          flex: 0 0 45%;
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 44px 52px;
+          background-size: cover;
+          background-position: center;
+          overflow: hidden;
+        }
+        /* Two-layer overlay: deeper, more saturated greens for bolder look
+           bottom vignette fully opaque for readability; upper section shows texture */
+        .lp-hero-overlay {
+          position: absolute;
+          inset: 0;
+          background:
+            linear-gradient(to top, rgba(2,8,5,0.98) 0%, rgba(3,14,8,0.65) 40%, rgba(8,28,16,0.25) 65%, transparent 75%),
+            linear-gradient(135deg, rgba(6,18,11,0.75), rgba(12,32,20,0.8));
+          pointer-events: none;
+          z-index: 0;
+        }
+        /* Warmer, more saturated amber sunrise — creates drama */
+        .lp-hero-glow {
+          position: absolute;
+          top: -15%;
+          right: -8%;
+          width: 65%;
+          height: 60%;
+          background: radial-gradient(ellipse at 75% 30%, rgba(255,200,80,0.22) 0%, rgba(255,170,40,0.08) 35%, transparent 60%);
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        .lp-brand {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          position: relative;
+          z-index: 1;
+        }
+        .lp-brand-logo {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .lp-fly-icon {
+          display: block;
+          mix-blend-mode: screen;
+          flex-shrink: 0;
+        }
+        .lp-brand-name {
+          color: #fff;
+          font-size: 1.5rem;
+          font-weight: 700;
+          letter-spacing: -0.02em;
+          line-height: 1;
+        }
+        .lp-tagline {
+          color: rgba(255,255,255,0.48);
+          font-size: 0.67rem;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          font-weight: 500;
+          padding-left: 2px;
+        }
+
+        .lp-headline-wrap {
+          position: relative;
+          z-index: 1;
+        }
+        .lp-accent-bar {
+          width: 48px;
+          height: 4px;
+          background: #25a96b;
+          border-radius: 2px;
+          margin-bottom: 20px;
+          box-shadow: 0 0 16px rgba(37,169,107,0.4);
+        }
+        .lp-headline {
+          color: #fff;
+          font-size: clamp(1.65rem, 2.5vw, 2.1rem);
+          font-weight: 700;
+          line-height: 1.2;
+          margin-bottom: 16px;
+          font-style: normal;
+          text-shadow: 0 4px 16px rgba(0,0,0,0.5);
+          letter-spacing: -0.015em;
+          overflow-wrap: break-word;
+        }
+        .lp-headline em {
+          font-style: normal;
+          color: #6dd9a0;
+        }
+        .lp-hero-desc {
+          color: rgba(255,255,255,0.65);
+          font-size: 0.91rem;
+          line-height: 1.68;
+          margin: 0;
+          max-width: 320px;
+          text-shadow: 0 1px 6px rgba(0,0,0,0.3);
+        }
+
+        /* Status card — enhanced glassmorphism with green tint */
+        .lp-status-card {
+          background: rgba(2,10,6,0.72);
+          border: 1.5px solid rgba(37,169,107,0.25);
+          border-radius: 16px;
+          padding: 18px 20px;
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          box-shadow:
+            0 8px 32px rgba(0,0,0,0.3),
+            inset 0 1px 1px rgba(255,255,255,0.1),
+            0 0 24px rgba(37,169,107,0.12);
+          max-width: 360px;
+          position: relative;
+          z-index: 1;
+        }
+        @media (max-width: 600px) {
+          .lp-status-card {
+            max-width: 100%;
+            padding: 14px 16px;
+            font-size: 0.9rem;
+          }
+        }
+        .lp-status-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          color: #fff;
+          font-size: 0.85rem;
+          font-weight: 600;
+          margin-bottom: 10px;
+        }
+        .lp-status-live {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 0.68rem;
+          font-weight: 600;
+          color: #6dd9a0;
+          letter-spacing: 0.03em;
+        }
+        .lp-live-dot {
+          display: inline-block;
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #25a96b;
+          box-shadow: 0 0 0 2px rgba(37,169,107,0.3);
+          animation: lpPulse 2s ease-in-out infinite;
+        }
+        @keyframes lpPulse {
+          0%, 100% { box-shadow: 0 0 0 2px rgba(37,169,107,0.3); }
+          50% { box-shadow: 0 0 0 5px rgba(37,169,107,0.08); }
+        }
+        .lp-status-row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 7px 0;
+          border-top: 1px solid rgba(255,255,255,0.07);
+        }
+        .lp-status-icon {
+          width: 30px;
+          height: 30px;
+          flex-shrink: 0;
+          border-radius: 8px;
+          background: rgba(37,169,107,0.2);
+          color: #6dd9a0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.88rem;
+        }
+        .lp-status-meta {
+          display: flex;
+          flex-direction: column;
+          flex-grow: 1;
+          gap: 1px;
+        }
+        .lp-status-meta span:first-child {
+          color: #fff;
+          font-size: 0.8rem;
+          font-weight: 500;
+        }
+        .lp-status-meta span:last-child {
+          color: rgba(255,255,255,0.5);
+          font-size: 0.7rem;
+        }
+        .lp-status-pill {
+          font-size: 0.62rem;
+          font-weight: 700;
+          padding: 2px 8px;
+          border-radius: 999px;
+          background: rgba(37,169,107,0.18);
+          color: #6dd9a0;
+          white-space: nowrap;
+          letter-spacing: 0.06em;
+        }
+        .lp-pill-up { background: rgba(37,169,107,0.22); }
+
+        .lp-copyright {
+          color: rgba(255,255,255,0.38);
+          font-size: 0.7rem;
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          margin: 12px 0 0;
+          position: relative;
+          z-index: 1;
+        }
+
+        /* ── RIGHT FORM SIDE (55%) ── */
+        .lp-form-side {
+          flex: 0 0 55%;
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 48px 48px;
+          background: #e8edf2;
+          overflow: hidden;
+        }
+        [data-bs-theme='dark'] .lp-form-side {
+          background: #0d1117;
+        }
+
+        /* Organic wave — fill matches panel bg, green stroke is the divider */
+        .lp-wave {
+          position: absolute;
+          left: -52px;
+          top: 0;
+          width: 76px;
+          height: 100%;
+          pointer-events: none;
+          z-index: 2;
+        }
+        .lp-wave-fill { fill: #e8edf2; }
+        [data-bs-theme='dark'] .lp-wave-fill { fill: #0d1117; }
+
+        /* Theme toggle */
+        .lp-theme-toggle {
+          position: absolute;
+          top: 24px;
+          right: 28px;
+          z-index: 10;
+          display: flex;
+          gap: 3px;
+          padding: 4px;
+          border-radius: 999px;
+          background: #fff;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+        }
+        [data-bs-theme='dark'] .lp-theme-toggle {
+          background: #161b22;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+        }
+        .lp-theme-btn {
+          width: 34px;
+          height: 34px;
+          border: none;
+          border-radius: 50%;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          border-radius: 50%;
-          border: 1px solid rgba(255, 255, 255, 0.4);
-          background: rgba(255, 255, 255, 0.18);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-          color: #ffffff;
-          font-size: 1.2rem;
+          background: transparent;
+          color: #94a3b8;
+          font-size: 1rem;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: background 0.18s, color 0.18s;
         }
-        .auth-theme-toggle:hover {
-          background: rgba(255, 255, 255, 0.3);
-          transform: translateY(-1px);
+        .lp-theme-btn.active {
+          background: #f1f5f9;
+          color: #1e293b;
+        }
+        .lp-theme-btn--moon.active {
+          background: #25a96b;
+          color: #fff;
+        }
+        .lp-theme-btn:focus-visible {
+          outline: 2px solid #25a96b;
+          outline-offset: 2px;
         }
 
-        .auth-one-bg {
-          height: 380px;
-          background-position: center;
-          background-size: cover;
+        /* Login card — elevated, dramatic shadow */
+        .lp-card {
           position: relative;
-        }
-
-        .auth-one-bg .bg-overlay {
-          background: linear-gradient(to right, rgba(14, 25, 34, 0.5), rgba(18, 38, 51, 0.4));
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          opacity: 1;
-        }
-        
-        .auth-one-bg .shape {
-          position: absolute;
-          bottom: 0;
-          right: 0;
-          left: 0;
-          z-index: 1;
-          pointer-events: none;
-        }
-        
-        .auth-one-bg .shape > svg {
+          z-index: 3;
           width: 100%;
-          height: auto;
-          fill: #ffffff;
-        }
-
-        /* Glassmorphism Card styling matching the reference image */
-        .glass-card {
-          background: rgba(255, 255, 255, 0.25) !important;
-          backdrop-filter: blur(20px) !important;
-          -webkit-backdrop-filter: blur(20px) !important;
-          border: 1px solid rgba(132, 199, 169, 0.6) !important;
-          border-radius: 16px !important;
-          box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important;
+          max-width: 480px;
+          background: #ffffff;
+          border-radius: 28px;
+          padding: 44px 48px;
+          box-shadow:
+            0 2px 4px rgba(15,23,42,0.08),
+            0 8px 24px rgba(15,23,42,0.12),
+            0 20px 60px rgba(15,23,42,0.16),
+            0 0 1px rgba(15,23,42,0.05);
           overflow: hidden;
         }
-
-        .welcome-title {
-          color: #ffffff !important;
-          font-weight: 600;
-          font-size: 1.25rem;
-          margin-bottom: 0.5rem;
+        [data-bs-theme='dark'] .lp-card {
+          background: #161b22;
+          box-shadow:
+            0 1px 2px rgba(0,0,0,0.4),
+            0 4px 16px rgba(0,0,0,0.4),
+            0 16px 48px rgba(0,0,0,0.5);
         }
 
-        .welcome-subtitle {
-          color: #e2e8f0 !important;
-          font-size: 0.95rem;
+        /* Dot grid decoration — top-right */
+        .lp-card-dots {
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 90px;
+          height: 90px;
+          pointer-events: none;
         }
 
-        .custom-label {
-          color: #1e293b !important;
+        .lp-card {
+          font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        .lp-card .form-label {
           font-weight: 500;
-          font-size: 0.9rem;
-          margin-bottom: 0.5rem;
+          font-size: 0.83rem;
+          color: #374151;
+          letter-spacing: 0.01em;
+        }
+        [data-bs-theme='dark'] .lp-card .form-label { color: #8b949e; }
+        .lp-card-title {
+          font-size: 1.65rem;
+          font-weight: 700;
+          color: #0f172a;
+          margin-bottom: 6px;
+          line-height: 1.2;
+          position: relative;
+          z-index: 1;
+          letter-spacing: -0.02em;
+        }
+        [data-bs-theme='dark'] .lp-card-title { color: #f0f6fc; }
+        .lp-card-title span { color: #25a96b; }
+
+        .lp-card-sub {
+          color: #64748b;
+          font-size: 0.87rem;
+          margin-bottom: 14px;
+          position: relative;
+          z-index: 1;
+        }
+        [data-bs-theme='dark'] .lp-card-sub { color: #8b949e; }
+
+        .lp-card-rule {
+          width: 36px;
+          height: 3px;
+          background: #25a96b;
+          border-radius: 2px;
+          margin-bottom: 26px;
+          position: relative;
+          z-index: 1;
         }
 
-        /* Inputs styled exactly like the screenshot */
-        .custom-input {
-          background-color: rgba(220, 237, 230, 0.8) !important;
-          border: 1px solid #73bda1 !important;
-          border-radius: 8px !important;
-          padding: 0.65rem 1rem !important;
-          color: #0f172a !important;
-          font-weight: 500;
-          height: 45px;
-          box-shadow: inset 0 1px 2px rgba(0,0,0,0.02) !important;
-          transition: all 0.2s ease;
-        }
-
-        .custom-input:focus {
-          background-color: #ffffff !important;
-          border-color: #27a87c !important;
-          box-shadow: 0 0 0 3px rgba(39, 168, 124, 0.25) !important;
-        }
-
-        .password-addon {
-          height: 45px;
-          padding: 0 1rem;
-          color: #64748b !important;
-          z-index: 10;
-        }
-
-        /* Submit Button */
-        .custom-btn {
-          background-color: #2da97f !important;
-          border-color: #2da97f !important;
-          color: white !important;
-          border-radius: 30px !important;
-          height: 45px;
-          font-weight: 500;
-          font-size: 1rem;
-          letter-spacing: 0.3px;
-          box-shadow: 0 4px 10px rgba(45, 169, 127, 0.3) !important;
-          transition: all 0.2s ease;
-        }
-
-        .custom-btn:hover {
-          background-color: #24906b !important;
-          border-color: #24906b !important;
-          transform: translateY(-1px);
-        }
-
-        /* Footer */
-        footer.footer {
-          background-color: #fff !important;
-          border-top: 1px solid #e2e8f0 !important;
-          font-family: inherit !important;
-          display: flex !important;
-          align-items: center !important;
-          padding-top: 0 !important;
-          padding-bottom: 0 !important;
-        }
-        footer.footer .container,
-        footer.footer .row {
-          width: 100%;
-          height: 100%;
-          min-height: 100%;
-        }
-        footer.footer .row {
+        /* Input wrapper with inset icon */
+        .lp-input-wrap {
+          position: relative;
+          display: flex;
           align-items: center;
         }
-
-        /* ===== Dark mode ===== */
-        [data-theme-mode='dark'] body {
-          background-color: #0b1727;
+        .lp-input-wrap > i:first-child {
+          position: absolute;
+          left: 14px;
+          color: #94a3b8;
+          font-size: 1rem;
+          pointer-events: none;
+          z-index: 1;
+        }
+        .lp-input-wrap .form-control {
+          padding-left: 42px;
+          height: 46px;
+          border-radius: 10px;
+          font-size: 0.92rem;
+        }
+        .lp-input-wrap .form-control:focus {
+          border-color: #25a96b;
+          box-shadow: 0 0 0 3px rgba(37,169,107,0.14);
+        }
+        .lp-pass-toggle {
+          position: absolute;
+          right: 12px;
+          background: none;
+          border: none;
+          color: #94a3b8;
+          font-size: 1rem;
+          cursor: pointer;
+          padding: 4px;
+          display: flex;
+          align-items: center;
+          z-index: 1;
+          transition: color 0.15s;
+        }
+        .lp-pass-toggle:hover { color: #475569; }
+        .lp-pass-toggle:focus-visible {
+          outline: 2px solid #25a96b;
+          outline-offset: 2px;
+          border-radius: 4px;
         }
 
-        [data-theme-mode='dark'] .auth-one-bg .bg-overlay {
-          background: linear-gradient(to right, rgba(8, 14, 22, 0.78), rgba(11, 23, 39, 0.7));
+        .lp-link {
+          color: #25a96b;
+          font-size: 0.85rem;
+          font-weight: 500;
+          text-decoration: none;
+        }
+        .lp-link:hover { text-decoration: underline; color: #1d8a56; }
+
+        /* Submit button */
+        .lp-submit {
+          height: 48px;
+          background: linear-gradient(135deg, #1e7a4a 0%, #145c38 100%);
+          border: none;
+          color: #fff;
+          font-weight: 600;
+          font-size: 0.95rem;
+          border-radius: 10px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+          letter-spacing: 0.01em;
+        }
+        .lp-submit:hover:not(:disabled) {
+          opacity: 0.9;
+          transform: translateY(-1px);
+          box-shadow: 0 6px 20px rgba(20,92,56,0.4);
+          color: #fff;
+        }
+        .lp-submit:active:not(:disabled) { transform: translateY(0); }
+        .lp-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+        .lp-submit:focus-visible {
+          outline: 3px solid rgba(37,169,107,0.5);
+          outline-offset: 2px;
         }
 
-        [data-theme-mode='dark'] .auth-one-bg .shape > svg {
-          fill: #0b1727;
+        .lp-divider {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin: 24px 0 18px;
+          color: #cbd5e1;
+          font-size: 1rem;
+        }
+        [data-bs-theme='dark'] .lp-divider { color: #30363d; }
+        .lp-divider-line {
+          flex: 1;
+          height: 1px;
+          background: #e2e8f0;
+        }
+        [data-bs-theme='dark'] .lp-divider-line { background: #30363d; }
+
+        .lp-footer-text {
+          text-align: center;
+          color: #64748b;
+          font-size: 0.84rem;
+          margin: 0;
+        }
+        [data-bs-theme='dark'] .lp-footer-text { color: #8b949e; }
+
+        /* ── Responsive ── */
+        @media (max-width: 991px) {
+          .lp-hero { display: none; }
+          .lp-form-side {
+            flex: 1 1 100%;
+            padding: 32px 20px;
+          }
+          .lp-wave { display: none; }
+          .lp-card {
+            max-width: 440px;
+            padding: 36px 28px;
+            border-radius: 20px;
+          }
+        }
+        @media (max-width: 480px) {
+          .lp-card { padding: 28px 20px; border-radius: 16px; }
+          .lp-card-title { font-size: 1.4rem; }
         }
 
-        [data-theme-mode='dark'] .glass-card {
-          background: rgba(26, 41, 66, 0.55) !important;
-          border: 1px solid rgba(132, 199, 169, 0.28) !important;
-          box-shadow: 0 15px 35px rgba(0, 0, 0, 0.45) !important;
-        }
-
-        [data-theme-mode='dark'] .welcome-subtitle {
-          color: #cbd5e1 !important;
-        }
-
-        [data-theme-mode='dark'] .custom-label {
-          color: #e2e8f0 !important;
-        }
-
-        [data-theme-mode='dark'] .custom-input {
-          background-color: rgba(15, 27, 45, 0.75) !important;
-          border: 1px solid #2f5e4d !important;
-          color: #e9eef5 !important;
-        }
-
-        [data-theme-mode='dark'] .custom-input::placeholder {
-          color: #7c8aa0 !important;
-        }
-
-        [data-theme-mode='dark'] .custom-input:focus {
-          background-color: rgba(15, 27, 45, 0.95) !important;
-          border-color: #2da97f !important;
-          box-shadow: 0 0 0 3px rgba(45, 169, 127, 0.3) !important;
-        }
-
-        [data-theme-mode='dark'] .password-addon {
-          color: #9aa4b6 !important;
-        }
-
-        [data-theme-mode='dark'] footer.footer,
-        [data-theme-mode='dark'] footer.footer .text-muted {
-          color: #9aa4b6 !important;
-        }
-
-        [data-theme-mode='dark'] .footer-border {
-          border-top: 1px solid rgba(255, 255, 255, 0.06);
+        @media (prefers-reduced-motion: reduce) {
+          .lp-live-dot { animation: none; }
+          .lp-submit { transition: none; }
         }
       `}</style>
-      <footer className="footer">
-        <div className="container-fluid">
-          <div className="row">
-            <div className="col-sm-6">
-              <p className="mb-0 text-muted">{new Date().getFullYear()} © Zigfly.</p>
-            </div>
-            <div className="col-sm-6">
-              <div className="text-sm-end d-none d-sm-block text-muted">
-                Design & Develop by Zigma
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
