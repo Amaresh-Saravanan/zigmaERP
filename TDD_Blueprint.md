@@ -1119,4 +1119,121 @@ export const disname = (s) =>
 
 ---
 
-*End of TDD Blueprint. All test examples use Vitest (Vite-based project). All backend references align with the actual PHP endpoints in PRD_React_Migration.md.*
+## 14. UI Enhancement — Technical Design
+
+> Added 2026-07-01, corresponds to PRD_React_Migration.md §12.2. This section only adds test/architecture guidance for the redesign; it does not replace Sections 1–13, which still govern the underlying page/component structure.
+
+### 14.1 Design System
+
+- Single source of truth: `DESIGN.md` (tokens: colors, spacing, typography). No component may hardcode a hex color — reference the CSS custom properties defined there (`--color-primary`, `--bg-card`, etc.).
+- `frontend/src/utils/chartTheme.js` is the only place ApexCharts color arrays are defined; chart components import from it instead of inlining colors (see `OverallStatusChart.jsx`, `PitStatusChart.jsx`).
+
+### 14.2 Component Architecture
+
+- Redesign is additive/in-place: existing components (`DataTable`, `FormInput`, `Sidebar`, `Header`, etc. — Section 5 of the PRD) get restyled, not rewritten, unless a component's structure can't express the new layout.
+- New shared primitives only when a pattern repeats 3+ times (ponytail rule already in force per Migration Tracker "Key Constraints"): e.g. a `Card` wrapper if glass-card styling is currently copy-pasted across pages.
+
+### 14.3 Theme Implementation / Dark Mode
+
+- `ThemeContext.jsx` + `useTheme.js` (already scaffolded in `frontend/src/context/` and `frontend/src/hooks/`) provide `{ theme, toggleTheme }`; persisted via `localStorage`.
+- `darkmode.css` holds the dark-theme variable overrides layered on top of `DESIGN.md` tokens; light mode is the default `:root` values.
+- **Test**: a component test asserting `toggleTheme()` flips the `data-theme` attribute on `<html>`/`<body>` and persists across reload (mock `localStorage`).
+
+### 14.4 Dashboard Redesign
+
+- Chart components (`OverallStatusChart.jsx`, `PitStatusChart.jsx`) must re-render with correct colors when theme changes — covered by a component test that toggles theme and asserts the series color prop passed to ApexCharts matches `chartTheme.js` output for that theme.
+
+### 14.5 Responsive Strategy
+
+- Extends the responsive QA already completed in Phase 1 (TASK-040, Section 8 above). New breakpoints introduced by the redesign must be added to `RESPONSIVE_CHECKLIST.md` / `useResponsive.js`, not a parallel system.
+
+### 14.6 Accessibility Improvements
+
+- No regression vs. the Phase 1 accessibility audit (Section 6/7 above). Dark theme contrast ratios (text on `--bg-card`, `--bg-main`) must meet WCAG AA — add an axe/jest-axe check per redesigned page, same pattern as Section 6.
+
+### 14.7 Animation & Interaction Guidelines
+
+- Motion only via CSS transitions/`prefers-reduced-motion`-aware rules; no new animation dependency (a small utility class set is enough — see ponytail rule, no library needed for hover/fade/slide transitions).
+- Animations are not asserted in tests (flaky); only the resulting DOM state (class toggled, element visible) is tested.
+
+---
+
+## 15. Django Backend — Technical Design
+
+> Added 2026-07-01, corresponds to PRD_React_Migration.md §12.3. Testing strategy uses Django's standard tooling (`pytest-django` or `unittest` + DRF `APITestCase`), separate from the Vitest/Cypress stack above, which continues to cover the React side.
+
+### 15.1 Project Architecture
+
+- Single Django project (e.g. `zigma_backend/`) with one app per business domain, mirroring the module groupings already in PRD §6.5: `accounts` (user/user_type/permissions), `inventory` (item/tray/pit/unit/supplier), `process` (screening/egg/culling/oven/dry/leachate/material_received/status_update/pit_status/frp_*), `reports` (logsheet/dc/measurable/*_report), `core` (main_screen, menu).
+
+### 15.2 Folder Structure
+
+```
+backend/
+├── manage.py
+├── config/                 # settings.py, urls.py, wsgi/asgi
+│   ├── settings/
+│   │   ├── base.py
+│   │   ├── dev.py
+│   │   └── prod.py
+├── accounts/                # models, serializers, views, urls, tests
+├── inventory/
+├── process/
+├── reports/
+├── core/
+└── requirements/
+    ├── base.txt
+    └── dev.txt
+```
+
+### 15.3 Models
+
+- One Django model per current MySQL table (Glossary, PRD §11). Preserve `unique_id` as an indexed field only if the frontend/other systems still depend on it during the migration window; otherwise prefer Django's default PK and expose `id`. Soft-delete (`is_delete`) becomes a model field + a custom manager (`ActiveManager`) filtering it by default, matching the current `is_delete = 0` convention everywhere.
+
+### 15.4 API Design
+
+- DRF `ModelViewSet` per resource, routed via `DefaultRouter` — e.g. `/api/items/`, `/api/items/{id}/`. Server-side pagination/search/filter replaces the `datatable` action (DRF's `PageNumberPagination` + `django-filter` instead of a bespoke `action=datatable` POST body), but the response shape returned to the frontend should stay row-array-compatible with `DataTable.jsx` until that component is updated, to avoid a forced simultaneous frontend+backend rewrite per module.
+- Business rules from `crud.php` (duplicate `item_name` check, `IT-` prefix auto-code generation) move into `serializer.validate()` / `save()` overrides.
+
+### 15.5 Authentication
+
+- DRF `SessionAuthentication` (keeps parity with the current same-origin session model in PRD §2.2) or `TokenAuthentication`/JWT if the Vercel-hosted frontend (Phase 4) ends up cross-origin — decide per Phase 4 deployment topology, not before it's needed.
+- Login endpoint returns the equivalent of today's `get_profile` payload (user, `mainScreens`, `screens`) in the same response, closing KI-002 from the Migration Tracker.
+
+### 15.6 Permissions
+
+- Custom DRF permission class checking the requesting user's role against the `screens` set for the requested resource/action, replacing the PHP `$_SESSION['screens']` check — same semantics as `usePermission()` on the frontend (PRD §2.3), just enforced server-side instead of only client-side (closing a real gap: today's PHP has no server-side permission enforcement beyond what's visible in the UI).
+
+### 15.7 Database Schema
+
+- Migrated via Django migrations from the existing MySQL schema; a one-time data migration script ports existing rows (including `unique_id` values, to avoid breaking any still-live PHP module during the phased cutover).
+
+### 15.8 Service Layer
+
+- Business logic (auto-code generation, cross-module validation) lives in a `services.py` per app, called from serializers/views — not duplicated across viewsets, mirroring the "one place per rule" principle already used in the PHP `comfun.php`.
+
+### 15.9 Error Handling
+
+- DRF's standard exception handling + a custom exception handler mapping to the existing toast vocabulary (`create`, `update`, `already`, `error`, `success_delete` — Appendix B above) so the frontend's `client.js` interceptor keeps working unmodified during the transition.
+
+### 15.10 Logging
+
+- Standard Django `logging` config (console in dev, file/rotating handler in prod) — no new logging framework; structured logging (e.g. `python-json-logger`) only if log aggregation in production actually requires it (Phase 4).
+
+### 15.11 Testing Strategy
+
+| Test | Type | Tool |
+|------|------|------|
+| Model validation (soft delete, `unique_id` uniqueness) | Unit | `pytest-django` |
+| Serializer validation (duplicate name, required fields) | Unit | `pytest-django` |
+| ViewSet CRUD + permission enforcement | Integration | DRF `APITestCase` |
+| Auth flow (login, session, logout) | Integration | DRF `APITestCase` |
+| Full module parity vs. legacy `crud.php` response shape | Contract | Compare fixture responses side-by-side per module before cutover |
+
+### 15.12 Security Considerations
+
+- Directly resolves PRD §9: `password_hash()`/DRF's built-in password hashing replaces plaintext; Django ORM replaces string-concatenated SQL (closes the injection risk); CSRF via DRF's session-auth CSRF enforcement; CORS restricted to the known frontend origin(s) (dev + Vercel prod URL) via `django-cors-headers`, replacing the current `Access-Control-Allow-Origin: *`.
+
+---
+
+*End of TDD Blueprint. All test examples use Vitest (Vite-based project) for the React frontend (Sections 1–14) and pytest-django/DRF APITestCase for the Django backend (Section 15). All backend references align with the actual PHP endpoints in PRD_React_Migration.md, and Section 15 reflects the planned Django replacement for those same endpoints.*

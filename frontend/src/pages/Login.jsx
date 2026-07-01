@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
+import useTheme from '../hooks/useTheme';
 import client from '../api/client';
 import Swal from 'sweetalert2';
 import logoImg from '../assets/images/logo-white.png';
+import bgImg from '../assets/images/bg-d.png';
 
 import { useEffect } from 'react';
 
@@ -101,6 +103,7 @@ export default function Login() {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -175,8 +178,24 @@ export default function Login() {
   const handleKey = (e) => { if (e.key === 'Enter') handleSubmit(); };
 
   return (
-    <div className="auth-page-wrapper pt-5" onKeyUp={handleKey}>
-      <div className="auth-one-bg-position auth-one-bg" id="auth-particles">
+      <div className="auth-page-wrapper pt-5" onKeyUp={handleKey}>
+      {/* Theme toggle — top-right, available before sign-in */}
+      <button
+        type="button"
+        className="auth-theme-toggle"
+        onClick={toggleTheme}
+        aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        <i className={isDark ? 'ri-sun-line' : 'ri-moon-line'} aria-hidden="true"></i>
+      </button>
+
+      {/* Background Particles & Shape */}
+      <div 
+        className="auth-one-bg-position auth-one-bg" 
+        id="auth-particles" 
+        style={{ backgroundImage: `url(${bgImg})` }}
+      >
         <div className="bg-overlay"></div>
         <div className="shape">
           <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0 0 1440 120">
@@ -263,12 +282,147 @@ export default function Login() {
       </div>
 
       <style>{`
-        .auth-page-wrapper .card-bg-fill {
-          background-color: #05192f !important;
-          border: 1px solid #2a4562 !important;
-          box-shadow: 0 5px 10px rgba(30, 32, 37, 0.3) !important;
-          font-family: "Poppins", sans-serif !important;
+        body {
+          font-family: "Inter", sans-serif !important;
+          background-color: #ffffff;
+          transition: background-color 0.3s ease;
         }
+
+        /* Floating theme toggle on the auth screen */
+        .auth-theme-toggle {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          z-index: 5;
+          width: 42px;
+          height: 42px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          border: 1px solid rgba(255, 255, 255, 0.4);
+          background: rgba(255, 255, 255, 0.18);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          color: #ffffff;
+          font-size: 1.2rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .auth-theme-toggle:hover {
+          background: rgba(255, 255, 255, 0.3);
+          transform: translateY(-1px);
+        }
+
+        .auth-one-bg {
+          height: 380px;
+          background-position: center;
+          background-size: cover;
+          position: relative;
+        }
+
+        .auth-one-bg .bg-overlay {
+          background: linear-gradient(to right, rgba(14, 25, 34, 0.5), rgba(18, 38, 51, 0.4));
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          opacity: 1;
+        }
+        
+        .auth-one-bg .shape {
+          position: absolute;
+          bottom: 0;
+          right: 0;
+          left: 0;
+          z-index: 1;
+          pointer-events: none;
+        }
+        
+        .auth-one-bg .shape > svg {
+          width: 100%;
+          height: auto;
+          fill: #ffffff;
+        }
+
+        /* Glassmorphism Card styling matching the reference image */
+        .glass-card {
+          background: rgba(255, 255, 255, 0.25) !important;
+          backdrop-filter: blur(20px) !important;
+          -webkit-backdrop-filter: blur(20px) !important;
+          border: 1px solid rgba(132, 199, 169, 0.6) !important;
+          border-radius: 16px !important;
+          box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important;
+          overflow: hidden;
+        }
+
+        .welcome-title {
+          color: #ffffff !important;
+          font-weight: 600;
+          font-size: 1.25rem;
+          margin-bottom: 0.5rem;
+        }
+
+        .welcome-subtitle {
+          color: #e2e8f0 !important;
+          font-size: 0.95rem;
+        }
+
+        .custom-label {
+          color: #1e293b !important;
+          font-weight: 500;
+          font-size: 0.9rem;
+          margin-bottom: 0.5rem;
+        }
+
+        /* Inputs styled exactly like the screenshot */
+        .custom-input {
+          background-color: rgba(220, 237, 230, 0.8) !important;
+          border: 1px solid #73bda1 !important;
+          border-radius: 8px !important;
+          padding: 0.65rem 1rem !important;
+          color: #0f172a !important;
+          font-weight: 500;
+          height: 45px;
+          box-shadow: inset 0 1px 2px rgba(0,0,0,0.02) !important;
+          transition: all 0.2s ease;
+        }
+
+        .custom-input:focus {
+          background-color: #ffffff !important;
+          border-color: #27a87c !important;
+          box-shadow: 0 0 0 3px rgba(39, 168, 124, 0.25) !important;
+        }
+
+        .password-addon {
+          height: 45px;
+          padding: 0 1rem;
+          color: #64748b !important;
+          z-index: 10;
+        }
+
+        /* Submit Button */
+        .custom-btn {
+          background-color: #2da97f !important;
+          border-color: #2da97f !important;
+          color: white !important;
+          border-radius: 30px !important;
+          height: 45px;
+          font-weight: 500;
+          font-size: 1rem;
+          letter-spacing: 0.3px;
+          box-shadow: 0 4px 10px rgba(45, 169, 127, 0.3) !important;
+          transition: all 0.2s ease;
+        }
+
+        .custom-btn:hover {
+          background-color: #24906b !important;
+          border-color: #24906b !important;
+          transform: translateY(-1px);
+        }
+
+        /* Footer */
         footer.footer {
           background-color: #fff !important;
           border-top: 1px solid #e2e8f0 !important;
@@ -286,6 +440,62 @@ export default function Login() {
         }
         footer.footer .row {
           align-items: center;
+        }
+
+        /* ===== Dark mode ===== */
+        [data-theme-mode='dark'] body {
+          background-color: #0b1727;
+        }
+
+        [data-theme-mode='dark'] .auth-one-bg .bg-overlay {
+          background: linear-gradient(to right, rgba(8, 14, 22, 0.78), rgba(11, 23, 39, 0.7));
+        }
+
+        [data-theme-mode='dark'] .auth-one-bg .shape > svg {
+          fill: #0b1727;
+        }
+
+        [data-theme-mode='dark'] .glass-card {
+          background: rgba(26, 41, 66, 0.55) !important;
+          border: 1px solid rgba(132, 199, 169, 0.28) !important;
+          box-shadow: 0 15px 35px rgba(0, 0, 0, 0.45) !important;
+        }
+
+        [data-theme-mode='dark'] .welcome-subtitle {
+          color: #cbd5e1 !important;
+        }
+
+        [data-theme-mode='dark'] .custom-label {
+          color: #e2e8f0 !important;
+        }
+
+        [data-theme-mode='dark'] .custom-input {
+          background-color: rgba(15, 27, 45, 0.75) !important;
+          border: 1px solid #2f5e4d !important;
+          color: #e9eef5 !important;
+        }
+
+        [data-theme-mode='dark'] .custom-input::placeholder {
+          color: #7c8aa0 !important;
+        }
+
+        [data-theme-mode='dark'] .custom-input:focus {
+          background-color: rgba(15, 27, 45, 0.95) !important;
+          border-color: #2da97f !important;
+          box-shadow: 0 0 0 3px rgba(45, 169, 127, 0.3) !important;
+        }
+
+        [data-theme-mode='dark'] .password-addon {
+          color: #9aa4b6 !important;
+        }
+
+        [data-theme-mode='dark'] footer.footer,
+        [data-theme-mode='dark'] footer.footer .text-muted {
+          color: #9aa4b6 !important;
+        }
+
+        [data-theme-mode='dark'] .footer-border {
+          border-top: 1px solid rgba(255, 255, 255, 0.06);
         }
       `}</style>
       <footer className="footer">

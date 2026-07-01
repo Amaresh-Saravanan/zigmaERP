@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
+import useTheme from '../../hooks/useTheme';
 import zigFlyLogo from '../../assets/images/zig-fly-logo.png';
 
 export default function Header() {
   const { user, logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const toggleSidebar = () => {
@@ -58,6 +60,21 @@ export default function Header() {
           </div>
 
           <div className="d-flex align-items-center">
+            <div className="ms-1 header-item d-none d-sm-flex">
+              <button
+                type="button"
+                className="btn btn-icon btn-topbar material-shadow-none btn-ghost-secondary rounded-circle light-dark-mode"
+                onClick={toggleTheme}
+                aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                <i
+                  className={`${isDark ? 'ri-sun-line' : 'ri-moon-line'} fs-22`}
+                  aria-hidden="true"
+                ></i>
+              </button>
+            </div>
+
             <div className="dropdown ms-sm-3 header-item topbar-user">
               <button
                 type="button"

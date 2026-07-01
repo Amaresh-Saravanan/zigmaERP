@@ -1,6 +1,7 @@
 # Zigma ERP — React Migration PRD v2
 
 *Version 2.0 · 2026-06-25 · Prepared for the Frontend Migration Developer*
+*Extended to v2.1 · 2026-07-01 — scope expanded to cover UI/UX enhancement, Django backend migration, and deployment. See [Section 12](#12-scope-expansion-phase-2-4-roadmap) for the current roadmap. Sections 1–11 below describe the original React migration (Phase 1) and remain the source of truth for that phase — they are not being rewritten, only extended.*
 
 ---
 
@@ -804,4 +805,63 @@ Week 14-16:[Polish]     Responsive QA, edge cases, testing, deployment config
 
 ---
 
-*End of Document. All statements are derived from the source code at `c:\Users\DELL\House work\Internship\erp\erp`. Items marked **Needs Verification** require confirmation against the live database or testing environment.*
+## 12. Scope Expansion: Phase 2–4 Roadmap
+
+> Added 2026-07-01. The project has grown beyond a like-for-like React migration. This section defines the four phases now in scope. Phase 1 (React UI Migration) is the work described in Sections 1–11 above — it is functionally complete and not being redone; the items below are additive.
+
+### 12.1 Phase 1 — React UI Migration (Status: Complete, hardening ongoing)
+
+- The PHP/jQuery frontend has been fully replaced by the React 19 SPA described in Sections 2–8 (all 33 module routes, DataTable/Form components, AuthContext, permission-gated Sidebar).
+- Per `Migration_Tracker.md`, all module pages are wired to their legacy `crud.php` endpoints; `git status` shows active follow-on UI work (dark mode, login redesign — see 12.2).
+- **Remaining UI debt carried into Phase 2**: KI-001–KI-004 (see Migration Tracker §11) — pre-rendered HTML in DataTable responses, missing `get_profile`/`get_menu` endpoints (now superseded by Phase 3's REST API), default-password redirect handling.
+- This phase's success metrics (Section 1.2) still apply and are not relaxed by later phases.
+
+### 12.2 Phase 2 — UI/UX Enhancement (Enterprise Redesign + Green Dark Theme)
+
+**Objective**: Move past parity-with-legacy visuals to a modern, enterprise-grade admin dashboard, anchored by the green dark theme already specified in `DESIGN.md`.
+
+| Area | Requirement |
+|------|-------------|
+| Visual design | Dark glassmorphism, green (`#22c55e` family) as the single accent color per `DESIGN.md` — no new competing brand colors |
+| Theme system | Runtime light/dark toggle (`ThemeContext.jsx`, `useTheme.js` — already scaffolded), persisted per user, all chart/table colors sourced from `chartTheme.js` rather than hardcoded |
+| Layout | Reworked Sidebar, Header, cards, tables, and forms for spacing/typography/visual hierarchy consistent with `DESIGN.md` tokens |
+| Responsiveness | All redesigned pages usable at mobile/tablet/desktop breakpoints (extends the responsive QA already done in Phase 1) |
+| Interaction | Purposeful transitions/micro-animations (page/section entry, hover, loading states) — motion is additive polish, not a blocking dependency for other phases |
+| Accessibility | WCAG AA contrast maintained in both themes; no regression vs. Phase 1's accessibility audit |
+| Scope boundary | Visual/UX only — no new business logic or endpoints. Pages still talk to the same PHP `crud.php` endpoints until Phase 3 lands, then are repointed to Django (Phase 4) |
+
+This phase is tracked in **Migration Tracker Workstream A** (§ below) and can proceed in parallel with Phase 3, since it only touches the frontend.
+
+### 12.3 Phase 3 — Django Backend Migration
+
+**Objective**: Replace the PHP backend (`index.php`, `body.php`, `inc/`, `config/`, `folders/*/crud.php`) with a Django REST backend, while the React frontend (Phases 1–2) is repointed to it without a UI rewrite.
+
+| Area | Requirement |
+|------|-------------|
+| Scope | Full removal of PHP once parity is reached — not a permanent dual-stack. PHP stays live only until each module's Django equivalent is verified. |
+| API style | REST (Django REST Framework), replacing the `action`-switch `crud.php` pattern with resource-oriented endpoints (`/api/items/`, `/api/trays/`, etc.) |
+| Auth | Session or token-based auth via DRF, replacing PHP `$_SESSION`; must preserve the existing permission model (`main_screens`, `screens` per role) described in Section 2.3 |
+| Data | MySQL schema migrated to Django models (`inventory`, `process`, `accounts`/`users`, `reports` apps or similar); soft-delete (`is_delete`) and `unique_id` conventions from Section 11 (Glossary) are preserved unless a stronger Django-native equivalent (e.g. real PKs + a `deleted_at` field) is deliberately adopted and documented |
+| Business logic | All rules currently embedded in `crud.php` (duplicate checks, auto-generated codes like `IT-001`, permission checks) reimplemented as Django serializer/view logic |
+| Frontend integration | Axios `client.js` base URL and endpoint paths updated per module as each Django app goes live; legacy `crud.php` calls are removed once the corresponding Django endpoint is verified end-to-end (never both left live for the same module) |
+| Security | Fixes the gaps flagged in Section 9 (plaintext passwords, string-concatenated SQL, missing CSRF) as part of the rewrite rather than patching PHP |
+
+Tracked in **Migration Tracker Workstream B** (§ below), module-by-module, mirroring the module list in Section 6.5.
+
+### 12.4 Phase 4 — Deployment
+
+**Objective**: Make the (by then) React + Django stack runnable locally via Docker and deployable to production, with the frontend on Vercel.
+
+| Area | Requirement |
+|------|-------------|
+| Containerization | Dockerfile for the Django backend (gunicorn/uvicorn + app), Dockerfile or build step for the React frontend, `docker-compose.yml` wiring backend + MySQL/Postgres for local dev |
+| Frontend hosting | React `frontend/dist` deployed to Vercel; API base URL switched from same-origin (Section 8.3) to the deployed Django API URL via `VITE_API_BASE_URL` |
+| Environment config | `.env` conventions for both apps (secrets, DB credentials, `VITE_API_BASE_URL`) — no secrets committed |
+| CI/CD | Build/test pipeline extended (Section 7.3 / TDD Blueprint §12) to run against the Docker Compose stack, not the old PHP dev server |
+| Cutover | Documented rollback path while Django endpoints are verified module-by-module (see 12.3); Vercel + Docker deploy only happens after a module's Django + React pairing is confirmed working |
+
+**Sequencing note**: Phase 2 (UI) and Phase 3 (Django backend) run in parallel workstreams. Phase 4 (Deployment) depends on Phase 3 reaching enough module coverage to be worth containerizing, but Docker/Vercel scaffolding can be drafted early against whatever is live.
+
+---
+
+*End of Document. All statements are derived from the source code at `c:\Users\DELL\House work\Internship\erp\erp`. Items marked **Needs Verification** require confirmation against the live database or testing environment. Section 12 reflects the 2026-07-01 scope expansion; Sections 1–11 remain accurate for the original React migration and are unchanged.*

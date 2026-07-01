@@ -1,6 +1,8 @@
 # Zigma ERP — Migration Tracker
 
-> **LIVING DOCUMENT** — Update after every completed task. This is the single source of truth for the entire PHP-to-React migration.
+> **LIVING DOCUMENT** — Update after every completed task. This is the single source of truth for the entire migration, now spanning two parallel workstreams (see [Workstream Overview](#workstream-overview)): **Workstream A — UI Modernization** and **Workstream B — Django Backend Migration**.
+>
+> Sections 1–15 below are the original, unchanged record of Workstream A / Phase 1 (PHP → React parity migration), which is complete. They are preserved as history and are not being rewritten. New work is tracked in the Workstream Overview and Sections 16–17.
 
 ---
 
@@ -10,11 +12,11 @@
 
 | Field | Value |
 |-------|-------|
-| **Current Phase** | Completed |
-| **Current Module** | Testing Setup |
-| **Current Task** | None - Migration Complete |
-| **Last Completed Task** | TASK-040 — Responsive QA + Polish |
-| **Overall Progress** | 100% |
+| **Current Phase** | Phase 2 (UI Modernization) + Phase 3 (Django Backend) — parallel workstreams |
+| **Current Module** | Workstream A: theme system (dark mode) + Login redesign in progress. Workstream B: not started. |
+| **Current Task** | See §16 (Workstream A) and §17 (Workstream B) task queues |
+| **Last Completed Task** | TASK-040 — Responsive QA + Polish (closed out Phase 1 / Workstream A's predecessor scope) |
+| **Overall Progress** | Phase 1 (React migration): 100%. Phase 2 (UI Modernization): in progress — ThemeContext/darkmode.css/chartTheme.js scaffolded, Login page glassmorphism redesign landed, Dashboard charts theme-aware. Phase 3 (Django Backend): 0%, not started. Phase 4 (Deployment): 0%, not started. |
 | **Active Blocker** | None |
 
 ### Completed Work
@@ -35,16 +37,56 @@
 - Fixed Login page particle background animation and layout fonts/theme variables mapping (fixed truncated particles.js, corrected layout.js syntax error, copied missing password-addon.init.js, and added standard HTML data attributes in index.html)
 
 ### Next Recommended Action
-Implement TASK-015: Supplier Creation module page using the new `DataTable` component.
+Workstream A: continue the theme rollout past Login/Dashboard to Sidebar, Header, Tables, Forms (§16). Workstream B: scaffold the Django project structure per TDD_Blueprint.md §15 (§17, TASK-B01).
 
 ### Key Constraints (never forget)
-- PHP backend is NOT being changed. Only frontend is migrated.
-- Auth = PHP sessions (NOT JWT, NOT localStorage)
-- POST format = application/x-www-form-urlencoded with withCredentials: true
-- Velzon/Bootstrap CSS already imported in main.jsx — do NOT re-import per component
-- No TypeScript — plain .jsx / .js
-- Ponytail FULL mode: YAGNI, no unnecessary abstractions
-- Extract unique ID dynamically from backend HTML columns in the DataTable to avoid changing PHP.
+- **2026-07-01 repo cleanup**: the legacy PHP backend (`index.php`, `body.php`, `logout.php`, `inc/`, `config/`, `folders/`, `vendors/`, `db_setup/`, `assets/`, `uploads/`, `generate_logsheet.py`) was moved into `legacy/` to keep the repo root focused on the React frontend + docs. **The PHP app still runs from there** — this was a move, not a deletion, since Django doesn't exist yet. If PHP stops responding at `http://localhost`, repoint the Apache/XAMPP docroot (or vhost/alias) to `legacy/` — that's outside this repo and wasn't changed by this cleanup.
+- Workstream A (UI): still talks to the existing PHP `crud.php` endpoints — this is a visual/UX-only workstream, no new backend calls.
+- Workstream B (Django): PHP backend is being replaced module-by-module, NOT changed in place. A module's PHP `crud.php` is only removed after its Django equivalent is verified end-to-end (see §17 rules).
+- Auth today = PHP sessions (NOT JWT, NOT localStorage). Django backend may keep session auth or move to token auth — decide at Phase 4 per deployment topology (see PRD §12.3/12.4), not before.
+- POST format to existing PHP endpoints = application/x-www-form-urlencoded with withCredentials: true. Django endpoints will be JSON REST (see TDD_Blueprint.md §15.4).
+- Velzon/Bootstrap CSS already imported in main.jsx — do NOT re-import per component. New dark-theme tokens live in `DESIGN.md` / `darkmode.css` — do NOT hardcode colors in components.
+- No TypeScript — plain .jsx / .js on the frontend. Backend is Python/Django.
+- Ponytail FULL mode: YAGNI, no unnecessary abstractions — applies to both workstreams.
+- Extract unique ID dynamically from backend HTML columns in the DataTable to avoid changing PHP (still applies until a module's DataTable is repointed to its Django endpoint).
+
+---
+
+## Workstream Overview
+
+> Added 2026-07-01. High-level status for the two active workstreams. Detail and task queues are in §16 (Workstream A) and §17 (Workstream B).
+
+### Workstream A — UI Modernization
+
+| Item | Status | Progress | Dependencies |
+|------|--------|----------|---------------|
+| Theme system (tokens, `DESIGN.md`) | Done | 100% | None |
+| Dark mode (`ThemeContext`, `useTheme`, `darkmode.css`) | In Progress | ~60% | Theme system |
+| Login page redesign | Done | 100% | Theme system |
+| Dashboard / Charts (`chartTheme.js`, `OverallStatusChart`, `PitStatusChart`) | In Progress | ~50% | Dark mode |
+| Sidebar | Not Started | 0% | Dark mode |
+| Navbar / Header | In Progress | ~30% | Dark mode |
+| Forms | Not Started | 0% | Theme system |
+| Tables (`DataTable.jsx`) | Not Started | 0% | Theme system |
+| Reports pages | Not Started | 0% | Tables |
+| Responsive improvements (redesign-specific) | Not Started | 0% | All of the above |
+| Component refactoring (shared `Card`, etc. if patterns repeat) | Not Started | 0% | Ongoing, opportunistic |
+
+### Workstream B — Django Backend Migration
+
+| Item | Status | Progress | Dependencies |
+|------|--------|----------|---------------|
+| Django project setup (structure, settings, DRF) | Not Started | 0% | None |
+| Database migration (MySQL schema → Django models) | Not Started | 0% | Django setup |
+| Authentication (session/token, permission enforcement) | Not Started | 0% | Database migration |
+| API implementation (per-module viewsets/routers) | Not Started | 0% | Authentication |
+| CRUD modules (Item, Tray, Pit, Unit, Supplier, User, Process modules, Reports) | Not Started | 0% | API implementation |
+| Integrations (frontend `client.js` repointed per module) | Not Started | 0% | Each module's CRUD endpoint |
+| Remove PHP modules (per-module, only after Django parity verified) | Not Started | 0% | Integrations |
+| Testing (pytest-django / DRF APITestCase) | Not Started | 0% | Alongside each module |
+| Docker (backend + frontend + DB compose) | Not Started | 0% | Django setup functional locally |
+| Deployment (Vercel frontend + containerized backend) | Not Started | 0% | Docker, sufficient module coverage |
+| Production readiness (env vars, secrets, CORS, logging) | Not Started | 0% | Deployment |
 
 ---
 
@@ -397,15 +439,96 @@ Estimated:     2 hours
 
 ---
 
+## 16. Workstream A — UI Modernization (Detail)
+
+> Tracks PRD_React_Migration.md §12.2 and TDD_Blueprint.md §14. Runs in parallel with Workstream B; both consume the React codebase from Phase 1 (§1–15 above).
+
+### 16.1 Task Queue
+
+| Task | Title | Status | Depends On | Notes |
+|------|-------|--------|------------|-------|
+| TASK-A01 | Design tokens + `DESIGN.md` | Done | None | Green dark glassmorphism palette defined |
+| TASK-A02 | `ThemeContext.jsx` / `useTheme.js` scaffold | Done | TASK-A01 | Toggle + persistence |
+| TASK-A03 | `darkmode.css` variable overrides | In Progress | TASK-A02 | |
+| TASK-A04 | `chartTheme.js` shared chart palette | Done | TASK-A01 | |
+| TASK-A05 | Login page redesign (glassmorphism) | Done | TASK-A01 | Landed per current `git status` diff |
+| TASK-A06 | Dashboard charts theme-aware (`OverallStatusChart`, `PitStatusChart`) | In Progress | TASK-A04 | |
+| TASK-A07 | Header/Navbar redesign + theme toggle control | In Progress | TASK-A02 | |
+| TASK-A08 | Sidebar redesign | Not Started | TASK-A02 | |
+| TASK-A09 | Forms redesign (`FormInput`, `FormSelect`) | Not Started | TASK-A01 | |
+| TASK-A10 | Tables redesign (`DataTable.jsx`) | Not Started | TASK-A01 | |
+| TASK-A11 | Reports pages redesign | Not Started | TASK-A10 | |
+| TASK-A12 | Responsive pass on redesigned pages | Not Started | TASK-A08–A11 | |
+| TASK-A13 | Accessibility re-audit (dark theme contrast) | Not Started | TASK-A12 | Per TDD_Blueprint.md §14.6 |
+
+### 16.2 Module Coverage
+
+| Module Group | Redesigned | Notes |
+|---------------|-----------|-------|
+| Auth (Login) | Yes | |
+| Dashboard | Partial | Charts done, layout cards pending |
+| Layout (Sidebar/Header/Footer) | Partial | Header in progress |
+| Core CRUD (Item/Tray/Pit/Unit/Supplier) | No | |
+| User Management | No | |
+| Process modules | No | |
+| Reports | No | |
+
+---
+
+## 17. Workstream B — Django Backend Migration (Detail)
+
+> Tracks PRD_React_Migration.md §12.3 and TDD_Blueprint.md §15. Nothing in this workstream has started; PHP backend is untouched and still serving Workstream A.
+
+### 17.1 Task Queue
+
+| Task | Title | Status | Depends On | Notes |
+|------|-------|--------|------------|-------|
+| TASK-B01 | Django project scaffold (`backend/`, apps, settings) | Not Started | None | Per TDD_Blueprint.md §15.2 |
+| TASK-B02 | Database models (per-table, `is_delete`/`unique_id` handling) | Not Started | TASK-B01 | §15.3 |
+| TASK-B03 | Auth (session/token) + login endpoint parity (`get_profile`) | Not Started | TASK-B02 | Closes KI-002 |
+| TASK-B04 | Permission enforcement (server-side `screens` check) | Not Started | TASK-B03 | Closes a gap PHP never had |
+| TASK-B05 | Menu endpoint (`get_menu` equivalent) | Not Started | TASK-B02 | Closes KI-003 |
+| TASK-B06 | Core CRUD APIs (Item, Tray, Pit, Unit, Supplier) | Not Started | TASK-B04 | Reference implementation module first |
+| TASK-B07 | User management APIs (User, Type, Permission, Screen) | Not Started | TASK-B06 | |
+| TASK-B08 | Process module APIs (Screening, Egg, Culling, Oven, Dry, Leachate, Material Received, Status Update, Pit Status, FRP*) | Not Started | TASK-B06 | |
+| TASK-B09 | Reports APIs (Logsheet, DC, Measurable, *Report) | Not Started | TASK-B08 | |
+| TASK-B10 | Frontend `client.js` repointed per module (module-by-module cutover) | Not Started | Each module's API task | Old `crud.php` removed only after this is verified |
+| TASK-B11 | pytest-django / DRF test suite | Not Started | Alongside B06–B09 | Per §15.11 |
+| TASK-B12 | Security hardening (password hashing, CORS, CSRF) | Not Started | TASK-B03 | Closes PRD §9 items |
+| TASK-B13 | Dockerfile (backend) + `docker-compose.yml` | Not Started | Enough modules live locally | Phase 4 |
+| TASK-B14 | Vercel deploy (frontend) + containerized backend deploy | Not Started | TASK-B13 | Phase 4 |
+
+### 17.2 Module Cutover Tracker
+
+> A module is only marked "Cut Over" once its Django endpoint is verified end-to-end AND the corresponding `crud.php` is removed. Until then it stays "PHP (legacy)" even if a Django endpoint exists in parallel for testing.
+
+| Module | Backend | Notes |
+|--------|---------|-------|
+| Item Creation | PHP (legacy) | Candidate for first Django reference module |
+| Tray Creation | PHP (legacy) | |
+| Pit Creation | PHP (legacy) | |
+| Unit Creation | PHP (legacy) | |
+| Supplier Creation | PHP (legacy) | |
+| User Management | PHP (legacy) | |
+| Process modules (all) | PHP (legacy) | |
+| Reports (all) | PHP (legacy) | |
+| Auth / Menu | PHP (legacy) | |
+
+---
+
 ## Update Rules
 
-When a task is completed:
+**Workstream A (§16) and Workstream B (§17), plus the Workstream Overview:**
+1. Update the relevant task's Status in the §16/§17 task queue.
+2. Update the Workstream Overview progress table for that item.
+3. Update AI Continuity Section's "Current Module"/"Overall Progress" fields.
+4. For Workstream B, update the Module Cutover Tracker (§17.2) only when the PHP endpoint is actually removed, not when the Django endpoint merely exists.
+
+**Legacy Phase 1 sections (1–15), preserved for history — only touch if correcting an error in the historical record, not for new work:**
 1. Move task from Current Task (section 5) to Completed Commits (section 13)
-2. Update the AI Continuity Section at the top with the new current task
-3. Check off the milestone in Milestone Tracker (section 3)
-4. Update module progress % in Module Tracker (section 4)
-5. Mark page row in Page Migration Status (section 8)
-6. Mark API rows in API Integration Status (section 9)
-7. Update Overall Progress % in Project Overview (section 1) and Dashboard (section 2)
-8. Append to Daily Development Log (section 14)
-9. Update Weekly Summary (section 15) every Friday
+2. Check off the milestone in Milestone Tracker (section 3)
+3. Update module progress % in Module Tracker (section 4)
+4. Mark page row in Page Migration Status (section 8)
+5. Mark API rows in API Integration Status (section 9)
+6. Append to Daily Development Log (section 14)
+7. Update Weekly Summary (section 15) every Friday

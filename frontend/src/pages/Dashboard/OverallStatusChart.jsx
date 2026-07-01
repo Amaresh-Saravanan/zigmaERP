@@ -1,7 +1,12 @@
 import React from 'react';
 import Chart from 'react-apexcharts';
+import useTheme from '../../hooks/useTheme';
+import { getChartPalette } from '../../utils/chartTheme';
 
 export default function OverallStatusChart({ data }) {
+  const { theme } = useTheme();
+  const palette = getChartPalette(theme);
+
   if (!data) return null;
 
   const labels = [
@@ -29,10 +34,13 @@ export default function OverallStatusChart({ data }) {
   const colors = ['#00008B', '#E89B9B', '#999900', '#008000', '#ff69b4', '#808080', '#00BFFF', '#FF8C00'];
 
   const options = {
-    chart: { type: 'donut', height: 350 },
+    chart: { type: 'donut', height: 350, foreColor: palette.foreColor },
+    theme: { mode: theme === 'dark' ? 'dark' : 'light' },
     labels: labels,
     colors: colors,
     legend: { show: false },
+    stroke: { colors: [palette.donutStroke] },
+    tooltip: { theme: palette.tooltip },
     dataLabels: { enabled: true, formatter: (val) => val.toFixed(1) + "%" }
   };
 

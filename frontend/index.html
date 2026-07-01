@@ -5,6 +5,25 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>frontend</title>
+    <!-- Apply the saved theme before first paint to avoid a flash of light UI.
+         Must stay in sync with THEME_STORAGE_KEY in src/context/ThemeContext.jsx -->
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem('zigfly-theme');
+          var prefersDark = window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var theme = (saved === 'light' || saved === 'dark')
+            ? saved
+            : (prefersDark ? 'dark' : 'light');
+          var root = document.documentElement;
+          root.setAttribute('data-bs-theme', theme);
+          root.setAttribute('data-sidebar', theme);
+          root.setAttribute('data-topbar', theme);
+          root.setAttribute('data-theme-mode', theme);
+        } catch (e) { /* keep light defaults */ }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,13 +1,19 @@
 import React from 'react';
 import Chart from 'react-apexcharts';
+import useTheme from '../../hooks/useTheme';
+import { getChartPalette } from '../../utils/chartTheme';
 
 export default function PitStatusChart({ data }) {
+  const { theme } = useTheme();
+  const palette = getChartPalette(theme);
+
   if (!data || !data.categories) return null;
 
   const options = {
     chart: {
       type: 'bar',
       height: 350,
+      foreColor: palette.foreColor,
       toolbar: {
         show: true,
         tools: {
@@ -21,8 +27,9 @@ export default function PitStatusChart({ data }) {
         }
       }
     },
+    theme: { mode: theme === 'dark' ? 'dark' : 'light' },
     grid: {
-      borderColor: '#f1f1f1',
+      borderColor: palette.gridBorder,
       strokeDashArray: 3
     },
     plotOptions: {
@@ -34,7 +41,7 @@ export default function PitStatusChart({ data }) {
         const feed = data.feed_qty[opts.dataPointIndex] || 0;
         return `${val} Days - ${feed} Tons`;
       },
-      style: { colors: ['#333'] },
+      style: { colors: [palette.dataLabel] },
       offsetX: 20
     },
     colors: ['#49c1bf'],
@@ -44,6 +51,7 @@ export default function PitStatusChart({ data }) {
     },
     yaxis: { title: { text: 'Pit Name' } },
     tooltip: {
+      theme: palette.tooltip,
       y: {
         formatter: function (val, opts) {
           const feed = data.feed_qty[opts.dataPointIndex] || 0;

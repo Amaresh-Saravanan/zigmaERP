@@ -1,0 +1,95 @@
+/* =====================================================================
+   Dark mode polish & consistency layer
+   Velzon (app.min.css) already styles [data-bs-theme=dark]; this file only
+   smooths the transition and fixes a few app-specific edges so there are no
+   inconsistencies when toggling themes.
+   ===================================================================== */
+
+/* Smooth, professional transition when switching themes.
+   Scoped to chrome surfaces so charts/animations aren't affected. */
+body,
+#layout-wrapper,
+.main-content,
+.app-menu,
+#page-topbar,
+.navbar-brand-box,
+.card,
+.dropdown-menu,
+.table,
+.form-control,
+.form-select,
+.btn-topbar {
+  transition: background-color 0.25s ease, border-color 0.25s ease,
+    color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* The header theme toggle should sit comfortably in the topbar */
+.light-dark-mode {
+  cursor: pointer;
+}
+
+/* ---- Dark-mode specific refinements ---- */
+[data-bs-theme='dark'] body {
+  color: #ced4da;
+}
+
+/* Custom sidebar scrollbar — keep it subtle on dark backgrounds */
+[data-bs-theme='dark'] #scrollbar::-webkit-scrollbar-thumb,
+[data-bs-theme='dark'] .simplebar-scrollbar::before {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+[data-bs-theme='dark'] ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+[data-bs-theme='dark'] ::-webkit-scrollbar-track {
+  background: transparent;
+}
+[data-bs-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+}
+[data-bs-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+/* Firefox scrollbar */
+[data-bs-theme='dark'] * {
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+/* KPI card divider lines read better with a softer border on dark */
+[data-bs-theme='dark'] .crm-widget .border-end {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* SweetAlert popups should follow the theme instead of staying bright white */
+[data-bs-theme='dark'] .swal2-popup {
+  background: #1a2942 !important;
+  color: #ced4da !important;
+}
+[data-bs-theme='dark'] .swal2-title,
+[data-bs-theme='dark'] .swal2-html-container {
+  color: #e9eef5 !important;
+}
+
+/* Keep focus rings visible and on-brand in both themes */
+:focus-visible {
+  outline-offset: 2px;
+}
+
+/* ApexCharts: make the download/menu icon + legend text legible on dark */
+[data-bs-theme='dark'] .apexcharts-menu {
+  background: #1a2942 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+[data-bs-theme='dark'] .apexcharts-menu-item:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+[data-bs-theme='dark'] .apexcharts-tooltip,
+[data-bs-theme='dark'] .apexcharts-tooltip-title {
+  background: #1a2942 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #e9eef5 !important;
+}
