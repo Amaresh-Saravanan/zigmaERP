@@ -5,7 +5,7 @@ import useTheme from '../hooks/useTheme';
 import client from '../api/client';
 import Swal from 'sweetalert2';
 import heroBg from '../assets/images/auth-one-bg.jpg';
-import zigflyLogo from '../assets/images/zigfly-logo-transparent.png';
+import zigflyLogo from '../assets/images/zigfly-logo-clean.png';
 
 export default function Login() {
   const [form, setForm] = useState({ user: '', password: '' });
@@ -363,7 +363,7 @@ export default function Login() {
         .lp-brand-logo-full {
           display: block;
           height: auto;
-          max-width: 220px;
+          max-width: 280px;
           filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
         }
 
