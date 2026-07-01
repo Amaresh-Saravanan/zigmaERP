@@ -421,17 +421,6 @@ input[type='month'].form-control {
   background-color: rgba(37, 169, 107, 0.2);
 }
 
-/* Submenu collapse — smooth transition (Bootstrap handles height, we animate opacity) */
-.navbar-menu .collapse {
-  transition: opacity var(--anim-duration-normal) var(--anim-ease-out);
-  opacity: 1;
-}
-
-.navbar-menu .collapse:not(.show) {
-  opacity: 0;
-  pointer-events: none;
-}
-
 /* Submenu items container */
 .navbar-menu .nav-sm {
   padding: 8px 0;

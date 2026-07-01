@@ -528,6 +528,68 @@ body,
   background-color: #1c2128 !important;
 }
 
+/* Dark mode text utility colors */
+[data-bs-theme='dark'] .text-success {
+  color: #5fd4a0 !important;
+}
+
+[data-bs-theme='dark'] .text-warning {
+  color: #ffc107 !important;
+}
+
+[data-bs-theme='dark'] .text-danger {
+  color: #ff6b6b !important;
+}
+
+[data-bs-theme='dark'] .text-info {
+  color: #58d9f7 !important;
+}
+
+[data-bs-theme='dark'] .text-primary {
+  color: #5fd4a0 !important;
+}
+
+/* Form section titles */
+[data-bs-theme='dark'] .form-section-title {
+  color: #5fd4a0 !important;
+}
+
+/* Card header decorative elements */
+[data-bs-theme='dark'] .card-header h5::before {
+  background-color: #5fd4a0 !important;
+}
+
+/* Increase shadow opacity for visibility in dark mode */
+[data-bs-theme='dark'] .card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+[data-bs-theme='dark'] #page-topbar {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+/* Improve menu hover visibility in dark mode */
+[data-bs-theme='dark'] .navbar-nav .nav-link.menu-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Improve read-only field stripe visibility */
+[data-bs-theme='dark'] .form-control:read-only,
+[data-bs-theme='dark'] .form-select:read-only {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(255, 255, 255, 0.03) 10px,
+    rgba(255, 255, 255, 0.03) 20px
+  );
+}
+
+/* Dark mode focus ring for WCAG compliance */
+[data-bs-theme='dark'] :focus-visible {
+  outline-color: #5fd4a0;
+}
+
 /* Topbar icon button styling — clean, minimal */
 [data-bs-theme='dark'] .btn-topbar,
 [data-bs-theme='dark'] .btn-ghost-secondary {
