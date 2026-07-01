@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
+import DateInput from '../../components/DateInput';
 
 // Mini pipeline position banner — shows where screening sits in the overall process
 function PipelinePosition() {
@@ -193,7 +194,7 @@ export default function ScreeningProcessForm() {
                 <div className="row">
                   <div className="col-md-3 mb-3">
                     <label htmlFor="entry_date">Entry Date</label>
-                    <input type="date" className="form-control" id="entry_date" name="entry_date"
+                    <DateInput id="entry_date" name="entry_date" className="form-control"
                       value={formData.entry_date} onChange={handleChange} required />
                   </div>
                   <div className="col-md-3 mb-3">

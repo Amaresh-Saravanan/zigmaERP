@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
+import DateInput from '../../components/DateInput';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -136,9 +137,14 @@ export default function FrpTrayProcessForm() {
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
                   <div className="col-md-3 mb-3">
-                    <label htmlFor="entry_date">Entry Date</label>
-                    <input type="date" id="entry_date" name="entry_date" className="form-control"
-                      value={formData.entry_date} onChange={handleChange} required />
+                    <DateInput
+                      id="entry_date"
+                      name="entry_date"
+                      label="Entry Date"
+                      value={formData.entry_date}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
 
                   <div className="col-md-3 mb-3">

@@ -84,10 +84,10 @@ Workstream A: continue the theme rollout past Login/Dashboard to Sidebar, Header
 | Animations (site-wide) | Done | 100% | Staggered card entrance, button press, fade-in, respects prefers-reduced-motion |
 | Dropdown styling | Done | 100% | Firefox fix (:-moz-focusring), solid borders enforced |
 | Date range picker (Dashboard) | Done | 100% | Styled pill, native input overlay |
-| Calendar component (`DateInput.jsx` + flatpickr rollout) | Pending | 0% | flatpickr installed; needs 28-file integration |
-| Forms / Table full redesign pass | Not Started | 0% | Lower priority; color/animation system ready |
-| Reports pages styling | Not Started | 0% | Depends on forms/tables pass |
-| Responsive improvements (redesign-specific) | Partial | ~30% | Animations + dark theme responsive; forms/tables TBD |
+| Calendar component (`DateInput.jsx` + flatpickr rollout) | In Progress | ~35% | DateInput.jsx built + fixed; dark theme CSS done; 10/28 files wired — 3 by linter, 7 by session |
+| Forms / Table full redesign pass | Done | 100% | `datatable.css`, `forms.css`, `ux.css`, `DataTable.jsx` rewritten; all pages covered |
+| Reports pages styling | Done | 100% | Filter labels, timeline (LoginHistory), badge colors, table headers — all covered via CSS |
+| Responsive improvements (redesign-specific) | Done | 100% | Mobile breakpoints in `ux.css` §19, `datatable.css`, `forms.css` |
 
 ### Workstream B — Django Backend Migration
 

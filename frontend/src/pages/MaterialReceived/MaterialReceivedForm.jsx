@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
+import DateInput from '../../components/DateInput';
 import useAuth from '../../hooks/useAuth';
+import DateInput from '../../components/DateInput';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -161,9 +163,15 @@ export default function MaterialReceivedForm() {
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
                   <div className="col-md-3 mb-3">
-                    <label htmlFor="date">Entry Date</label>
-                    <input type="date" id="date" name="date" className="form-control"
-                      value={formData.date} onChange={handleChange} required readOnly={!isAdmin} />
+                    <DateInput
+                      id="date"
+                      name="date"
+                      label="Entry Date"
+                      value={formData.date}
+                      onChange={handleChange}
+                      disabled={!isAdmin}
+                      required
+                    />
                   </div>
 
                   <div className="col-md-3 mb-3">
@@ -195,9 +203,13 @@ export default function MaterialReceivedForm() {
                   </div>
 
                   <div className="col-md-3 mb-3">
-                    <label htmlFor="invoice_date">Invoice Date</label>
-                    <input type="date" id="invoice_date" name="invoice_date" className="form-control"
-                      value={formData.invoice_date} onChange={handleChange} />
+                    <DateInput
+                      id="invoice_date"
+                      name="invoice_date"
+                      label="Invoice Date"
+                      value={formData.invoice_date}
+                      onChange={handleChange}
+                    />
                   </div>
 
                   <div className="col-md-3 mb-3">

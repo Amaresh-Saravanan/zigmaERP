@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
+import DateInput from '../../components/DateInput';
 import useAuth from '../../hooks/useAuth';
+import DateInput from '../../components/DateInput';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -152,10 +154,15 @@ export default function StatusUpdateForm() {
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
                   <div className="col-md-3 mb-3">
-                    <label htmlFor="entry_date">Entry Date</label>
-                    <input type="date" id="entry_date" name="entry_date" className="form-control"
-                      value={formData.entry_date} onChange={handleChange} required 
-                      readOnly={!!formData.batch_id} />
+                    <DateInput
+                      id="entry_date"
+                      name="entry_date"
+                      label="Entry Date"
+                      value={formData.entry_date}
+                      onChange={handleChange}
+                      required
+                      disabled={!!formData.batch_id}
+                    />
                   </div>
 
                   <div className="col-md-3 mb-3">
@@ -173,9 +180,13 @@ export default function StatusUpdateForm() {
                   </div>
 
                   <div className="col-md-3 mb-3">
-                    <label htmlFor="starting_day">Processing Started Day</label>
-                    <input type="date" id="starting_day" name="starting_day" className="form-control"
-                      value={formData.starting_day} readOnly />
+                    <DateInput
+                      id="starting_day"
+                      name="starting_day"
+                      label="Processing Started Day"
+                      value={formData.starting_day}
+                      disabled
+                    />
                   </div>
 
                   <div className="col-md-3 mb-3">

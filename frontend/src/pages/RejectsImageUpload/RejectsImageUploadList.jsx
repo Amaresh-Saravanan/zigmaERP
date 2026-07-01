@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import client from '../../api/client';
+import DateInput from '../../components/DateInput';
 import DataTable from '../../components/DataTable';
 
 const TODAY = new Date().toISOString().split('T')[0];

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import client from '../../api/client';
+import DateInput from '../../components/DateInput';
 import DataTable from '../../components/DataTable';
+import DateInput from '../../components/DateInput';
 
 const TODAY = new Date().toISOString().split('T')[0];
 const FIRST_OF_MONTH = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];

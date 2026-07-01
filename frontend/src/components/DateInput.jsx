@@ -21,7 +21,8 @@ export default function DateInput({
       pickerRef.current = flatpickr(inputRef.current, {
         mode: 'single',
         dateFormat: 'Y-m-d',
-        defaultValue: value || '',
+        defaultDate: value || undefined,
+        allowInput: true,
         disableMobile: false,
         onChange: (selectedDates) => {
           const dateStr = selectedDates.length > 0

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import DateInput from '../../components/DateInput';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -159,9 +160,15 @@ export default function DCForm() {
               {/* Document Details */}
               <div className="row bg-light p-3 rounded mb-4">
                 <div className="col-md-3 mb-3">
-                  <label htmlFor="challanDate">Challan Date</label>
-                  <input type="date" id="challanDate" name="challanDate" className="form-control form-control-sm"
-                    value={formData.challanDate} onChange={handleChange} required />
+                  <DateInput
+                    id="challanDate"
+                    name="challanDate"
+                    label="Challan Date"
+                    value={formData.challanDate}
+                    onChange={handleChange}
+                    className="form-control form-control-sm"
+                    required
+                  />
                 </div>
                 <div className="col-md-3 mb-3">
                   <label htmlFor="poRef">PO Ref #</label>
@@ -169,9 +176,14 @@ export default function DCForm() {
                     value={formData.poRef} onChange={handleChange} />
                 </div>
                 <div className="col-md-3 mb-3">
-                  <label htmlFor="poDate">PO Date</label>
-                  <input type="date" id="poDate" name="poDate" className="form-control form-control-sm"
-                    value={formData.poDate} onChange={handleChange} />
+                  <DateInput
+                    id="poDate"
+                    name="poDate"
+                    label="PO Date"
+                    value={formData.poDate}
+                    onChange={handleChange}
+                    className="form-control form-control-sm"
+                  />
                 </div>
                 <div className="col-md-3 mb-3">
                   <label htmlFor="challanType">Challan Type</label>

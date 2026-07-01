@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
+import DateInput from '../../components/DateInput';
 
 export default function EggProcessForm() {
   const [searchParams] = useSearchParams();
@@ -258,12 +259,10 @@ export default function EggProcessForm() {
                   
                   {!unique_id ? (
                     <div className="col-3 mb-3">
-                      <label htmlFor="entry_date">Entry Date</label>
-                      <input
-                        type="date"
-                        className="form-control"
+                      <DateInput
                         id="entry_date"
                         name="entry_date"
+                        label="Entry Date"
                         value={formData.entry_date}
                         onChange={handleChange}
                         required

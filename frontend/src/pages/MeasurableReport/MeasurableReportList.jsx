@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import client from '../../api/client';
 import DataTable from '../../components/DataTable';
+import DateInput from '../../components/DateInput';
 
 const now = new Date();
 const pad = (n) => n.toString().padStart(2, '0');
@@ -64,12 +65,12 @@ export default function MeasurableReportList() {
             <div className="row mt-2 g-2 align-items-end">
               <div className="col-6 col-md-2">
                 <label className="form-label mb-1" style={{ fontSize: '0.72rem', color: 'var(--vz-secondary-color)' }}>From Date</label>
-                <input type="date" name="from_date" className="form-control form-control-sm"
+                <DateInput name="from_date" className="form-control form-control-sm"
                   value={filters.from_date} onChange={handleFilterChange} />
               </div>
               <div className="col-6 col-md-2">
                 <label className="form-label mb-1" style={{ fontSize: '0.72rem', color: 'var(--vz-secondary-color)' }}>To Date</label>
-                <input type="date" name="to_date" className="form-control form-control-sm"
+                <DateInput name="to_date" className="form-control form-control-sm"
                   value={filters.to_date} onChange={handleFilterChange} />
               </div>
               <div className="col-12 col-md-3">
