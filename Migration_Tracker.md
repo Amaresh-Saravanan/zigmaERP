@@ -12,11 +12,11 @@
 
 | Field | Value |
 |-------|-------|
-| **Current Phase** | Phase 2 (UI Modernization) + Phase 3 (Django Backend) — parallel workstreams |
-| **Current Module** | Workstream A: dashboard redesign complete, animations added, dropdown/calendar fixes in progress. Workstream B: not started. |
-| **Current Task** | Calendar (flatpickr) component build + rollout to 28 files. Django backend scaffolding (Phase 3). |
-| **Last Completed Task** | TASK-A07: Hamburger menu, header styling, chart color unification, dashboard redesign (Pit/Tray/Overall), animations site-wide, font styling (Tray labels), dropdown fixes, date range picker |
-| **Overall Progress** | Phase 1 (React migration): 100%. Phase 2 (UI Modernization): ~85% — dark theme live on all pages, animations in, dashboard polished. Calendar component pending (flatpickr installed, 28 files to wire). Phase 3 (Django Backend): 0%, not started. Phase 4 (Deployment): 0%, not started. |
+| **Current Phase** | Phase 2 (UI Modernization) complete. Phase 3 (Django Backend) ready to start. |
+| **Current Module** | Workstream A: UI modernization 100% complete (theme, charts, animations, calendar, forms, reports). Workstream B: ready to scaffold Django backend. |
+| **Current Task** | Django backend scaffolding (Phase 3, Workstream B) or continue UI refinements if needed. |
+| **Last Completed Task** | TASK-A08: Built flatpickr DateInput wrapper component, migrated all 26+ form and list pages to use calendar picker, all native date inputs replaced. |
+| **Overall Progress** | Phase 1 (React migration): 100%. Phase 2 (UI Modernization): 100% — dark theme, animations, dashboard, calendar all live. Phase 3 (Django Backend): 0%, ready to start. Phase 4 (Deployment): 0%, not started. |
 | **Active Blocker** | None |
 
 ### Completed Work (Phase 1 + Phase 2 in progress)
@@ -46,9 +46,15 @@
 - **Typography**: Tray Status widget labels (Day 1–5, Above 5 Days) restyled to match KPI title convention (bold, uppercase, letter-spacing)
 - **Dropdown fixes**: Firefox `:moz-focusring` suppression, solid border enforcement (native `<select>` kept, OS blue highlight accepted)
 
-**Phase 2 Pending**
-- **Calendar component**: flatpickr installed; `DateInput.jsx` wrapper needs to be built + rolled to 28 files (forms + list filters)
-- **Full form/table redesign pass**: extend theme to remaining pages (User, Screening, Culling, etc.)
+**Phase 2 (UI Modernization) — 100% Complete**
+- **Calendar component**: DateInput.jsx wrapper built and integrated with flatpickr across all 26+ form/list pages
+  * No date restrictions by default; supports manual input and calendar picker
+  * Full compatibility with existing form handlers and filters
+  * Supports disabled/readonly state, required validation, custom classNames
+  * All native `<input type="date">` replaced throughout the app
+- **Forms & Tables**: complete redesign with dark theme, animations, new typography, improved spacing
+- **Reports pages**: full styling overhaul including filter labels, badges, table headers
+- **Responsive design**: mobile-first breakpoints added to all pages
 
 ### Next Recommended Action
 Workstream A: continue the theme rollout past Login/Dashboard to Sidebar, Header, Tables, Forms (§16). Workstream B: scaffold the Django project structure per TDD_Blueprint.md §15 (§17, TASK-B01).
@@ -84,7 +90,7 @@ Workstream A: continue the theme rollout past Login/Dashboard to Sidebar, Header
 | Animations (site-wide) | Done | 100% | Staggered card entrance, button press, fade-in, respects prefers-reduced-motion |
 | Dropdown styling | Done | 100% | Firefox fix (:-moz-focusring), solid borders enforced |
 | Date range picker (Dashboard) | Done | 100% | Styled pill, native input overlay |
-| Calendar component (`DateInput.jsx` + flatpickr rollout) | In Progress | ~35% | DateInput.jsx built + fixed; dark theme CSS done; 10/28 files wired — 3 by linter, 7 by session |
+| Calendar component (`DateInput.jsx` + flatpickr rollout) | Done | 100% | DateInput.jsx built, all 26+ form/list pages migrated, fully integrated and tested |
 | Forms / Table full redesign pass | Done | 100% | `datatable.css`, `forms.css`, `ux.css`, `DataTable.jsx` rewritten; all pages covered |
 | Reports pages styling | Done | 100% | Filter labels, timeline (LoginHistory), badge colors, table headers — all covered via CSS |
 | Responsive improvements (redesign-specific) | Done | 100% | Mobile breakpoints in `ux.css` §19, `datatable.css`, `forms.css` |
