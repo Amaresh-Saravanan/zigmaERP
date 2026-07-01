@@ -761,17 +761,25 @@ body,
   border-radius: 0 2px 2px 0;
 }
 
+/* Sub-item nav-link — ensure position context for dot indicator */
+[data-bs-theme='light'] .nav-sm .nav-link,
+[data-bs-theme='dark'] .nav-sm .nav-link {
+  position: relative;
+  padding-left: 16px;
+}
+
 /* Sub-item active dot indicator — Light Mode */
 [data-bs-theme='light'] .nav-sm .nav-link.active::before,
 [data-bs-theme='light'] .nav-sm .nav-item.active .nav-link::before {
   content: '';
-  display: inline-block;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: #25a96b;
-  margin-right: 8px;
-  vertical-align: middle;
   flex-shrink: 0;
 }
 
@@ -779,13 +787,14 @@ body,
 [data-bs-theme='dark'] .nav-sm .nav-link.active::before,
 [data-bs-theme='dark'] .nav-sm .nav-item.active .nav-link::before {
   content: '';
-  display: inline-block;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: #25a96b;
-  margin-right: 8px;
-  vertical-align: middle;
   flex-shrink: 0;
 }
 
