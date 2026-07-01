@@ -383,6 +383,7 @@ input[type='month'].form-control {
   display: flex;
   align-items: center;
   gap: 10px;
+  outline: none;
 }
 
 /* Menu icon sizing */
@@ -392,12 +393,20 @@ input[type='month'].form-control {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 /* Menu item hover state */
 .navbar-menu .nav-link:hover {
   background-color: rgba(37, 169, 107, 0.08);
   color: #25a96b;
+}
+
+/* Menu item focus state (keyboard navigation) */
+.navbar-menu .nav-link:focus-visible {
+  outline: 2px solid #25a96b;
+  outline-offset: -2px;
+  background-color: rgba(37, 169, 107, 0.1);
 }
 
 /* Active menu item — strong visual indicator */
@@ -412,13 +421,14 @@ input[type='month'].form-control {
   background-color: rgba(37, 169, 107, 0.2);
 }
 
-/* Submenu collapse — smooth height animation (Bootstrap handles it, we add opacity) */
+/* Submenu collapse — smooth transition (Bootstrap handles height, we animate opacity) */
 .navbar-menu .collapse {
   transition: opacity var(--anim-duration-normal) var(--anim-ease-out);
+  opacity: 1;
 }
 
 .navbar-menu .collapse:not(.show) {
-  opacity: 0.6;
+  opacity: 0;
   pointer-events: none;
 }
 
@@ -450,12 +460,19 @@ input[type='month'].form-control {
   background-color: rgba(37, 169, 107, 0.08);
 }
 
+/* Submenu item focus state (keyboard navigation) */
+.navbar-menu .nav-sm .nav-link:focus-visible {
+  outline: 2px solid #25a96b;
+  outline-offset: -2px;
+  background-color: rgba(37, 169, 107, 0.1);
+}
+
 /* Submenu item active — green indicator */
 .navbar-menu .nav-sm .nav-link.active {
   color: #25a96b;
   background-color: rgba(37, 169, 107, 0.12);
-  border-left: 2px solid #25a96b;
-  padding-left: 42px;
+  border-left: 1px solid #25a96b;
+  padding-left: 43px;
   font-weight: 500;
 }
 
