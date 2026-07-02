@@ -12,12 +12,14 @@
 
 | Field | Value |
 |-------|-------|
-| **Current Phase** | Phase 2 (UI Modernization) complete. Phase 3 (Django Backend) ready to start. |
-| **Current Module** | Workstream A: UI modernization 100% complete (theme, charts, animations, calendar, forms, reports). Workstream B: ready to scaffold Django backend. |
-| **Current Task** | Django backend scaffolding (Phase 3, Workstream B) or continue UI refinements if needed. |
-| **Last Completed Task** | TASK-A08: Built flatpickr DateInput wrapper component, migrated all 26+ form and list pages to use calendar picker, all native date inputs replaced. |
-| **Overall Progress** | Phase 1 (React migration): 100%. Phase 2 (UI Modernization): 100% — dark theme, animations, dashboard, calendar all live. Phase 3 (Django Backend): 0%, ready to start. Phase 4 (Deployment): 0%, not started. |
-| **Active Blocker** | None |
+| **Architecture** | **React (Vite) + Django REST + MongoDB Atlas + Docker + Vercel** (NOT PHP → Django migration; greenfield Django build using legacy PHP as reference for business logic only). |
+| **Current Phase** | Phase 1 (React): 100%. Phase 2 (UI Modernization): 100%. Phase 3 (Django Backend): TASK-B01–B03 done, TASK-B04 next. Phase 4 (Deployment): 0%. |
+| **Current Task** | TASK-B04 — Permission enforcement (server-side `screens` check). |
+| **Last Completed Task** | TASK-B03: `AuthToken` MongoEngine model (one token per user, `secrets.token_hex(32)`), `MongoTokenAuthentication` DRF class, `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`. 9 pytest tests (6 model, 3→9 after adding API tests) passing against mongomock + DRF `APIClient`. |
+| **Overall Progress** | Frontend: 100% complete. Backend: TASK-B01, B02, B03 done (3/14). |
+| **Active Blocker** | Real MongoDB Atlas cluster + connection string still needed (placeholder URI in `backend/.env` is local/fake) before TASK-B02+ can hit a live DB. |
+| **Tech Stack** | See TECH_STACK.md (React, Django 4.2+, MongoEngine, MongoDB, Vercel, Docker). |
+| **Legacy Reference** | `legacy/` folder (PHP source code — read for business logic understanding; do NOT migrate code). |
 
 ### Completed Work (Phase 1 + Phase 2 in progress)
 
@@ -99,17 +101,18 @@ Workstream A: continue the theme rollout past Login/Dashboard to Sidebar, Header
 
 | Item | Status | Progress | Dependencies |
 |------|--------|----------|---------------|
-| Django project setup (structure, settings, DRF) | Not Started | 0% | None |
-| Database migration (MySQL schema → Django models) | Not Started | 0% | Django setup |
-| Authentication (session/token, permission enforcement) | Not Started | 0% | Database migration |
-| API implementation (per-module viewsets/routers) | Not Started | 0% | Authentication |
-| CRUD modules (Item, Tray, Pit, Unit, Supplier, User, Process modules, Reports) | Not Started | 0% | API implementation |
-| Integrations (frontend `client.js` repointed per module) | Not Started | 0% | Each module's CRUD endpoint |
-| Remove PHP modules (per-module, only after Django parity verified) | Not Started | 0% | Integrations |
-| Testing (pytest-django / DRF APITestCase) | Not Started | 0% | Alongside each module |
-| Docker (backend + frontend + DB compose) | Not Started | 0% | Django setup functional locally |
-| Deployment (Vercel frontend + containerized backend) | Not Started | 0% | Docker, sufficient module coverage |
-| Production readiness (env vars, secrets, CORS, logging) | Not Started | 0% | Deployment |
+| Django + MongoEngine scaffold (TASK-B01) | Done | 100% | `backend/` created, verified booting |
+| Auth (login endpoint, token gen, login endpoint parity with legacy) | Not Started | 0% | TASK-B01 done |
+| Item module (reference impl: Item, Unit CRUD) | Not Started | 0% | Auth working |
+| Core CRUD modules (Tray, Pit, Supplier, clone from Item pattern) | Not Started | 0% | Item reference complete |
+| User management (User, UserType, Permissions, Screens) | Not Started | 0% | Core CRUD done |
+| Process modules (Screening, Egg, Culling, Oven, Dry, Leachate, etc.) | Not Started | 0% | User mgmt done |
+| Reports modules (Logsheet, DC, Measurable, *_Report) | Not Started | 0% | Process modules done |
+| Frontend `client.js` repointed to Django API | Not Started | 0% | Enough modules live (Item minimum) |
+| pytest-django test suite | Not Started | 0% | Alongside each module |
+| Docker (Dockerfile, docker-compose.yml, production config) | Not Started | 0% | Django setup functional locally |
+| Deployment (Vercel frontend + containerized backend to cloud) | Not Started | 0% | Docker working, CORS/secrets set |
+| Production hardening (env vars, MongoDB Atlas, secrets, logging) | Not Started | 0% | Deployment live |
 
 ---
 
@@ -506,12 +509,12 @@ Estimated:     2 hours
 
 | Task | Title | Status | Depends On | Notes |
 |------|-------|--------|------------|-------|
-| TASK-B01 | Django project scaffold (`backend/`, apps, settings) | Not Started | None | Per TDD_Blueprint.md §15.2 |
-| TASK-B02 | Database models (per-table, `is_delete`/`unique_id` handling) | Not Started | TASK-B01 | §15.3 |
-| TASK-B03 | Auth (session/token) + login endpoint parity (`get_profile`) | Not Started | TASK-B02 | Closes KI-002 |
-| TASK-B04 | Permission enforcement (server-side `screens` check) | Not Started | TASK-B03 | Closes a gap PHP never had |
-| TASK-B05 | Menu endpoint (`get_menu` equivalent) | Not Started | TASK-B02 | Closes KI-003 |
-| TASK-B06 | Core CRUD APIs (Item, Tray, Pit, Unit, Supplier) | Not Started | TASK-B04 | Reference implementation module first |
+| TASK-B01 | Django + MongoEngine scaffold, MongoDB Atlas cluster (`backend/`, apps, settings) | **Done** | None | `backend/` scaffolded: 5 apps (accounts, inventory, process, reports, core), `config/settings.py` wired to MongoEngine via `.env`, `requirements.txt`, `.gitignore`. Verified `manage.py check` and `runserver` boot cleanly, `/api/health` returns 200. **Still needed: a real MongoDB Atlas cluster** — `backend/.env` has a local placeholder `MONGODB_URI`, not a live connection string (see BACKEND_START.md step 3). |
+| TASK-B02 | MongoEngine `Document` models (per-entity, `is_deleted`/`unique_id` handling) | **Done** | TASK-B01 (done) | `accounts/models.py`: `UserType`, `User` (unique_id, is_deleted, is_active). 3 pytest tests vs mongomock passing (`accounts/tests.py`). Other entities' models arrive with their own tasks (Item/Unit in B06, process/report entities in B08/B09). |
+| TASK-B03 | Auth (token-based) + login endpoint returning full profile in one response | **Done** | TASK-B02 (done) | `accounts/models.AuthToken` (MongoEngine, not DRF's relational `authtoken`), `accounts/authentication.MongoTokenAuthentication`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`. Also removed `django.contrib.auth`/`contenttypes` from `INSTALLED_APPS` (dead weight, no relational DB) and set `REST_FRAMEWORK.UNAUTHENTICATED_USER = None` to stop DRF importing Django's `AnonymousUser` (which needs contenttypes). 9 pytest tests passing (mongomock + DRF `APIClient`). |
+| TASK-B04 | Permission enforcement (server-side `screens` check) | Not Started | TASK-B03 (done) | Closes a gap legacy PHP never had (§15.6) |
+| TASK-B05 | Menu endpoint (`main_screens`/`screens` tree, returned from login or a dedicated endpoint) | Not Started | TASK-B02 | Closes KI-003 |
+| TASK-B06 | Core CRUD APIs (Item, Tray, Pit, Unit, Supplier) | Not Started | TASK-B04 | Item is the reference implementation — see BACKEND_START.md "Reference Implementation: Item Module"; clone the pattern for the rest |
 | TASK-B07 | User management APIs (User, Type, Permission, Screen) | Not Started | TASK-B06 | |
 | TASK-B08 | Process module APIs (Screening, Egg, Culling, Oven, Dry, Leachate, Material Received, Status Update, Pit Status, FRP*) | Not Started | TASK-B06 | |
 | TASK-B09 | Reports APIs (Logsheet, DC, Measurable, *Report) | Not Started | TASK-B08 | |
