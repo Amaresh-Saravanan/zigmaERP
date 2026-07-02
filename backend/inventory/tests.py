@@ -1,3 +1,136 @@
-from django.test import TestCase
+"""
+Item/Unit CRUD tests — run against mongomock, not the real Atlas cluster in .env.
+"""
+import mongoengine as me
+import mongomock
+import pytest
+from django.contrib.auth.hashers import make_password
+from rest_framework.test import APIClient
 
-# Create your tests here.
+from accounts.models import AuthToken, User, UserType
+from inventory.models import Item, Unit
+
+
+@pytest.fixture(autouse=True)
+def mongomock_connection():
+    me.disconnect()
+    me.connect(db='zigma_erp_test', mongo_client_class=mongomock.MongoClient)
+    yield
+    UserType.drop_collection()
+    User.drop_collection()
+    AuthToken.drop_collection()
+    Unit.drop_collection()
+    Item.drop_collection()
+    me.disconnect()
+
+
+def make_user(screens=''):
+    ut = UserType(type_name='Tester').save()
+    return User(user_name='tester', password_hash=make_password('pw'), user_type=ut, screens=screens).save()
+
+
+def authed_client(user):
+    client = APIClient()
+    res = client.post('/api/auth/login', {'user_name': user.user_name, 'password': 'pw'}, format='json')
+    client.credentials(HTTP_AUTHORIZATION=f"Token {res.data['data']['access_token']}")
+    return client
+
+
+# ── Unit ──
+
+def test_unit_list_denied_without_screen():
+    client = authed_client(make_user(screens=''))
+    res = client.get('/api/units')
+    assert res.status_code == 403
+
+
+def test_unit_create_and_list_with_screens():
+    client = authed_client(make_user(screens='unit_view,unit_create'))
+
+    create_res = client.post('/api/units', {'unit_name': 'Kilogram'}, format='json')
+    assert create_res.status_code == 201
+    assert create_res.data['data']['unit_name'] == 'Kilogram'
+
+    list_res = client.get('/api/units')
+    assert list_res.status_code == 200
+    assert list_res.data['count'] == 1
+
+
+def test_unit_create_denied_without_create_screen():
+    client = authed_client(make_user(screens='unit_view'))
+    res = client.post('/api/units', {'unit_name': 'Kilogram'}, format='json')
+    assert res.status_code == 403
+
+
+def test_unit_name_duplicate_returns_400():
+    client = authed_client(make_user(screens='unit_create'))
+    client.post('/api/units', {'unit_name': 'Kilogram'}, format='json')
+    res = client.post('/api/units', {'unit_name': 'Kilogram'}, format='json')
+    assert res.status_code == 400
+    assert res.data['status'] == 0
+
+
+# ── Item ──
+
+@pytest.fixture
+def unit():
+    return Unit(unit_name='Kilogram').save()
+
+
+def test_item_create_auto_generates_sequential_codes(unit):
+    client = authed_client(make_user(screens='item_create'))
+
+    res1 = client.post('/api/items', {'item_name': 'Widget', 'unit': {'unique_id': unit.unique_id}}, format='json')
+    res2 = client.post('/api/items', {'item_name': 'Gadget', 'unit': {'unique_id': unit.unique_id}}, format='json')
+
+    assert res1.data['data']['item_code'] == 'IT-001'
+    assert res2.data['data']['item_code'] == 'IT-002'
+
+
+def test_item_create_rejects_unknown_unit(unit):
+    client = authed_client(make_user(screens='item_create'))
+    res = client.post('/api/items', {'item_name': 'Widget', 'unit': {'unique_id': 'ghost'}}, format='json')
+    assert res.status_code == 400
+
+
+def test_item_retrieve_update_delete_lifecycle(unit):
+    client = authed_client(make_user(screens='item_create,item_view,item_edit,item_delete'))
+
+    created = client.post('/api/items', {'item_name': 'Widget', 'unit': {'unique_id': unit.unique_id}}, format='json')
+    item_id = created.data['data']['unique_id']
+
+    get_res = client.get(f'/api/items/{item_id}')
+    assert get_res.status_code == 200
+    assert get_res.data['data']['item_name'] == 'Widget'
+
+    update_res = client.put(
+        f'/api/items/{item_id}',
+        {'item_name': 'Widget V2', 'unit': {'unique_id': unit.unique_id}, 'is_active': False},
+        format='json',
+    )
+    assert update_res.status_code == 200
+    assert update_res.data['data']['item_name'] == 'Widget V2'
+    assert update_res.data['data']['is_active'] is False
+
+    delete_res = client.delete(f'/api/items/{item_id}')
+    assert delete_res.status_code == 200
+
+    # Soft-deleted: no longer visible via list/retrieve
+    assert client.get(f'/api/items/{item_id}').status_code == 404
+    assert Item.objects.get(unique_id=item_id).is_deleted is True
+
+
+def test_item_retrieve_missing_returns_404(unit):
+    client = authed_client(make_user(screens='item_view'))
+    res = client.get('/api/items/does-not-exist')
+    assert res.status_code == 404
+
+
+def test_item_search_filters_by_name(unit):
+    client = authed_client(make_user(screens='item_create,item_view'))
+    client.post('/api/items', {'item_name': 'Widget', 'unit': {'unique_id': unit.unique_id}}, format='json')
+    client.post('/api/items', {'item_name': 'Gadget', 'unit': {'unique_id': unit.unique_id}}, format='json')
+
+    res = client.get('/api/items', {'search': 'widg'})
+    assert res.data['count'] == 1
+    assert res.data['results'][0]['item_name'] == 'Widget'
