@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
 import DateInput from '../../components/DateInput';
+import TextInput from '../../components/TextInput';
+import Select from '../../components/Select';
+import Button from '../../components/Button';
 
 // Mini pipeline position banner — shows where screening sits in the overall process
 function PipelinePosition() {
@@ -192,22 +195,24 @@ export default function ScreeningProcessForm() {
                   <i className="ri-map-pin-2-line me-1"></i> Pit Selection
                 </p>
                 <div className="row">
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="entry_date">Entry Date</label>
-                    <DateInput id="entry_date" name="entry_date" className="form-control"
+                  <div className="col-12 col-md-3">
+                    <DateInput id="entry_date" name="entry_date" label="Entry Date"
                       value={formData.entry_date} onChange={handleChange} required />
                   </div>
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="pit_id">Pit Number</label>
-                    <select id="pit_id" name="pit_id" className="form-control"
-                      value={formData.pit_id} onChange={handleChange} required>
-                      {pitOptions.map((o, i) => <option key={i} value={o.value}>{o.label}</option>)}
-                    </select>
+                  <div className="col-12 col-md-3">
+                    <Select
+                      label="Pit Number"
+                      name="pit_id"
+                      value={formData.pit_id}
+                      onChange={handleChange}
+                      options={pitOptions}
+                      required
+                    />
                   </div>
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="batch_id" className="label-computed">Pit Batch Id</label>
+                  <div className="col-12 col-md-3 mb-3">
+                    <label htmlFor="batch_id" className="form-label app-form-label label-computed">Pit Batch Id</label>
                     <div className="position-relative">
-                      <input id="batch_id" name="batch_id" className="form-control"
+                      <input id="batch_id" name="batch_id" className="form-control app-form-control"
                         readOnly value={formData.batch_id}
                         placeholder={batchLoading ? 'Fetching…' : 'Auto-filled from pit'} />
                       {batchLoading && (
@@ -226,23 +231,41 @@ export default function ScreeningProcessForm() {
                   <i className="ri-scales-3-line me-1"></i> Measurements
                 </p>
                 <div className="row">
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="qty_manure_1">Manure &minus;4mm (kg)</label>
-                    <input type="number" step="0.01" min="0" id="qty_manure_1" name="qty_manure_1"
-                      className="form-control" value={formData.qty_manure_1} onChange={handleChange}
-                      placeholder="0.00" />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      label="Manure −4mm (kg)"
+                      name="qty_manure_1"
+                      value={formData.qty_manure_1}
+                      onChange={handleChange}
+                      placeholder="0.00"
+                    />
                   </div>
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="qty_manure_2">Manure +4mm (kg)</label>
-                    <input type="number" step="0.01" min="0" id="qty_manure_2" name="qty_manure_2"
-                      className="form-control" value={formData.qty_manure_2} onChange={handleChange}
-                      placeholder="0.00" />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      label="Manure +4mm (kg)"
+                      name="qty_manure_2"
+                      value={formData.qty_manure_2}
+                      onChange={handleChange}
+                      placeholder="0.00"
+                    />
                   </div>
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="qty_rejets">Rejects (kg)</label>
-                    <input type="number" step="0.01" min="0" id="qty_rejets" name="qty_rejets"
-                      className="form-control" value={formData.qty_rejets} onChange={handleChange}
-                      placeholder="0.00" />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      label="Rejects (kg)"
+                      name="qty_rejets"
+                      value={formData.qty_rejets}
+                      onChange={handleChange}
+                      placeholder="0.00"
+                    />
                   </div>
                 </div>
 
@@ -251,32 +274,38 @@ export default function ScreeningProcessForm() {
                   <i className="ri-checkbox-circle-line me-1"></i> Completion
                 </p>
                 <div className="row">
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="harvest_comp">Harvest Status</label>
-                    <select id="harvest_comp" name="harvest_comp" className="form-control"
-                      value={formData.harvest_comp} onChange={handleChange} required>
-                      {harvestOptions.map((o, i) => <option key={i} value={o.value}>{o.label}</option>)}
-                    </select>
+                  <div className="col-12 col-md-3">
+                    <Select
+                      label="Harvest Status"
+                      name="harvest_comp"
+                      value={formData.harvest_comp}
+                      onChange={handleChange}
+                      options={harvestOptions}
+                      required
+                    />
                   </div>
-                  <div className="col-md-6 mb-3">
-                    <label htmlFor="notes">Remarks</label>
-                    <input type="text" name="notes" id="notes" className="form-control"
-                      value={formData.notes} onChange={handleChange}
-                      placeholder="Optional notes…" />
+                  <div className="col-12 col-md-6">
+                    <TextInput
+                      label="Remarks"
+                      name="notes"
+                      value={formData.notes}
+                      onChange={handleChange}
+                      placeholder="Optional notes…"
+                    />
                   </div>
                 </div>
 
                 {/* Actions */}
                 <div className="row mt-1">
                   <div className="col-12 text-end mt-2">
-                    <button type="button" onClick={() => navigate('/screening_process/list')} className="btn btn-danger me-2">
+                    <Button variant="danger" className="me-2" onClick={() => navigate('/screening_process/list')}>
                       Cancel
-                    </button>
-                    <button type="submit" className="btn btn-success" disabled={isLoading || batchLoading}>
+                    </Button>
+                    <Button type="submit" disabled={isLoading || batchLoading}>
                       {isLoading ? (
                         <><span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Saving…</>
                       ) : unique_id ? 'Update' : 'Save'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </form>

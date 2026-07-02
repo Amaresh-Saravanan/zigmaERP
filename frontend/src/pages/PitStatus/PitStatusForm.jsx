@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
 import DateInput from '../../components/DateInput';
+import TextInput from '../../components/TextInput';
+import Select from '../../components/Select';
+import Button from '../../components/Button';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -262,7 +265,7 @@ export default function PitStatusForm() {
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
                   {/* Common Fields */}
-                  <div className="col-md-3 mb-3">
+                  <div className="col-12 col-md-3">
                     <DateInput
                       id="entry_date"
                       name="entry_date"
@@ -273,40 +276,59 @@ export default function PitStatusForm() {
                     />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="pit_id">Pit Number</label>
-                    <select id="pit_id" name="pit_id" className="form-control"
-                      value={formData.pit_id} onChange={handleChange} required>
-                      {options.pit_id.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
+                  <div className="col-12 col-md-3">
+                    <Select
+                      label="Pit Number"
+                      name="pit_id"
+                      value={formData.pit_id}
+                      onChange={handleChange}
+                      options={options.pit_id}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="org_status">Status</label>
-                    <select id="org_status" name="org_status" className="form-control"
-                      value={formData.org_status} onChange={handleChange} required>
-                      {options.org_status.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
+                  <div className="col-12 col-md-3">
+                    <Select
+                      label="Status"
+                      name="org_status"
+                      value={formData.org_status}
+                      onChange={handleChange}
+                      options={options.org_status}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="notes">Remarks</label>
-                    <input type="text" id="notes" name="notes" className="form-control"
-                      value={formData.notes} onChange={handleChange} />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      label="Remarks"
+                      name="notes"
+                      value={formData.notes}
+                      onChange={handleChange}
+                    />
                   </div>
                 </div>
 
                 {/* Conditional Section 1: Organic Waste Added in Pit */}
                 {formData.org_status === '1' && (
                   <div className="row border-top pt-3 mt-2">
-                    <div className="col-md-3 mb-3">
-                      <label htmlFor="feed_count_name">Feeding Count</label>
-                      <input type="text" id="feed_count_name" className="form-control" value={feedCountName} readOnly />
+                    <div className="col-12 col-md-3">
+                      <TextInput
+                        label="Feeding Count"
+                        name="feed_count_name"
+                        value={feedCountName}
+                        readOnly
+                      />
                     </div>
-                    <div className="col-md-3 mb-3">
-                      <label htmlFor="feed_qty">Feeding Qty(Tons)</label>
-                      <input type="number" step="0.01" id="feed_qty" name="feed_qty" className="form-control"
-                        value={formData.feed_qty} onChange={handleChange} required />
+                    <div className="col-12 col-md-3">
+                      <TextInput
+                        type="number"
+                        step="0.01"
+                        label="Feeding Qty(Tons)"
+                        name="feed_qty"
+                        value={formData.feed_qty}
+                        onChange={handleChange}
+                        required
+                      />
                     </div>
                   </div>
                 )}
@@ -314,21 +336,30 @@ export default function PitStatusForm() {
                 {/* Conditional Section 2: Baby Larvae Added */}
                 {formData.org_status === '2' && (
                   <div className="row border-top pt-3 mt-2">
-                    <div className="col-md-3 mb-3">
-                      <label htmlFor="batch_id">Batch Id</label>
-                      <select id="batch_id" name="batch_id" className="form-control"
-                        value={formData.batch_id} onChange={handleChange} required>
-                        {options.batch_id.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                      </select>
+                    <div className="col-12 col-md-3">
+                      <Select
+                        label="Batch Id"
+                        name="batch_id"
+                        value={formData.batch_id}
+                        onChange={handleChange}
+                        options={options.batch_id}
+                        required
+                      />
                     </div>
-                    <div className="col-md-3 mb-3">
-                      <label htmlFor="larvae_qty_in">Qty of Baby Larvae(kg)</label>
-                      <input type="number" step="0.01" id="larvae_qty_in" name="larvae_qty_in" className="form-control"
-                        value={formData.larvae_qty_in} onChange={handleChange} required />
+                    <div className="col-12 col-md-3">
+                      <TextInput
+                        type="number"
+                        step="0.01"
+                        label="Qty of Baby Larvae(kg)"
+                        name="larvae_qty_in"
+                        value={formData.larvae_qty_in}
+                        onChange={handleChange}
+                        required
+                      />
                     </div>
-                    <div className="col-md-6 mb-3">
-                      <label htmlFor="tray_no">Tray No</label>
-                      <select id="tray_no" name="tray_no" className="form-control"
+                    <div className="col-12 col-md-6 mb-3">
+                      <label htmlFor="tray_no" className="form-label app-form-label">Tray No</label>
+                      <select id="tray_no" name="tray_no" className="form-select app-form-control"
                         multiple size="3" value={formData.tray_no} onChange={handleChange} required>
                         {options.tray_no.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                       </select>
@@ -340,13 +371,16 @@ export default function PitStatusForm() {
                 {/* Conditional Section 3: Aeration Process */}
                 {formData.org_status === '3' && (
                   <div className="row border-top pt-3 mt-2">
-                    <div className="col-md-3 mb-3">
-                      <label htmlFor="method">Method</label>
-                      <select id="method" name="method" className="form-control"
-                        value={formData.method} onChange={handleChange} required>
-                        <option value="">Select Method</option>
-                        {options.method.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                      </select>
+                    <div className="col-12 col-md-3">
+                      <Select
+                        label="Method"
+                        name="method"
+                        value={formData.method}
+                        onChange={handleChange}
+                        options={options.method}
+                        placeholder="Select Method"
+                        required
+                      />
                     </div>
                   </div>
                 )}
@@ -354,30 +388,31 @@ export default function PitStatusForm() {
                 {/* Conditional Section 4: Measurement */}
                 {formData.org_status === '4' && (
                   <div className="row border-top pt-3 mt-2">
-                    <div className="col-md-3 mb-3">
-                      <label htmlFor="measure_time">Measurement Time</label>
-                      <select id="measure_time" name="measure_time" className="form-control"
-                        value={formData.measure_time} onChange={handleChange} required>
-                        <option value="">Select Time</option>
-                        {options.measure_time.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                      </select>
+                    <div className="col-12 col-md-3">
+                      <Select
+                        label="Measurement Time"
+                        name="measure_time"
+                        value={formData.measure_time}
+                        onChange={handleChange}
+                        options={options.measure_time}
+                        placeholder="Select Time"
+                        required
+                      />
                     </div>
-                    <div className="col-md-4 mb-3">
-                      <label htmlFor="tempstart">Temperature(°c)</label>
-                      <input type="number" step="0.01" id="tempstart" name="tempstart" className="form-control mb-1" placeholder="Start"
+                    <div className="col-12 col-md-4">
+                      <TextInput type="number" step="0.01" label="Temperature(°c)" name="tempstart" className="mb-1" placeholder="Start"
                         value={formData.tempstart} onChange={handleChange} required />
-                      <input type="number" step="0.01" id="tempmid" name="tempmid" className="form-control mb-1" placeholder="Mid"
+                      <TextInput type="number" step="0.01" name="tempmid" className="mb-1" placeholder="Mid"
                         value={formData.tempmid} onChange={handleChange} required />
-                      <input type="number" step="0.01" id="tempend" name="tempend" className="form-control" placeholder="End"
+                      <TextInput type="number" step="0.01" name="tempend" placeholder="End"
                         value={formData.tempend} onChange={handleChange} required />
                     </div>
-                    <div className="col-md-4 mb-3">
-                      <label htmlFor="humistart">Humidity(%)</label>
-                      <input type="number" step="0.01" id="humistart" name="humistart" className="form-control mb-1" placeholder="Start"
+                    <div className="col-12 col-md-4">
+                      <TextInput type="number" step="0.01" label="Humidity(%)" name="humistart" className="mb-1" placeholder="Start"
                         value={formData.humistart} onChange={handleChange} required />
-                      <input type="number" step="0.01" id="humimid" name="humimid" className="form-control mb-1" placeholder="Mid"
+                      <TextInput type="number" step="0.01" name="humimid" className="mb-1" placeholder="Mid"
                         value={formData.humimid} onChange={handleChange} required />
-                      <input type="number" step="0.01" id="humiend" name="humiend" className="form-control" placeholder="End"
+                      <TextInput type="number" step="0.01" name="humiend" placeholder="End"
                         value={formData.humiend} onChange={handleChange} required />
                     </div>
                   </div>
@@ -386,18 +421,27 @@ export default function PitStatusForm() {
                 {/* Conditional Section 5: Harvesting */}
                 {formData.org_status === '5' && (
                   <div className="row border-top pt-3 mt-2">
-                    <div className="col-md-3 mb-3">
-                      <label htmlFor="larvae_qty">Qty of Live Larvae(kg)</label>
-                      <input type="number" step="0.01" id="larvae_qty" name="larvae_qty" className="form-control"
-                        value={formData.larvae_qty} onChange={handleChange} required />
+                    <div className="col-12 col-md-3">
+                      <TextInput
+                        type="number"
+                        step="0.01"
+                        label="Qty of Live Larvae(kg)"
+                        name="larvae_qty"
+                        value={formData.larvae_qty}
+                        onChange={handleChange}
+                        required
+                      />
                     </div>
-                    <div className="col-md-3 mb-3">
-                      <label htmlFor="harvest_comp">Harvest Status</label>
-                      <select id="harvest_comp" name="harvest_comp" className="form-control"
-                        value={formData.harvest_comp} onChange={handleChange} required>
-                        <option value="">Select Status</option>
-                        {options.harvest_comp.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                      </select>
+                    <div className="col-12 col-md-3">
+                      <Select
+                        label="Harvest Status"
+                        name="harvest_comp"
+                        value={formData.harvest_comp}
+                        onChange={handleChange}
+                        options={options.harvest_comp}
+                        placeholder="Select Status"
+                        required
+                      />
                     </div>
                   </div>
                 )}
@@ -405,22 +449,28 @@ export default function PitStatusForm() {
                 {/* Conditional Section 7: Tippi */}
                 {formData.org_status === '7' && (
                   <div className="row border-top pt-3 mt-2">
-                    <div className="col-md-3 mb-3">
-                      <label htmlFor="tippi_qty">Qty(Kg)</label>
-                      <input type="number" step="0.01" id="tippi_qty" name="tippi_qty" className="form-control"
-                        value={formData.tippi_qty} onChange={handleChange} required />
+                    <div className="col-12 col-md-3">
+                      <TextInput
+                        type="number"
+                        step="0.01"
+                        label="Qty(Kg)"
+                        name="tippi_qty"
+                        value={formData.tippi_qty}
+                        onChange={handleChange}
+                        required
+                      />
                     </div>
                   </div>
                 )}
 
                 <div className="row mt-2">
                   <div className="col-12 text-end mt-3">
-                    <button type="button" onClick={() => navigate('/pit_status/list')} className="btn btn-danger me-2">
+                    <Button variant="danger" className="me-2" onClick={() => navigate('/pit_status/list')}>
                       Cancel
-                    </button>
-                    <button type="submit" className="btn btn-success" disabled={isLoading}>
+                    </Button>
+                    <Button type="submit" disabled={isLoading}>
                       {isLoading ? 'Saving...' : unique_id ? 'Update' : 'Save'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </form>

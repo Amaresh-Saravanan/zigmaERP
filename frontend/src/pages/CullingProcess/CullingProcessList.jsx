@@ -90,19 +90,19 @@ export default function CullingProcessList() {
                 />
               </div>
               <div className="col-md-2">
-                <select name="shift_type" className="form-control form-control-sm" value={filters.shift_type} onChange={handleFilterChange}>
+                <select name="shift_type" className="form-select form-select-sm" value={filters.shift_type} onChange={handleFilterChange}>
                   <option value="">All Shifts</option>
                   {SHIFT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
               <div className="col-md-2">
-                <select name="cylinder_type" className="form-control form-control-sm" value={filters.cylinder_type} onChange={handleFilterChange}>
+                <select name="cylinder_type" className="form-select form-select-sm" value={filters.cylinder_type} onChange={handleFilterChange}>
                   <option value="">All Cylinders</option>
                   {CYLINDER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
               <div className="col-md-2">
-                <select name="work_done" className="form-control form-control-sm" value={filters.work_done} onChange={handleFilterChange}>
+                <select name="work_done" className="form-select form-select-sm" value={filters.work_done} onChange={handleFilterChange}>
                   <option value="">All Work Done</option>
                   {WORK_DONE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>

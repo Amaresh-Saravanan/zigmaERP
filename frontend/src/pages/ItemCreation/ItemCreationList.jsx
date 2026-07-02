@@ -40,7 +40,7 @@ export default function ItemCreationList() {
       <div className="row">
         <div className="col-12 col-sm-6 col-md-3 col-lg-2 mb-3">
           <label htmlFor="is_active">Active Status </label>
-          <select name="active_status" id="active_status" className="form-control" required>
+          <select name="active_status" id="active_status" className="form-select" required>
             <option value="">Select Status Type</option>
             <option value="all">All</option>
             <option value="1">Active</option>

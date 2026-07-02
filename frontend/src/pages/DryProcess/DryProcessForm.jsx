@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
+import TextInput from '../../components/TextInput';
+import Select from '../../components/Select';
+import FileInput from '../../components/FileInput';
+import Button from '../../components/Button';
 
 const TYPE_OPTIONS = [{ value: '1', label: 'Input' }, { value: '2', label: 'Output' }];
 const METHOD_OPTIONS = [{ value: '1', label: 'Solar' }, { value: '2', label: 'Electric' }];
@@ -112,58 +116,84 @@ export default function DryProcessForm() {
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="entry_date">Date</label>
-                    <input type="datetime-local" id="entry_date" name="entry_date" className="form-control"
-                      value={formData.entry_date} onChange={handleChange} required />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      type="datetime-local"
+                      label="Date"
+                      name="entry_date"
+                      value={formData.entry_date}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="type">Type</label>
-                    <select id="type" name="type" className="form-control"
-                      value={formData.type} onChange={handleChange} required>
-                      {TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
+                  <div className="col-12 col-md-3">
+                    <Select
+                      label="Type"
+                      name="type"
+                      value={formData.type}
+                      onChange={handleChange}
+                      options={TYPE_OPTIONS}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="drying_method">Drying Method</label>
-                    <select id="drying_method" name="drying_method" className="form-control"
-                      value={formData.drying_method} onChange={handleChange} required>
-                      {METHOD_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
+                  <div className="col-12 col-md-3">
+                    <Select
+                      label="Drying Method"
+                      name="drying_method"
+                      value={formData.drying_method}
+                      onChange={handleChange}
+                      options={METHOD_OPTIONS}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="quantity">Quantity(kg)</label>
-                    <input type="number" step="0.01" min="1" id="quantity" name="quantity" className="form-control"
-                      value={formData.quantity} onChange={handleChange} required />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      type="number"
+                      step="0.01"
+                      min="1"
+                      label="Quantity(kg)"
+                      name="quantity"
+                      value={formData.quantity}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
 
                   {showQtyManure && (
-                    <div className="col-md-3 mb-3">
-                      <label htmlFor="qty_manure">Qty Manure</label>
-                      <input type="number" step="0.01" id="qty_manure" name="qty_manure" className="form-control"
-                        value={formData.qty_manure} onChange={handleChange} />
+                    <div className="col-12 col-md-3">
+                      <TextInput
+                        type="number"
+                        step="0.01"
+                        label="Qty Manure"
+                        name="qty_manure"
+                        value={formData.qty_manure}
+                        onChange={handleChange}
+                      />
                     </div>
                   )}
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="test_file">Image Upload</label>
-                    <input type="file" id="test_file" className="form-control" multiple
+                  <div className="col-12 col-md-3">
+                    <FileInput
+                      label="Image Upload"
+                      name="test_file"
+                      multiple
                       accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"
-                      onChange={e => setFiles(Array.from(e.target.files))} />
+                      onFilesChange={(fl) => setFiles(Array.from(fl))}
+                    />
                   </div>
                 </div>
 
                 <div className="row mt-2">
                   <div className="col-12 text-end mt-3">
-                    <button type="button" onClick={() => navigate('/dry_process/list')} className="btn btn-danger me-2">
+                    <Button variant="danger" className="me-2" onClick={() => navigate('/dry_process/list')}>
                       Cancel
-                    </button>
-                    <button type="submit" className="btn btn-success" disabled={isLoading}>
+                    </Button>
+                    <Button type="submit" disabled={isLoading}>
                       {isLoading ? 'Saving...' : unique_id ? 'Update' : 'Save'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </form>

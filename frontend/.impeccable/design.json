@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-02T00:00:00.000Z",
+  "title": "Design System: Zigfly ERP",
+  "extensions": {
+    "colorMeta": {
+      "primary-green": { "role": "primary", "displayName": "Zigfly Green", "canonical": "#25a96b", "tonalRamp": ["#0d2117", "#12331f", "#197a4c", "#1e8f5a", "#25a96b", "#3fbd82", "#5fd4a0", "#a8ecc7"] },
+      "danger-coral": { "role": "error", "displayName": "Error Coral", "canonical": "#f06548", "tonalRamp": ["#3a1710", "#5c2418", "#8a3624", "#c14c34", "#f06548", "#f38b73", "#f7ac9c", "#fbd4c9"] },
+      "neutral-bg-dark": { "role": "neutral", "displayName": "Void", "canonical": "#0d1117" },
+      "neutral-surface-dark": { "role": "neutral", "displayName": "Panel", "canonical": "#161b22" },
+      "neutral-surface-raised-dark": { "role": "neutral", "displayName": "Raised Panel", "canonical": "#1c2128" }
+    },
+    "typographyMeta": {
+      "title": { "displayName": "Title", "purpose": "Card headers and section titles." },
+      "body": { "displayName": "Body", "purpose": "General UI copy, table cells." },
+      "label": { "displayName": "Label", "purpose": "Form field labels, uniform across every form." }
+    },
+    "shadows": [
+      { "name": "dropdown-shadow", "value": "0 8px 24px rgba(0, 0, 0, 0.4)", "purpose": "Vertical menu dropdown submenus that float above the page." },
+      { "name": "focus-ring-primary", "value": "0 0 0 3px rgba(37, 169, 107, 0.25)", "purpose": "Button/input focus and hover feedback." },
+      { "name": "focus-ring-error", "value": "0 0 0 3px rgba(240, 101, 72, 0.15)", "purpose": "Invalid form field feedback." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "0.15s ease", "purpose": "Background, border-color, box-shadow transitions on buttons and inputs." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "575.98px" },
+      { "name": "tablet", "value": "991.98px" },
+      { "name": "desktop", "value": "992px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Save/update/confirm action across every form.",
+      "html": "<button class=\"ds-btn-primary\">Save</button>",
+      "css": ".ds-btn-primary { background: #25a96b; color: #ffffff; font-size: 0.85rem; font-weight: 500; padding: 8px 20px; border-radius: 6px; border: 1px solid #25a96b; transition: background 0.15s, border-color 0.15s, box-shadow 0.15s; } .ds-btn-primary:hover, .ds-btn-primary:focus { background: #1e8f5a; border-color: #1e8f5a; box-shadow: 0 0 0 3px rgba(37, 169, 107, 0.25); } .ds-btn-primary:active { background: #197a4c; border-color: #197a4c; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Cancel/delete action, paired with Primary Button in form action rows.",
+      "html": "<button class=\"ds-btn-danger\">Cancel</button>",
+      "css": ".ds-btn-danger { background: #f06548; color: #ffffff; font-size: 0.85rem; font-weight: 500; padding: 8px 20px; border-radius: 6px; border: 1px solid #f06548; transition: background 0.15s, border-color 0.15s; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "Default form field, dark-mode styling with green focus ring and validation states.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Enter value\" />",
+      "css": ".ds-input { background: #0d1117; color: #c9d1d9; border: 1px solid #30363d; border-radius: 6px; padding: 8px 12px; font-size: 0.85rem; transition: border-color 0.15s, box-shadow 0.15s; } .ds-input:focus { outline: none; border-color: #25a96b; box-shadow: 0 0 0 3px rgba(37, 169, 107, 0.25); } .ds-input.is-invalid { border-color: #f06548; box-shadow: 0 0 0 3px rgba(240, 101, 72, 0.15); } .ds-input.is-valid { border-color: #25a96b; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Standard content container used across all list and form pages.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-header\"><h5>Card Title</h5></div><div class=\"ds-card-body\">Content</div></div>",
+      "css": ".ds-card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; } .ds-card-header { padding: 16px 20px 12px; border-bottom: 1px solid #30363d; } .ds-card-header h5 { font-size: 0.95rem; font-weight: 600; color: #e6edf3; margin: 0; } .ds-card-body { padding: 20px; }"
+    },
+    {
+      "name": "Sidebar Nav Item",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Vertical menu item with the active-state green signal.",
+      "html": "<a class=\"ds-nav-item ds-nav-item--active\" href=\"#\">Dashboard</a>",
+      "css": ".ds-nav-item { display: block; padding: 8px 16px; color: #8b949e; font-size: 0.85rem; font-weight: 500; border-radius: 6px; transition: color 0.15s, background 0.15s; } .ds-nav-item:hover { color: #e6edf3; } .ds-nav-item--active { color: #25a96b; background: rgba(37, 169, 107, 0.14); }"
+    },
+    {
+      "name": "Status Badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "Micro-label used for status/state indicators in data tables.",
+      "html": "<span class=\"ds-badge ds-badge--success\">Active</span>",
+      "css": ".ds-badge { display: inline-block; padding: 2px 8px; font-size: 0.68rem; font-weight: 700; border-radius: 4px; } .ds-badge--success { background: rgba(37, 169, 107, 0.12); color: #5fd4a0; } .ds-badge--error { background: rgba(240, 101, 72, 0.12); color: #f06548; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Focused Control Room",
+    "overview": "Zigfly ERP is an operations platform for teams running manufacturing and processing workflows — units, suppliers, screening, egg process, culling, drying, status tracking. The interface exists to give operators, admins, and managers a fast, trustworthy read on where things stand, without demanding they wade through noise to find it. Design decisions optimize for a person mid-task: entering data, checking a status, approving a step, and moving to the next screen.\n\nThe visual language borrows the calm, developer-familiar structure of a GitHub-dark workspace — deep charcoal surfaces, restrained borders, quiet neutral text — and marks it as Zigfly's own with a single green (#25a96b) that appears everywhere something is active, successful, or primary. This is not a decorative dark mode; it's a working environment built for long sessions and quick scanning, where the eye should always find state (active menu item, valid field, primary action) through one consistent color signal rather than hunting across a busy palette.\n\nThis system explicitly rejects the generic, checkbox-list admin panel: rows of identical gray cards with no hierarchy, dashboards for the sake of having a dashboard, decorative flourishes that don't carry information. Every visual choice earns its place by helping someone finish a task faster or trust the result more.",
+    "keyCharacteristics": [
+      "One accent color (green) carries all \"this is active / correct / primary\" meaning across menus, buttons, links, and validation",
+      "Dark-first design (GitHub-dark inspired) with a light mode maintained for auth/login screens",
+      "Compact, information-dense typography (0.8–0.95rem) sized for data-heavy screens, not marketing display type",
+      "Subtle, functional elevation — borders and tonal shifts do more work than shadows"
+    ],
+    "rules": [
+      { "name": "The One Signal Rule", "body": "Green means active, correct, or primary — nowhere else. If an element isn't one of those three things, it does not get green.", "section": "colors" },
+      { "name": "The Error Is Coral, Nothing Else Is Rule", "body": "#f06548 is reserved exclusively for invalid states and destructive actions. Never use it decoratively.", "section": "colors" },
+      { "name": "The One Family Rule", "body": "Poppins carries every text role. There is no serif or mono counterpoint — this is a working tool, not an editorial surface.", "section": "typography" },
+      { "name": "The Tonal-Not-Cast Rule", "body": "Depth is expressed by moving up the neutral ramp (Void → Panel → Raised Panel), not by adding shadow. Reserve shadows for genuinely floating content (dropdowns, menus).", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use Zigfly Green (#25a96b) as the only accent for primary actions, active states, and success — one signal, used consistently.",
+      "Do keep depth tonal: step through Void → Panel → Raised Panel rather than reaching for a drop shadow.",
+      "Do size UI text for density (0.8–0.95rem) — this is a working tool for long sessions, not a marketing surface.",
+      "Do apply the same 3px focus-ring language (green for valid/active, coral for invalid) across every interactive element so feedback stays predictable.",
+      "Do keep card header/body padding consistent across every form and list page (16–20px range) — this uniformity is load-bearing for a system with dozens of near-identical CRUD screens."
+    ],
+    "donts": [
+      "Don't ship a bland, generic admin panel — every gray card grid without hierarchy is the exact failure mode this system exists to avoid.",
+      "Don't introduce a second accent color. If it isn't primary, active, or success, it doesn't get green — and nothing else gets a competing saturated color.",
+      "Don't use coral (#f06548) for anything but errors and destructive actions.",
+      "Don't add decorative shadows or glassmorphism; this system is flat-by-default and tonal.",
+      "Don't pair a second type family with Poppins for \"hierarchy\" — weight and size carry hierarchy here, not a font swap.",
+      "Don't clutter dense data screens with information that doesn't help someone finish their task faster or trust the result more."
+    ]
+  }
+}

@@ -10,7 +10,7 @@ export default function DateInput({
   label,
   required,
   disabled,
-  className = 'form-control',
+  className = 'form-control app-form-control',
   ...rest
 }) {
   const inputRef = useRef(null);
@@ -50,7 +50,7 @@ export default function DateInput({
 
   return (
     <>
-      {label && <label htmlFor={id}>{label}</label>}
+      {label && <label htmlFor={id} className="form-label app-form-label">{label}</label>}
       <input
         ref={inputRef}
         type="text"

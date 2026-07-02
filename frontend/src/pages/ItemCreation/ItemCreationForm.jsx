@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import client from '../../api/client';
+import TextInput from '../../components/TextInput';
+import Select from '../../components/Select';
+import Toggle from '../../components/Toggle';
+import Button from '../../components/Button';
 
 export default function ItemCreationForm() {
   const [searchParams] = useSearchParams();
@@ -117,11 +121,8 @@ export default function ItemCreationForm() {
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
                   <div className="col-12 col-md-6">
-                    <label htmlFor="item_code">Item Code </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="item_code"
+                    <TextInput
+                      label="Item Code"
                       name="item_code"
                       value={formData.item_code}
                       readOnly
@@ -129,11 +130,8 @@ export default function ItemCreationForm() {
                     />
                   </div>
                   <div className="col-12 col-md-6">
-                    <label htmlFor="item_name">Item Name </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="item_name"
+                    <TextInput
+                      label="Item Name"
                       name="item_name"
                       value={formData.item_name}
                       onChange={handleChange}
@@ -143,43 +141,33 @@ export default function ItemCreationForm() {
                 </div>
                 <div className="row">
                   <div className="col-12 col-md-6">
-                    <label htmlFor="unit" className="form-label">Unit </label>
-                    <select
+                    <Select
+                      label="Unit"
                       name="unit"
-                      id="unit"
-                      className="form-control"
                       value={formData.unit}
                       onChange={handleChange}
+                      options={unitOptions}
                       required
-                    >
-                      {unitOptions.map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
+                    />
                   </div>
                   <div className="col-12 col-md-6">
-                    <label htmlFor="active_status">Active Status </label>
-                    <select
+                    <Toggle
+                      label="Active Status"
                       name="active_status"
-                      id="active_status"
-                      className="form-control"
                       value={formData.active_status}
                       onChange={handleChange}
-                      required
-                    >
-                      <option value="1">Active</option>
-                      <option value="0">Inactive</option>
-                    </select>
+                      helperText={formData.active_status === '1' ? 'Active' : 'Inactive'}
+                    />
                   </div>
                 </div>
                 <div className="row mt-2">
                   <div className="col-12 text-end mt-3">
-                    <button type="button" onClick={() => navigate('/item_creation/list')} className="btn btn-danger me-2">
+                    <Button variant="danger" className="me-2" onClick={() => navigate('/item_creation/list')}>
                       Cancel
-                    </button>
-                    <button type="submit" className="btn btn-success" disabled={isLoading}>
+                    </Button>
+                    <Button type="submit" disabled={isLoading}>
                       {isLoading ? 'Saving...' : unique_id ? 'Update' : 'Save'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </form>

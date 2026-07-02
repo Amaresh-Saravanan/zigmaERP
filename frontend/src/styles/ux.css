@@ -29,7 +29,7 @@
   display: inline-block;
   width: 3px;
   height: 18px;
-  background: #25a96b;
+  background: var(--primary-green);
   border-radius: 2px;
   flex-shrink: 0;
 }
@@ -43,8 +43,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #25a96b;
-  border-color: #25a96b;
+  background: var(--primary-green);
+  border-color: var(--primary-green);
   color: #fff;
   white-space: nowrap;
   transition: background 0.15s, box-shadow 0.15s;
@@ -85,7 +85,7 @@
 
 .card-header .form-control-sm:focus,
 .card-header .form-select-sm:focus {
-  border-color: #25a96b;
+  border-color: var(--primary-green);
   box-shadow: 0 0 0 3px rgba(37, 169, 107, 0.15);
 }
 
@@ -161,7 +161,7 @@ span.badge {
 .badge.badge-soft-success,
 .badge-soft-success {
   background: rgba(37, 169, 107, 0.15) !important;
-  color: #25a96b !important;
+  color: var(--primary-green) !important;
   border: 1px solid rgba(37, 169, 107, 0.25);
 }
 
@@ -170,7 +170,7 @@ span.badge {
 .badge.badge-soft-warning,
 .badge-soft-warning {
   background: rgba(247, 184, 75, 0.15) !important;
-  color: #f7b84b !important;
+  color: var(--warning-amber) !important;
   border: 1px solid rgba(247, 184, 75, 0.25);
 }
 
@@ -179,7 +179,7 @@ span.badge {
 .badge.badge-soft-danger,
 .badge-soft-danger {
   background: rgba(240, 101, 72, 0.15) !important;
-  color: #f06548 !important;
+  color: var(--error-coral) !important;
   border: 1px solid rgba(240, 101, 72, 0.25);
 }
 
@@ -188,7 +188,7 @@ span.badge {
 .badge.badge-soft-info,
 .badge-soft-info {
   background: rgba(41, 182, 246, 0.15) !important;
-  color: #29b6f6 !important;
+  color: var(--info-blue) !important;
   border: 1px solid rgba(41, 182, 246, 0.25);
 }
 
@@ -197,7 +197,7 @@ span.badge {
 .badge.badge-soft-primary,
 .badge-soft-primary {
   background: rgba(37, 169, 107, 0.12) !important;
-  color: #5fd4a0 !important;
+  color: var(--primary-green-light) !important;
   border: 1px solid rgba(37, 169, 107, 0.2);
 }
 
@@ -220,7 +220,7 @@ input[type='file'].form-control {
 
 input[type='file'].form-control::-webkit-file-upload-button {
   background: rgba(37, 169, 107, 0.1);
-  color: #25a96b;
+  color: var(--primary-green);
   border: 1px solid rgba(37, 169, 107, 0.3);
   border-radius: 4px;
   padding: 3px 10px;
@@ -243,7 +243,7 @@ input[type='file'].form-control::-webkit-file-upload-button:hover {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: #25a96b;
+  color: var(--primary-green);
   margin: 20px 0 12px;
   padding-bottom: 6px;
   border-bottom: 1px solid rgba(37, 169, 107, 0.2);
@@ -252,7 +252,7 @@ input[type='file'].form-control::-webkit-file-upload-button:hover {
 /* Computed/auto fields — green label hint */
 label[data-computed='true'],
 .label-computed {
-  color: #25a96b;
+  color: var(--primary-green);
   font-size: 0.75rem;
 }
 
@@ -268,29 +268,29 @@ label[data-computed='true']::after,
 .was-validated label::after,
 label.required::after {
   content: ' *';
-  color: #f06548;
+  color: var(--error-coral);
   font-weight: 400;
 }
 
 /* ── 7. Table status cells — color-coded text ── */
 
 /* Pit status type colors (text returned by PHP) */
-td:has(.text-success) { color: #25a96b; }
-td:has(.text-danger)  { color: #f06548; }
-td:has(.text-warning) { color: #f7b84b; }
-td:has(.text-info)    { color: #29b6f6; }
+td:has(.text-success) { color: var(--primary-green); }
+td:has(.text-danger)  { color: var(--error-coral); }
+td:has(.text-warning) { color: var(--warning-amber); }
+td:has(.text-info)    { color: var(--info-blue); }
 
 /* Alternate: target common PHP-returned spans */
-.text-success { color: #25a96b !important; }
-.text-warning { color: #f7b84b !important; }
-.text-danger  { color: #f06548 !important; }
-.text-info    { color: #29b6f6 !important; }
+.text-success { color: var(--primary-green) !important; }
+.text-warning { color: var(--warning-amber) !important; }
+.text-danger  { color: var(--error-coral) !important; }
+.text-info    { color: var(--info-blue) !important; }
 
 /* ── 8. Loading states — consistent ── */
 
 /* Spinner inside card body */
 .card-body .text-center .spinner-border {
-  color: #25a96b !important;
+  color: var(--primary-green) !important;
   width: 28px;
   height: 28px;
   border-width: 2.5px;
@@ -345,7 +345,7 @@ input[type='month'].form-control {
 }
 
 .breadcrumb-trail a:hover {
-  color: #25a96b;
+  color: var(--primary-green);
 }
 
 .breadcrumb-trail .separator {
@@ -399,12 +399,12 @@ input[type='month'].form-control {
 /* Menu item hover state */
 .navbar-menu .nav-link:hover {
   background-color: rgba(37, 169, 107, 0.08);
-  color: #25a96b;
+  color: var(--primary-green);
 }
 
 /* Menu item focus state (keyboard navigation) */
 .navbar-menu .nav-link:focus-visible {
-  outline: 2px solid #25a96b;
+  outline: 2px solid var(--primary-green);
   outline-offset: -2px;
   background-color: rgba(37, 169, 107, 0.1);
 }
@@ -412,8 +412,8 @@ input[type='month'].form-control {
 /* Active menu item — strong visual indicator */
 .navbar-menu .nav-link.active {
   background-color: rgba(37, 169, 107, 0.15);
-  color: #25a96b;
-  border-left: 1px solid #25a96b;
+  color: var(--primary-green);
+  border-left: 1px solid var(--primary-green);
   padding-left: 37px;
 }
 
@@ -449,32 +449,32 @@ input[type='month'].form-control {
   content: '•';
   position: absolute;
   left: 20px;
-  color: #25a96b;
+  color: var(--primary-green);
   font-weight: bold;
   font-size: 1.2rem;
   line-height: 1;
 }
 
 [data-bs-theme='dark'] .navbar-menu .nav-sm .nav-link::before {
-  color: #5fd4a0;
+  color: var(--primary-green-light);
 }
 
 /* Submenu item hover */
 .navbar-menu .nav-sm .nav-link:hover {
-  color: #25a96b;
+  color: var(--primary-green);
   background-color: rgba(37, 169, 107, 0.08);
 }
 
 /* Submenu item focus state (keyboard navigation) */
 .navbar-menu .nav-sm .nav-link:focus-visible {
-  outline: 2px solid #25a96b;
+  outline: 2px solid var(--primary-green);
   outline-offset: -2px;
   background-color: rgba(37, 169, 107, 0.1);
 }
 
 /* Submenu item active — no background, just color change */
 .navbar-menu .nav-sm .nav-link.active {
-  color: #25a96b;
+  color: var(--primary-green);
   background-color: transparent;
   border-left: none;
   padding-left: 44px;
@@ -530,7 +530,7 @@ input[type='month'].form-control {
 .btn:focus-visible,
 .form-control:focus-visible,
 .form-select:focus-visible {
-  outline: 2px solid #25a96b;
+  outline: 2px solid var(--primary-green);
   outline-offset: 2px;
 }
 
@@ -545,7 +545,7 @@ select:-moz-focusring {
 /* Native selects — consistent solid border everywhere, no dashed states */
 .form-select {
   border-style: solid;
-  accent-color: #25a96b;
+  accent-color: var(--primary-green);
 }
 
 /* ── 13b. Pipeline position bar (ScreeningProcessForm) ── */
@@ -571,7 +571,7 @@ select:-moz-focusring {
 }
 
 .pipeline-stage--active {
-  color: #25a96b;
+  color: var(--primary-green);
   font-weight: 700;
 }
 
@@ -579,7 +579,7 @@ select:-moz-focusring {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #25a96b;
+  background: var(--primary-green);
   display: inline-block;
   animation: pulseRing 2s ease-out infinite;
 }
@@ -641,24 +641,24 @@ select:-moz-focusring {
 }
 
 .form-step__connector--done {
-  background: #25a96b;
+  background: var(--primary-green);
 }
 
 /* Active step */
 .form-step--active .form-step__badge {
-  border-color: #25a96b;
+  border-color: var(--primary-green);
   background: rgba(37, 169, 107, 0.12);
-  color: #25a96b;
+  color: var(--primary-green);
 }
 .form-step--active .form-step__label {
-  color: #25a96b;
+  color: var(--primary-green);
   font-weight: 600;
 }
 
 /* Done step */
 .form-step--done .form-step__badge {
-  border-color: #25a96b;
-  background: #25a96b;
+  border-color: var(--primary-green);
+  background: var(--primary-green);
   color: #fff;
 }
 .form-step--done .form-step__label {
@@ -785,7 +785,7 @@ select:-moz-focusring {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  border: 2px solid #25a96b;
+  border: 2px solid var(--primary-green);
   background: var(--vz-body-bg, #fff);
   flex-shrink: 0;
 }
@@ -842,7 +842,7 @@ select:-moz-focusring {
 
 .lh-session__worked strong {
   font-family: 'IBM Plex Mono', monospace;
-  color: #25a96b;
+  color: var(--primary-green);
   font-size: 0.78rem;
 }
 
@@ -867,7 +867,7 @@ select:-moz-focusring {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 1rem;
   font-weight: 700;
-  color: #25a96b;
+  color: var(--primary-green);
 }
 
 /* ── 17. Smooth page load ── */
@@ -929,7 +929,7 @@ a:focus-visible,
 button:focus-visible,
 [role='button']:focus-visible,
 .nav-link:focus-visible {
-  outline: 2px solid #25a96b;
+  outline: 2px solid var(--primary-green);
   outline-offset: 2px;
   border-radius: 3px;
 }

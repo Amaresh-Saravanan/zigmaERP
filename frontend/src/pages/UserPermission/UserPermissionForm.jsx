@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
+import Select from '../../components/Select';
+import Button from '../../components/Button';
 
 export default function UserPermissionForm() {
   const [searchParams] = useSearchParams();
@@ -186,41 +188,27 @@ export default function UserPermissionForm() {
           <div className="card-body">
             <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
               <div className="row mb-3">
-                <div className="col-4">
-                  <label htmlFor="user_type" className="col-form-label">User Type</label>
-                  <select
-                    className="form-control"
-                    id="user_type"
+                <div className="col-12 col-md-4">
+                  <Select
+                    label="User Type"
                     name="user_type"
                     value={formData.user_type}
                     onChange={handleChange}
+                    options={userTypeOptions}
                     disabled={!!unique_id}
                     required
-                  >
-                    {userTypeOptions.map((opt, i) => (
-                      <option key={i} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
 
-                <div className="col-4">
-                  <label htmlFor="main_screen" className="col-form-label">Main Screen</label>
-                  <select
-                    className="form-control"
-                    id="main_screen"
+                <div className="col-12 col-md-4">
+                  <Select
+                    label="Main Screen"
                     name="main_screen"
                     value={formData.main_screen}
                     onChange={handleChange}
+                    options={mainScreenOptions}
                     required
-                  >
-                    {mainScreenOptions.map((opt, i) => (
-                      <option key={i} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 </div>
               </div>
 
@@ -233,12 +221,12 @@ export default function UserPermissionForm() {
               
               <div className="row mt-4">
                 <div className="col-12 text-end mt-3">
-                  <button type="button" onClick={() => navigate('/user_permission/list')} className="btn btn-danger me-2">
+                  <Button variant="danger" className="me-2" onClick={() => navigate('/user_permission/list')}>
                     Cancel
-                  </button>
-                  <button type="submit" className="btn btn-success" disabled={isLoading || !permUiHtml}>
+                  </Button>
+                  <Button type="submit" disabled={isLoading || !permUiHtml}>
                     {isLoading ? 'Saving...' : unique_id ? 'Update' : 'Save'}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </form>

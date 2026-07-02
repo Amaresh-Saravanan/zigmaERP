@@ -81,13 +81,13 @@ export default function DryProcessList() {
                 />
               </div>
               <div className="col-md-2">
-                <select name="type" className="form-control form-control-sm" value={filters.type} onChange={handleFilterChange}>
+                <select name="type" className="form-select form-select-sm" value={filters.type} onChange={handleFilterChange}>
                   <option value="">All Types</option>
                   {TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
               <div className="col-md-2">
-                <select name="drying_method" className="form-control form-control-sm" value={filters.drying_method} onChange={handleFilterChange}>
+                <select name="drying_method" className="form-select form-select-sm" value={filters.drying_method} onChange={handleFilterChange}>
                   <option value="">All Drying Methods</option>
                   {METHOD_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>

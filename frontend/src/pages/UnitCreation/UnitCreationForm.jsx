@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import client from '../../api/client';
+import TextInput from '../../components/TextInput';
+import Toggle from '../../components/Toggle';
+import Button from '../../components/Button';
 
 export default function UnitCreationForm() {
   const [searchParams] = useSearchParams();
@@ -97,41 +100,33 @@ export default function UnitCreationForm() {
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
-                  <div className="col-4 mb-3">
-                    <label htmlFor="unit_name">Unit Name</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="unit_name"
+                  <div className="col-12 col-md-4">
+                    <TextInput
+                      label="Unit Name"
                       name="unit_name"
                       value={formData.unit_name}
                       onChange={handleChange}
                       required
                     />
                   </div>
-                  <div className="col-4 mb-3">
-                    <label htmlFor="active_status">Active Status</label>
-                    <select
+                  <div className="col-12 col-md-4">
+                    <Toggle
+                      label="Active Status"
                       name="active_status"
-                      id="active_status"
-                      className="form-control"
                       value={formData.active_status}
                       onChange={handleChange}
-                      required
-                    >
-                      <option value="1">Active</option>
-                      <option value="0">Inactive</option>
-                    </select>
+                      helperText={formData.active_status === '1' ? 'Active' : 'Inactive'}
+                    />
                   </div>
                 </div>
                 <div className="row mt-2">
                   <div className="col-12 text-end mt-3">
-                    <button type="button" onClick={() => navigate('/unit_creation/list')} className="btn btn-danger me-2">
+                    <Button variant="danger" className="me-2" onClick={() => navigate('/unit_creation/list')}>
                       Cancel
-                    </button>
-                    <button type="submit" className="btn btn-success" disabled={isLoading}>
+                    </Button>
+                    <Button type="submit" disabled={isLoading}>
                       {isLoading ? 'Saving...' : unique_id ? 'Update' : 'Save'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </form>

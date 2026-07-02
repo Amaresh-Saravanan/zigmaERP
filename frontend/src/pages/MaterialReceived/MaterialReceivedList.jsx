@@ -104,13 +104,13 @@ export default function MaterialReceivedList() {
                 />
               </div>
               <div className="col-md-3">
-                <select name="supplier_name" className="form-control form-control-sm" value={filters.supplier_name} onChange={handleFilterChange}>
+                <select name="supplier_name" className="form-select form-select-sm" value={filters.supplier_name} onChange={handleFilterChange}>
                   <option value="">All Suppliers</option>
                   {supplierOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
               <div className="col-md-3">
-                <select name="item_name" className="form-control form-control-sm" value={filters.item_name} onChange={handleFilterChange}>
+                <select name="item_name" className="form-select form-select-sm" value={filters.item_name} onChange={handleFilterChange}>
                   <option value="">All Items</option>
                   {itemOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>

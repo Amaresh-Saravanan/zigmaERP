@@ -3,6 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
 import DateInput from '../../components/DateInput';
 import useAuth from '../../hooks/useAuth';
+import TextInput from '../../components/TextInput';
+import Select from '../../components/Select';
+import FileInput from '../../components/FileInput';
+import Button from '../../components/Button';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -152,7 +156,7 @@ export default function StatusUpdateForm() {
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
-                  <div className="col-md-3 mb-3">
+                  <div className="col-12 col-md-3">
                     <DateInput
                       id="entry_date"
                       name="entry_date"
@@ -164,21 +168,27 @@ export default function StatusUpdateForm() {
                     />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="batch_id">Batch Id</label>
-                    <select id="batch_id" name="batch_id" className="form-control"
-                      value={formData.batch_id} onChange={handleChange} required>
-                      {batchOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
+                  <div className="col-12 col-md-3">
+                    <Select
+                      label="Batch Id"
+                      name="batch_id"
+                      value={formData.batch_id}
+                      onChange={handleChange}
+                      options={batchOptions}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="entry_no">Entry No</label>
-                    <input type="text" id="entry_no" name="entry_no" className="form-control"
-                      value={formData.entry_no} readOnly />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      label="Entry No"
+                      name="entry_no"
+                      value={formData.entry_no}
+                      readOnly
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
+                  <div className="col-12 col-md-3">
                     <DateInput
                       id="starting_day"
                       name="starting_day"
@@ -188,42 +198,54 @@ export default function StatusUpdateForm() {
                     />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="day">Day</label>
-                    <input type="text" id="day" name="day" className="form-control"
-                      value={formData.day} readOnly />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      label="Day"
+                      name="day"
+                      value={formData.day}
+                      readOnly
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="hatching_status">Hatching Status</label>
-                    <select id="hatching_status" name="hatching_status" className="form-control"
-                      value={formData.hatching_status} onChange={handleChange} required>
-                      {HATCHING_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
+                  <div className="col-12 col-md-3">
+                    <Select
+                      label="Hatching Status"
+                      name="hatching_status"
+                      value={formData.hatching_status}
+                      onChange={handleChange}
+                      options={HATCHING_OPTIONS}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="test_file">Egg process Image Upload</label>
-                    <input type="file" id="test_file" className="form-control" multiple
+                  <div className="col-12 col-md-3">
+                    <FileInput
+                      label="Egg process Image Upload"
+                      name="test_file"
+                      multiple
                       accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"
-                      onChange={e => setFiles(Array.from(e.target.files))} />
+                      onFilesChange={(fl) => setFiles(Array.from(fl))}
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="remarks">Remarks</label>
-                    <input type="text" id="remarks" name="remarks" className="form-control"
-                      value={formData.remarks} onChange={handleChange} />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      label="Remarks"
+                      name="remarks"
+                      value={formData.remarks}
+                      onChange={handleChange}
+                    />
                   </div>
                 </div>
 
                 <div className="row mt-2">
                   <div className="col-12 text-end mt-3">
-                    <button type="button" onClick={() => navigate('/status_update/list')} className="btn btn-danger me-2">
+                    <Button variant="danger" className="me-2" onClick={() => navigate('/status_update/list')}>
                       Cancel
-                    </button>
-                    <button type="submit" className="btn btn-success" disabled={isLoading}>
+                    </Button>
+                    <Button type="submit" disabled={isLoading}>
                       {isLoading ? 'Saving...' : unique_id ? 'Update' : 'Save'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </form>

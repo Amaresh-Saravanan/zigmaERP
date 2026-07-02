@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
+import TextInput from '../../components/TextInput';
+import Select from '../../components/Select';
+import Toggle from '../../components/Toggle';
+import Button from '../../components/Button';
 
 export default function TrayCreationForm() {
   const [searchParams] = useSearchParams();
@@ -109,27 +113,19 @@ export default function TrayCreationForm() {
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
-                  <div className="col-4 mb-3">
-                    <label htmlFor="tray_type">Type </label>
-                    <select
+                  <div className="col-12 col-md-4">
+                    <Select
+                      label="Type"
                       name="tray_type"
-                      id="tray_type"
-                      className="form-control"
                       value={formData.tray_type}
                       onChange={handleChange}
+                      options={trayTypeOptions}
                       required
-                    >
-                      {trayTypeOptions.map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
+                    />
                   </div>
-                  <div className="col-4 mb-3">
-                    <label htmlFor="bin_name">Tray Name</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="bin_name"
+                  <div className="col-12 col-md-4">
+                    <TextInput
+                      label="Tray Name"
                       name="bin_name"
                       value={formData.bin_name}
                       onChange={handleChange}
@@ -137,29 +133,24 @@ export default function TrayCreationForm() {
                       required
                     />
                   </div>
-                  <div className="col-4 mb-3">
-                    <label htmlFor="active_status">Status </label>
-                    <select
+                  <div className="col-12 col-md-4">
+                    <Toggle
+                      label="Status"
                       name="active_status"
-                      id="active_status"
-                      className="form-control"
                       value={formData.active_status}
                       onChange={handleChange}
-                      required
-                    >
-                      <option value="1">Active</option>
-                      <option value="0">Inactive</option>
-                    </select>
+                      helperText={formData.active_status === '1' ? 'Active' : 'Inactive'}
+                    />
                   </div>
                 </div>
                 <div className="row mt-2">
                   <div className="col-12 text-end mt-3">
-                    <button type="button" onClick={() => navigate('/tray_creation/list')} className="btn btn-danger me-2">
+                    <Button variant="danger" className="me-2" onClick={() => navigate('/tray_creation/list')}>
                       Cancel
-                    </button>
-                    <button type="submit" className="btn btn-success" disabled={isLoading}>
+                    </Button>
+                    <Button type="submit" disabled={isLoading}>
                       {isLoading ? 'Saving...' : unique_id ? 'Update' : 'Save'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </form>

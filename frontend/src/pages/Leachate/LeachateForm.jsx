@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
 import DateInput from '../../components/DateInput';
+import TextInput from '../../components/TextInput';
+import FileInput from '../../components/FileInput';
+import Button from '../../components/Button';
 
 const now = new Date();
 const pad = (n) => n.toString().padStart(2, '0');
@@ -94,7 +97,7 @@ export default function LeachateForm() {
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
-                  <div className="col-md-3 mb-3">
+                  <div className="col-12 col-md-3">
                     <DateInput
                       id="entry_date"
                       name="entry_date"
@@ -105,34 +108,47 @@ export default function LeachateForm() {
                     />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="qty_leachate">Qty Leachate(L)</label>
-                    <input type="number" step="0.01" id="qty_leachate" name="qty_leachate" className="form-control"
-                      value={formData.qty_leachate} onChange={handleChange} required />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      type="number"
+                      step="0.01"
+                      label="Qty Leachate(L)"
+                      name="qty_leachate"
+                      value={formData.qty_leachate}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="test_file">Bill Copy</label>
-                    <input type="file" id="test_file" className="form-control" multiple
+                  <div className="col-12 col-md-3">
+                    <FileInput
+                      label="Bill Copy"
+                      name="test_file"
+                      multiple
                       accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"
-                      onChange={e => setFiles(Array.from(e.target.files))} required={!unique_id} />
+                      onFilesChange={(fl) => setFiles(Array.from(fl))}
+                      required={!unique_id}
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="remarks">Remarks</label>
-                    <input type="text" id="remarks" name="remarks" className="form-control"
-                      value={formData.remarks} onChange={handleChange} />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      label="Remarks"
+                      name="remarks"
+                      value={formData.remarks}
+                      onChange={handleChange}
+                    />
                   </div>
                 </div>
 
                 <div className="row mt-2">
                   <div className="col-12 text-end mt-3">
-                    <button type="button" onClick={() => navigate('/leachate/list')} className="btn btn-danger me-2">
+                    <Button variant="danger" className="me-2" onClick={() => navigate('/leachate/list')}>
                       Cancel
-                    </button>
-                    <button type="submit" className="btn btn-success" disabled={isLoading}>
+                    </Button>
+                    <Button type="submit" disabled={isLoading}>
                       {isLoading ? 'Saving...' : unique_id ? 'Update' : 'Save'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </form>

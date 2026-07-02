@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
+import TextInput from '../../components/TextInput';
+import Textarea from '../../components/Textarea';
+import Select from '../../components/Select';
+import Toggle from '../../components/Toggle';
+import Button from '../../components/Button';
 
 export default function MainScreenForm() {
   const navigate = useNavigate();
@@ -78,39 +83,68 @@ export default function MainScreenForm() {
           <div className="card-body">
             <form onSubmit={handleSubmit}>
               <div className="row">
-                <div className="col-md-4 mb-3">
-                  <label className="form-label">Screen Type</label>
-                  <select name="screen_type" className="form-select" value={formData.screen_type} onChange={handleChange} required>
-                    {options.screenType.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
+                <div className="col-12 col-md-4">
+                  <Select
+                    label="Screen Type"
+                    name="screen_type"
+                    value={formData.screen_type}
+                    onChange={handleChange}
+                    options={options.screenType}
+                    required
+                  />
                 </div>
-                <div className="col-md-4 mb-3">
-                  <label className="form-label">Screen Name</label>
-                  <input type="text" name="screen_name" className="form-control" value={formData.screen_name} onChange={handleChange} required />
+                <div className="col-12 col-md-4">
+                  <TextInput
+                    label="Screen Name"
+                    name="screen_name"
+                    value={formData.screen_name}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
-                <div className="col-md-4 mb-3">
-                  <label className="form-label">Order No</label>
-                  <input type="number" name="order_no" className="form-control" min="1" value={formData.order_no} onChange={handleChange} required />
+                <div className="col-12 col-md-4">
+                  <TextInput
+                    type="number"
+                    min="1"
+                    label="Order No"
+                    name="order_no"
+                    value={formData.order_no}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
-                <div className="col-md-4 mb-3">
-                  <label className="form-label">Active Status</label>
-                  <select name="active_status" className="form-select" value={formData.active_status} onChange={handleChange} required>
-                    {options.activeStatus.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
+                <div className="col-12 col-md-4">
+                  <Toggle
+                    label="Active Status"
+                    name="active_status"
+                    value={formData.active_status}
+                    onChange={handleChange}
+                    helperText={formData.active_status === '1' ? 'Active' : 'Inactive'}
+                  />
                 </div>
-                <div className="col-md-4 mb-3">
-                  <label className="form-label">Icon Name</label>
-                  <input type="text" name="icon_name" className="form-control" value={formData.icon_name} onChange={handleChange} required />
+                <div className="col-12 col-md-4">
+                  <TextInput
+                    label="Icon Name"
+                    name="icon_name"
+                    value={formData.icon_name}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
-                <div className="col-md-4 mb-3">
-                  <label className="form-label">Description</label>
-                  <textarea name="description" className="form-control" rows="2" value={formData.description} onChange={handleChange}></textarea>
+                <div className="col-12 col-md-4">
+                  <Textarea
+                    label="Description"
+                    name="description"
+                    rows={2}
+                    value={formData.description}
+                    onChange={handleChange}
+                  />
                 </div>
               </div>
               <div className="row mt-3">
                 <div className="col-12 text-end">
-                  <button type="button" className="btn btn-secondary me-2" onClick={() => navigate('/main_screen/list')}>Cancel</button>
-                  <button type="submit" className="btn btn-primary">{unique_id ? 'Update' : 'Save'}</button>
+                  <Button variant="danger" className="me-2" onClick={() => navigate('/main_screen/list')}>Cancel</Button>
+                  <Button type="submit">{unique_id ? 'Update' : 'Save'}</Button>
                 </div>
               </div>
             </form>

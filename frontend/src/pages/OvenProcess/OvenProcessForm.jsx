@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
 import DateInput from '../../components/DateInput';
+import TextInput from '../../components/TextInput';
+import FileInput from '../../components/FileInput';
+import Button from '../../components/Button';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -121,7 +124,7 @@ export default function OvenProcessForm() {
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
 
-                  <div className="col-md-3 mb-3">
+                  <div className="col-12 col-md-3">
                     <DateInput
                       id="entry_date"
                       name="entry_date"
@@ -132,64 +135,109 @@ export default function OvenProcessForm() {
                     />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="starting_time">Start Time</label>
-                    <input type="time" id="starting_time" name="starting_time" className="form-control"
-                      value={formData.starting_time} onChange={handleChange} required />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      type="time"
+                      label="Start Time"
+                      name="starting_time"
+                      value={formData.starting_time}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="closing_time">Close Time</label>
-                    <input type="time" id="closing_time" name="closing_time" className="form-control"
-                      value={formData.closing_time} onChange={handleChange} required />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      type="time"
+                      label="Close Time"
+                      name="closing_time"
+                      value={formData.closing_time}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="running_hours">Total Run Hours</label>
-                    <input type="number" step="0.01" id="running_hours" name="running_hours" className="form-control"
-                      value={formData.running_hours} readOnly required />
-                    <small className="text-muted">Auto-calculated (handles overnight)</small>
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      type="number"
+                      step="0.01"
+                      label="Total Run Hours"
+                      name="running_hours"
+                      value={formData.running_hours}
+                      readOnly
+                      required
+                    >
+                      <small className="text-muted">Auto-calculated (handles overnight)</small>
+                    </TextInput>
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="diesel_topup">Diesel Top Up (Litres)</label>
-                    <input type="number" step="0.01" id="diesel_topup" name="diesel_topup" className="form-control"
-                      value={formData.diesel_topup} onChange={handleChange} required />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      type="number"
+                      step="0.01"
+                      label="Diesel Top Up (Litres)"
+                      name="diesel_topup"
+                      value={formData.diesel_topup}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="raw_larvae_process">Total Raw (Live Larvae) Process (Kg)</label>
-                    <input type="number" step="0.01" id="raw_larvae_process" name="raw_larvae_process" className="form-control"
-                      value={formData.raw_larvae_process} onChange={handleChange} required />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      type="number"
+                      step="0.01"
+                      label="Total Raw (Live Larvae) Process (Kg)"
+                      name="raw_larvae_process"
+                      value={formData.raw_larvae_process}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="dried_larvae_production">Dried Larvae Production (Kg)</label>
-                    <input type="number" step="0.01" id="dried_larvae_production" name="dried_larvae_production" className="form-control"
-                      value={formData.dried_larvae_production} onChange={handleChange} required />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      type="number"
+                      step="0.01"
+                      label="Dried Larvae Production (Kg)"
+                      name="dried_larvae_production"
+                      value={formData.dried_larvae_production}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="dried_larvae_stock">Dried Larvae Stock (Kg)</label>
-                    <input type="number" step="0.01" id="dried_larvae_stock" name="dried_larvae_stock" className="form-control"
-                      value={formData.dried_larvae_stock} onChange={handleChange} required />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      type="number"
+                      step="0.01"
+                      label="Dried Larvae Stock (Kg)"
+                      name="dried_larvae_stock"
+                      value={formData.dried_larvae_stock}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="test_file">Image Upload</label>
-                    <input type="file" id="test_file" className="form-control" multiple accept="image/*"
-                      onChange={e => setFiles(Array.from(e.target.files))} />
+                  <div className="col-12 col-md-3">
+                    <FileInput
+                      label="Image Upload"
+                      name="test_file"
+                      multiple
+                      accept="image/*"
+                      onFilesChange={(fl) => setFiles(Array.from(fl))}
+                    />
                   </div>
                 </div>
 
                 <div className="row mt-2">
                   <div className="col-12 text-end mt-3">
-                    <button type="button" onClick={() => navigate('/oven_process/list')} className="btn btn-danger me-2">
+                    <Button variant="danger" className="me-2" onClick={() => navigate('/oven_process/list')}>
                       Cancel
-                    </button>
-                    <button type="submit" className="btn btn-success" disabled={isLoading}>
+                    </Button>
+                    <Button type="submit" disabled={isLoading}>
                       {isLoading ? 'Saving...' : unique_id ? 'Update' : 'Save'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </form>

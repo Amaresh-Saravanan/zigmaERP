@@ -8,19 +8,19 @@
    1. CSS variable overrides — all dark surfaces + green primary
    ------------------------------------------------------------------ */
 [data-bs-theme='dark']:root {
-  /* Green accent — Zigfly brand */
-  --vz-primary: #25a96b;
+  /* Green accent — Zigfly brand (use global token) */
+  --vz-primary: var(--primary-green);
   --vz-primary-rgb: 37, 169, 107;
-  --vz-primary-text-emphasis: #5fd4a0;
-  --vz-primary-bg-subtle: rgba(37, 169, 107, 0.12);
-  --vz-primary-border-subtle: rgba(37, 169, 107, 0.25);
+  --vz-primary-text-emphasis: var(--primary-green-light);
+  --vz-primary-bg-subtle: var(--primary-green-bg-subtle);
+  --vz-primary-border-subtle: var(--primary-green-border-subtle);
 
   /* Remap success to the same green so badges/charts stay consistent */
-  --vz-success: #25a96b;
+  --vz-success: var(--primary-green);
   --vz-success-rgb: 37, 169, 107;
-  --vz-success-text-emphasis: #5fd4a0;
-  --vz-success-bg-subtle: rgba(37, 169, 107, 0.12);
-  --vz-success-border-subtle: rgba(37, 169, 107, 0.25);
+  --vz-success-text-emphasis: var(--primary-green-light);
+  --vz-success-bg-subtle: var(--primary-green-bg-subtle);
+  --vz-success-border-subtle: var(--primary-green-border-subtle);
 
   /* Page / body */
   --vz-body-bg: #0d1117;
@@ -59,13 +59,13 @@
   --vz-vertical-menu-bg: #161b22;
   --vz-vertical-menu-border: #21262d;
   --vz-vertical-menu-item-color: #8b949e;
-  --vz-vertical-menu-item-bg: rgba(37, 169, 107, 0.12);
+  --vz-vertical-menu-item-bg: var(--primary-green-bg-subtle);
   --vz-vertical-menu-item-hover-color: #e6edf3;
-  --vz-vertical-menu-item-active-color: #25a96b;
-  --vz-vertical-menu-item-active-bg: rgba(37, 169, 107, 0.14);
+  --vz-vertical-menu-item-active-color: var(--primary-green);
+  --vz-vertical-menu-item-active-bg: var(--primary-green-bg-light);
   --vz-vertical-menu-sub-item-color: #8b949e;
   --vz-vertical-menu-sub-item-hover-color: #e6edf3;
-  --vz-vertical-menu-sub-item-active-color: #25a96b;
+  --vz-vertical-menu-sub-item-active-color: var(--primary-green);
   --vz-vertical-menu-title-color: #6e7681;
   --vz-vertical-menu-box-shadow: 0 0 0 1px #21262d;
   --vz-vertical-menu-dropdown-box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
@@ -74,14 +74,14 @@
   --vz-header-bg: #161b22;
   --vz-header-border: #21262d;
   --vz-header-item-color: #c9d1d9;
-  --vz-header-item-bg: rgba(37, 169, 107, 0.1);
+  --vz-header-item-bg: rgba(37, 169, 107, 0.1); /* ponytail: 0.1 variant for header distinction */
   --vz-header-item-sub-color: #8b949e;
   --vz-topbar-search-bg: rgba(13, 17, 23, 0.8);
   --vz-topbar-search-color: #e6edf3;
   --vz-topbar-user-bg: transparent;
 
   /* ---- Links ---- */
-  --vz-link-color: #5fd4a0;
+  --vz-link-color: var(--primary-green-light);
   --vz-link-hover-color: #80e0b5;
 
   /* ---- Footer ---- */
@@ -108,11 +108,11 @@
   --vz-vertical-menu-item-color: #8b949e;
   --vz-vertical-menu-item-bg: rgba(37, 169, 107, 0.12);
   --vz-vertical-menu-item-hover-color: #e6edf3;
-  --vz-vertical-menu-item-active-color: #25a96b;
+  --vz-vertical-menu-item-active-color: var(--primary-green);
   --vz-vertical-menu-item-active-bg: rgba(37, 169, 107, 0.14);
   --vz-vertical-menu-sub-item-color: #8b949e;
   --vz-vertical-menu-sub-item-hover-color: #e6edf3;
-  --vz-vertical-menu-sub-item-active-color: #25a96b;
+  --vz-vertical-menu-sub-item-active-color: var(--primary-green);
   --vz-vertical-menu-title-color: #6e7681;
 }
 
@@ -192,7 +192,7 @@ body,
 
 [data-bs-theme='light'] .navbar-nav .nav-link.menu-link.active,
 [data-bs-theme='light'] .navbar-nav .nav-link.menu-link[aria-expanded='true'] {
-  color: #25a96b;
+  color: var(--primary-green);
   background-color: rgba(37, 169, 107, 0.08);
 }
 
@@ -226,7 +226,7 @@ body,
 
 [data-bs-theme='dark'] .navbar-nav .nav-link.menu-link.active,
 [data-bs-theme='dark'] .navbar-nav .nav-link.menu-link[aria-expanded='true'] {
-  color: #25a96b;
+  color: var(--primary-green);
   background-color: rgba(37, 169, 107, 0.12);
 }
 
@@ -323,7 +323,7 @@ body,
 [data-bs-theme='dark'] .form-control:focus,
 [data-bs-theme='dark'] .form-select:focus {
   background-color: #0d1117;
-  border-color: #25a96b;
+  border-color: var(--primary-green);
   box-shadow: 0 0 0 3px rgba(37, 169, 107, 0.2);
   color: #e6edf3;
 }
@@ -332,15 +332,45 @@ body,
   color: #6e7681;
 }
 
+[data-bs-theme='dark'] .was-validated .form-control:invalid,
+[data-bs-theme='dark'] .was-validated .form-select:invalid {
+  border-color: var(--error-coral);
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2);
+}
+
+[data-bs-theme='dark'] .form-check-input:checked {
+  background-color: var(--primary-green);
+  border-color: var(--primary-green);
+}
+
+/* Shared form components (TextInput, Select, Textarea) — Stitch mockup styling */
+[data-bs-theme='dark'] .app-form-label {
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #8b949e;
+  margin-bottom: 0.4rem;
+}
+
+[data-bs-theme='dark'] .app-form-control {
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+}
+
+[data-bs-theme='dark'] .app-form-control:hover:not(:disabled):not(:focus) {
+  border-color: #545d68;
+}
+
 /* ------------------------------------------------------------------
    9. Buttons — primary green
    ------------------------------------------------------------------ */
 [data-bs-theme='dark'] .btn-primary {
-  --vz-btn-bg: #25a96b;
-  --vz-btn-border-color: #25a96b;
-  --vz-btn-hover-bg: #1e8f5a;
-  --vz-btn-hover-border-color: #1e8f5a;
-  --vz-btn-active-bg: #197a4c;
+  --vz-btn-bg: var(--primary-green);
+  --vz-btn-border-color: var(--primary-green);
+  --vz-btn-hover-bg: var(--primary-green-dark);
+  --vz-btn-hover-border-color: var(--primary-green-dark);
+  --vz-btn-active-bg: var(--primary-green-darker);
   --vz-btn-color: #ffffff;
   --vz-btn-hover-color: #ffffff;
 }
@@ -348,14 +378,14 @@ body,
 [data-bs-theme='dark'] .btn-soft-primary,
 [data-bs-theme='dark'] .btn-subtle-primary {
   background-color: rgba(37, 169, 107, 0.12);
-  color: #25a96b;
+  color: var(--primary-green);
   border-color: transparent;
 }
 
 [data-bs-theme='dark'] .btn-soft-primary:hover,
 [data-bs-theme='dark'] .btn-subtle-primary:hover {
   background-color: rgba(37, 169, 107, 0.2);
-  color: #5fd4a0;
+  color: var(--primary-green-light);
 }
 
 /* ------------------------------------------------------------------
@@ -364,13 +394,13 @@ body,
 [data-bs-theme='dark'] .badge.bg-primary,
 [data-bs-theme='dark'] .badge.badge-soft-primary {
   background-color: rgba(37, 169, 107, 0.15) !important;
-  color: #5fd4a0 !important;
+  color: var(--primary-green-light) !important;
 }
 
 [data-bs-theme='dark'] .badge.bg-success,
 [data-bs-theme='dark'] .badge.badge-soft-success {
   background-color: rgba(37, 169, 107, 0.15) !important;
-  color: #5fd4a0 !important;
+  color: var(--primary-green-light) !important;
 }
 
 /* ------------------------------------------------------------------
@@ -460,7 +490,7 @@ body,
 }
 
 [data-bs-theme='dark'] .swal2-confirm {
-  background-color: #25a96b !important;
+  background-color: var(--primary-green) !important;
 }
 
 [data-bs-theme='dark'] .swal2-cancel {
@@ -477,7 +507,7 @@ body,
 }
 
 [data-theme-mode='dark'] .auth-page-content h5.text-primary {
-  color: #25a96b !important;
+  color: var(--primary-green) !important;
 }
 
 [data-theme-mode='dark'] .auth-page-content p.text-muted {
@@ -489,11 +519,37 @@ body,
 }
 
 /* ------------------------------------------------------------------
-   16. Focus rings
+   16. Focus rings — consolidated across all interactive elements
    ------------------------------------------------------------------ */
+/* Global focus-visible default */
 [data-bs-theme='dark'] :focus-visible {
-  outline: 2px solid #25a96b;
-  outline-offset: 2px;
+  outline: var(--focus-outline-width) solid var(--primary-green);
+  outline-offset: var(--focus-outline-offset);
+}
+
+/* Primary input/button focus — green ring */
+[data-bs-theme='dark'] .form-control:focus,
+[data-bs-theme='dark'] .form-select:focus,
+[data-bs-theme='dark'] .btn:focus,
+[data-bs-theme='dark'] a:focus-visible,
+[data-bs-theme='dark'] button:focus-visible {
+  outline: var(--focus-outline-width) solid var(--primary-green);
+  outline-offset: var(--focus-outline-offset);
+}
+
+/* Invalid/error state focus — coral ring */
+[data-bs-theme='dark'] .form-control:invalid:focus,
+[data-bs-theme='dark'] .form-select:invalid:focus,
+[data-bs-theme='dark'] .was-validated .form-control:invalid:focus {
+  outline: var(--focus-outline-width) solid var(--error-coral);
+  outline-offset: var(--focus-outline-offset);
+}
+
+/* Utility class for consistent focus styling */
+[data-bs-theme='dark'] .focus-visible-ring:focus,
+[data-bs-theme='dark'] .focus-visible-ring:focus-visible {
+  outline: var(--focus-outline-width) solid var(--primary-green);
+  outline-offset: var(--focus-outline-offset);
 }
 
 /* ------------------------------------------------------------------
@@ -526,7 +582,7 @@ body,
 
 /* Dark mode text utility colors */
 [data-bs-theme='dark'] .text-success {
-  color: #5fd4a0 !important;
+  color: var(--primary-green-light) !important;
 }
 
 [data-bs-theme='dark'] .text-warning {
@@ -534,7 +590,7 @@ body,
 }
 
 [data-bs-theme='dark'] .text-danger {
-  color: #ff6b6b !important;
+  color: var(--error-coral) !important;
 }
 
 [data-bs-theme='dark'] .text-info {
@@ -542,17 +598,17 @@ body,
 }
 
 [data-bs-theme='dark'] .text-primary {
-  color: #5fd4a0 !important;
+  color: var(--primary-green-light) !important;
 }
 
 /* Form section titles */
 [data-bs-theme='dark'] .form-section-title {
-  color: #5fd4a0 !important;
+  color: var(--primary-green-light) !important;
 }
 
 /* Card header decorative elements */
 [data-bs-theme='dark'] .card-header h5::before {
-  background-color: #5fd4a0 !important;
+  background-color: var(--primary-green-light) !important;
 }
 
 /* Increase shadow opacity for visibility in dark mode */
@@ -583,7 +639,7 @@ body,
 
 /* Dark mode focus ring for WCAG compliance */
 [data-bs-theme='dark'] :focus-visible {
-  outline-color: #5fd4a0;
+  outline-color: var(--primary-green-light);
 }
 
 /* Topbar icon button styling — clean, minimal */
@@ -676,7 +732,7 @@ body,
 }
 
 .search-bar .form-control:focus {
-  border-color: #25a96b;
+  border-color: var(--primary-green);
   box-shadow: 0 0 0 3px rgba(37, 169, 107, 0.18);
 }
 
@@ -714,7 +770,7 @@ body,
 }
 
 .page-title-box .breadcrumb-item.active {
-  color: #25a96b;
+  color: var(--primary-green);
 }
 
 .page-title-box .breadcrumb-item + .breadcrumb-item::before {
@@ -737,7 +793,7 @@ body,
   transform: translateY(-50%);
   width: 3px;
   height: 60%;
-  background: #25a96b;
+  background: var(--primary-green);
   border-radius: 0 2px 2px 0;
 }
 
@@ -757,7 +813,7 @@ body,
   transform: translateY(-50%);
   width: 3px;
   height: 60%;
-  background: #25a96b;
+  background: var(--primary-green);
   border-radius: 0 2px 2px 0;
 }
 
@@ -769,7 +825,7 @@ body,
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #25a96b;
+  background: var(--primary-green);
   margin-right: 8px;
   vertical-align: middle;
   flex-shrink: 0;
@@ -783,7 +839,7 @@ body,
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #25a96b;
+  background: var(--primary-green);
   margin-right: 8px;
   vertical-align: middle;
   flex-shrink: 0;
@@ -818,8 +874,8 @@ body,
 
 [data-bs-theme='dark'] .flatpickr-months .flatpickr-prev-month:hover,
 [data-bs-theme='dark'] .flatpickr-months .flatpickr-next-month:hover {
-  color: #25a96b;
-  fill: #25a96b;
+  color: var(--primary-green);
+  fill: var(--primary-green);
 }
 
 [data-bs-theme='dark'] .flatpickr-current-month input.cur-year,
@@ -862,7 +918,7 @@ body,
 
 [data-bs-theme='dark'] .flatpickr-day.today {
   border-color: rgba(37, 169, 107, 0.4);
-  color: #25a96b;
+  color: var(--primary-green);
   font-weight: 600;
 }
 
@@ -872,8 +928,8 @@ body,
 
 [data-bs-theme='dark'] .flatpickr-day.selected,
 [data-bs-theme='dark'] .flatpickr-day.selected:hover {
-  background: #25a96b;
-  border-color: #25a96b;
+  background: var(--primary-green);
+  border-color: var(--primary-green);
   color: #fff;
   font-weight: 600;
 }
@@ -899,14 +955,14 @@ body,
 /* Light mode: green selected day */
 .flatpickr-day.selected,
 .flatpickr-day.selected:hover {
-  background: #25a96b;
-  border-color: #25a96b;
+  background: var(--primary-green);
+  border-color: var(--primary-green);
   color: #fff;
 }
 
 .flatpickr-day.today {
-  border-color: #25a96b;
-  color: #1e8f5a;
+  border-color: var(--primary-green);
+  color: var(--primary-green-dark);
 }
 
 .flatpickr-day:hover {

@@ -1,3 +1,97 @@
+/* =====================================================================
+   Design System: Zigfly ERP — Global CSS Variables
+   Extracted from ux.css, forms.css, darkmode.css, and design.json
+   Single source of truth for all design tokens.
+   ===================================================================== */
+
+:root {
+  /* ── Colors: Primary Green & Status ── */
+  --primary-green: #25a96b;
+  --primary-green-dark: #1e8f5a;
+  --primary-green-darker: #197a4c;
+  --primary-green-light: #5fd4a0;
+  --primary-green-bg-subtle: rgba(37, 169, 107, 0.12);
+  --primary-green-bg-light: rgba(37, 169, 107, 0.15);
+  --primary-green-border-subtle: rgba(37, 169, 107, 0.25);
+  --primary-green-focus-ring: rgba(37, 169, 107, 0.25);
+
+  --error-coral: #f06548;
+  --error-coral-light: #f3846d;
+  --error-coral-bg-subtle: rgba(240, 101, 72, 0.12);
+  --error-coral-bg-light: rgba(240, 101, 72, 0.15);
+  --error-coral-focus-ring: rgba(240, 101, 72, 0.15);
+
+  --warning-amber: #f7b84b;
+  --warning-amber-bg-subtle: rgba(247, 184, 75, 0.15);
+  --warning-amber-border: rgba(247, 184, 75, 0.25);
+
+  --info-blue: #29b6f6;
+  --info-blue-bg-subtle: rgba(41, 182, 246, 0.15);
+  --info-blue-border: rgba(41, 182, 246, 0.25);
+
+  /* ── Typography Scale ── */
+  --font-size-xs: 0.68rem;      /* 10.88px */
+  --font-size-sm: 0.72rem;      /* 11.52px */
+  --font-size-base: 0.8rem;     /* 12.8px */
+  --font-size-md: 0.82rem;      /* 13.12px */
+  --font-size-lg: 0.85rem;      /* 13.6px */
+  --font-size-xl: 0.87rem;      /* 13.92px */
+  --font-size-xxl: 0.95rem;     /* 15.2px */
+  --font-size-title: 1rem;      /* 16px */
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* ── Spacing Scale ── */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 20px;
+  --space-xxl: 24px;
+  --space-3xl: 32px;
+
+  /* ── Shadows ── */
+  --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
+
+  --shadow-dark-xs: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow-dark-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-dark-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-dark-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
+
+  /* ── Motion & Animation ── */
+  --transition-fast: 0.12s ease;
+  --transition-standard: 0.15s ease;
+  --transition-slow: 0.25s ease;
+  --transition-slowest: 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+
+  --anim-duration-fast: 0.15s;
+  --anim-ease-out: ease;
+
+  /* ── Focus & Interaction ── */
+  --focus-outline-width: 2px;
+  --focus-outline-offset: 2px;
+  --focus-ring-primary: 0 0 0 3px var(--primary-green-focus-ring);
+  --focus-ring-error: 0 0 0 3px var(--error-coral-focus-ring);
+
+  /* ── Border Radius ── */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* ── Touch Targets ── */
+  --min-touch-target: 44px;
+}
+
 body {
   margin: 0;
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;

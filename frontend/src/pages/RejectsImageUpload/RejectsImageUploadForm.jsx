@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
+import TextInput from '../../components/TextInput';
+import Select from '../../components/Select';
+import FileInput from '../../components/FileInput';
+import Button from '../../components/Button';
 
 export default function RejectsImageUploadForm() {
   const navigate = useNavigate();
@@ -91,10 +95,6 @@ export default function RejectsImageUploadForm() {
     }
   };
 
-  const handleFileChange = (e) => {
-    setFormData(prev => ({ ...prev, test_file: e.target.files }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -137,41 +137,68 @@ export default function RejectsImageUploadForm() {
             <h5 className="mb-0">Reject Image Upload {unique_id ? 'Update' : 'Create'}</h5>
           </div>
           <div className="card-body">
-            <form onSubmit={handleSubmit}>
+            <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
               <div className="row">
-                <div className="col-md-4 mb-3">
-                  <label className="form-label">Date</label>
-                  <input type="datetime-local" name="entry_date" className="form-control" value={formData.entry_date} onChange={handleChange} required />
+                <div className="col-12 col-md-4">
+                  <TextInput
+                    type="datetime-local"
+                    label="Date"
+                    name="entry_date"
+                    value={formData.entry_date}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
-                
-                <div className="col-md-4 mb-3">
-                  <label className="form-label">Ticket Number</label>
-                  <select name="ticket_number" className="form-select" value={formData.ticket_number} onChange={handleChange} required>
-                    {ticketOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
+
+                <div className="col-12 col-md-4">
+                  <Select
+                    label="Ticket Number"
+                    name="ticket_number"
+                    value={formData.ticket_number}
+                    onChange={handleChange}
+                    options={ticketOptions}
+                    required
+                  />
                 </div>
-                
-                <div className="col-md-4 mb-3">
-                  <label className="form-label">Weigh Date</label>
-                  <input type="datetime-local" name="weigh_date" className="form-control" value={formData.weigh_date} readOnly />
+
+                <div className="col-12 col-md-4">
+                  <TextInput
+                    type="datetime-local"
+                    label="Weigh Date"
+                    name="weigh_date"
+                    value={formData.weigh_date}
+                    readOnly
+                  />
                 </div>
-                
-                <div className="col-md-4 mb-3">
-                  <label className="form-label">Vehicle Number</label>
-                  <input type="text" name="vehicle_number" className="form-control" value={formData.vehicle_number} readOnly />
+
+                <div className="col-12 col-md-4">
+                  <TextInput
+                    label="Vehicle Number"
+                    name="vehicle_number"
+                    value={formData.vehicle_number}
+                    readOnly
+                  />
                 </div>
-                
-                <div className="col-md-4 mb-3">
-                  <label className="form-label">Net Weight(MT)</label>
+
+                <div className="col-12 col-md-4">
                   <input type="hidden" name="net_weight" value={formData.net_weight} />
-                  <input type="text" name="net_weight_ton" className="form-control" value={formData.net_weight_ton} readOnly />
+                  <TextInput
+                    label="Net Weight(MT)"
+                    name="net_weight_ton"
+                    value={formData.net_weight_ton}
+                    readOnly
+                  />
                 </div>
               </div>
-              
+
               <div className="row">
-                <div className="col-md-4 mb-3">
-                  <label className="form-label">Image Upload</label>
-                  <input type="file" multiple name="test_file" className="form-control" onChange={handleFileChange} required={!unique_id} />
+                <div className="col-12 col-md-4">
+                  <FileInput
+                    label="Image Upload"
+                    name="test_file"
+                    onFilesChange={(files) => setFormData(prev => ({ ...prev, test_file: files }))}
+                    required={!unique_id}
+                  />
                 </div>
               </div>
 
@@ -181,8 +208,8 @@ export default function RejectsImageUploadForm() {
 
               <div className="row mt-3">
                 <div className="col-12 text-end">
-                  <button type="button" className="btn btn-secondary me-2" onClick={() => navigate('/rejects_image_upload/list')}>Cancel</button>
-                  <button type="submit" className="btn btn-primary">{unique_id ? 'Update' : 'Save'}</button>
+                  <Button variant="danger" className="me-2" onClick={() => navigate('/rejects_image_upload/list')}>Cancel</Button>
+                  <Button type="submit">{unique_id ? 'Update' : 'Save'}</Button>
                 </div>
               </div>
             </form>
