@@ -8,7 +8,7 @@ from django.contrib.auth.hashers import make_password
 from rest_framework.test import APIClient
 
 from accounts.models import AuthToken, User, UserType
-from inventory.models import Item, Unit
+from inventory.models import Item, Pit, Supplier, Tray, Unit
 
 
 @pytest.fixture(autouse=True)
@@ -21,6 +21,9 @@ def mongomock_connection():
     AuthToken.drop_collection()
     Unit.drop_collection()
     Item.drop_collection()
+    Tray.drop_collection()
+    Pit.drop_collection()
+    Supplier.drop_collection()
     me.disconnect()
 
 
@@ -134,3 +137,68 @@ def test_item_search_filters_by_name(unit):
     res = client.get('/api/items', {'search': 'widg'})
     assert res.data['count'] == 1
     assert res.data['results'][0]['item_name'] == 'Widget'
+
+
+# ── Tray ──
+
+def test_tray_create_rejects_invalid_type():
+    client = authed_client(make_user(screens='tray_create'))
+    res = client.post('/api/trays', {'tray_type': '9', 'bin_name': 'Bin A'}, format='json')
+    assert res.status_code == 400
+
+
+def test_tray_create_and_list():
+    client = authed_client(make_user(screens='tray_create,tray_view'))
+    res = client.post('/api/trays', {'tray_type': '1', 'bin_name': 'Bin A'}, format='json')
+    assert res.status_code == 201
+    assert res.data['data']['tray_type'] == '1'
+
+    list_res = client.get('/api/trays')
+    assert list_res.data['count'] == 1
+
+
+# ── Pit ──
+
+def test_pit_volume_is_server_computed_and_ignores_client_value():
+    client = authed_client(make_user(screens='pit_create'))
+    res = client.post(
+        '/api/pits',
+        {'pit_name': 'Pit 1', 'length': 2, 'width': 3, 'height': 4, 'volume': 999},
+        format='json',
+    )
+    assert res.status_code == 201
+    assert res.data['data']['volume'] == 24.0
+
+
+def test_pit_name_must_be_unique():
+    client = authed_client(make_user(screens='pit_create'))
+    client.post('/api/pits', {'pit_name': 'Pit 1', 'length': 1, 'width': 1, 'height': 1}, format='json')
+    res = client.post('/api/pits', {'pit_name': 'Pit 1', 'length': 1, 'width': 1, 'height': 1}, format='json')
+    assert res.status_code == 400
+
+
+# ── Supplier ──
+
+def test_supplier_create_normalizes_label_contact_and_gst():
+    client = authed_client(make_user(screens='supplier_create'))
+    res = client.post('/api/suppliers', {
+        'supplier_name': 'Acme Co',
+        'label': 'a1b2c',
+        'contact_no': '(98) 765-4321 0',
+        'gst_no': '33aaaaa0000a1z5',
+    }, format='json')
+
+    assert res.status_code == 201
+    assert res.data['data']['label'] == 'ABC'
+    assert res.data['data']['contact_no'] == '9876543210'
+    assert res.data['data']['gst_no'] == '33AAAAA0000A1Z5'
+
+
+def test_supplier_delete_is_soft():
+    client = authed_client(make_user(screens='supplier_create,supplier_delete,supplier_view'))
+    created = client.post('/api/suppliers', {'supplier_name': 'Acme Co'}, format='json')
+    supplier_id = created.data['data']['unique_id']
+
+    client.delete(f'/api/suppliers/{supplier_id}')
+    assert Supplier.objects.get(unique_id=supplier_id).is_deleted is True
+    assert client.get(f'/api/suppliers/{supplier_id}').status_code == 404

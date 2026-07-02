@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter
 
 from accounts.views import login, logout, me
 from core.views import menu
-from inventory.views import ItemViewSet, UnitViewSet
+from inventory.views import ItemViewSet, PitViewSet, SupplierViewSet, TrayViewSet, UnitViewSet
 
 
 def health(request):
@@ -14,6 +14,9 @@ def health(request):
 router = DefaultRouter(trailing_slash=False)
 router.register(r'units', UnitViewSet, basename='unit')
 router.register(r'items', ItemViewSet, basename='item')
+router.register(r'trays', TrayViewSet, basename='tray')
+router.register(r'pits', PitViewSet, basename='pit')
+router.register(r'suppliers', SupplierViewSet, basename='supplier')
 
 urlpatterns = [
     path('api/health', health, name='health'),
