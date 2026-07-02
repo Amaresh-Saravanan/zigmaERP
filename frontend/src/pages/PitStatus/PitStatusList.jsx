@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import client from '../../api/client';
 import DataTable from '../../components/DataTable';
+import DateInput from '../../components/DateInput';
 
 const now = new Date();
 const pad = (n) => n.toString().padStart(2, '0');
@@ -96,29 +97,46 @@ export default function PitStatusList() {
               </div>
             </div>
 
-            {/* Filters */}
-            <div className="row mt-2 g-2">
-              <div className="col-md-2">
-                <input type="date" name="from_date" className="form-control form-control-sm" placeholder="From Date"
+            {/* Filter bar */}
+            <div className="row mt-2 g-2 align-items-end">
+              <div className="col-6 col-md-2">
+                <label className="form-label mb-1" style={{ fontSize: '0.72rem', color: 'var(--vz-secondary-color)' }}>
+                  From Date
+                </label>
+                <DateInput name="from_date" className="form-control form-control-sm"
                   value={filters.from_date} onChange={handleFilterChange} />
               </div>
-              <div className="col-md-2">
-                <input type="date" name="to_date" className="form-control form-control-sm" placeholder="To Date"
+              <div className="col-6 col-md-2">
+                <label className="form-label mb-1" style={{ fontSize: '0.72rem', color: 'var(--vz-secondary-color)' }}>
+                  To Date
+                </label>
+                <DateInput name="to_date" className="form-control form-control-sm"
                   value={filters.to_date} onChange={handleFilterChange} />
               </div>
-              <div className="col-md-2">
-                <select name="status_type" className="form-control form-control-sm" value={filters.status_type} onChange={handleFilterChange}>
-                  <option value="">All Statuses</option>
-                  <option value="1">Organic Waste Added in Pit</option>
-                  <option value="2">Baby Larvae Added</option>
-                  <option value="3">Aeration Process</option>
-                  <option value="4">Measurement</option>
-                  <option value="5">Harvesting</option>
-                  <option value="7">Tippi</option>
+              <div className="col-12 col-md-3">
+                <label className="form-label mb-1" style={{ fontSize: '0.72rem', color: 'var(--vz-secondary-color)' }}>
+                  Process Stage
+                </label>
+                <select name="status_type" className="form-select form-select-sm" value={filters.status_type} onChange={handleFilterChange}>
+                  <option value="">All Stages</option>
+                  <option value="1">🌿 Organic Waste Added</option>
+                  <option value="2">🥚 Baby Larvae Added</option>
+                  <option value="3">💨 Aeration Process</option>
+                  <option value="4">📏 Measurement</option>
+                  <option value="5">✅ Harvesting</option>
+                  <option value="7">🧪 Tippi</option>
                 </select>
               </div>
-              <div className="col-md-2">
-                {/* Normally we'd fetch pit options here, but for simplicity we let DataTable handle text search */}
+              <div className="col-auto">
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  style={{ fontSize: '0.78rem', color: 'var(--vz-secondary-color)', background: 'transparent', border: '1px solid var(--vz-border-color)', borderRadius: 6, height: 34, padding: '0 12px' }}
+                  onClick={() => setFilters({ from_date: FIRST_DAY_OF_MONTH, to_date: TODAY, pit_name: '', status_type: '' })}
+                  title="Reset filters"
+                >
+                  <i className="ri-refresh-line me-1"></i> Reset
+                </button>
               </div>
             </div>
           </div>

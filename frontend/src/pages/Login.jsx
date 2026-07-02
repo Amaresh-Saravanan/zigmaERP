@@ -1,95 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
+import useTheme from '../hooks/useTheme';
 import client from '../api/client';
 import Swal from 'sweetalert2';
-// We'll use the specific logo that matches the screenshot (green bug, white text)
-import logoImg from '../assets/images/zig-fly-logo.png';
-import bgImg from '../assets/images/auth-one-bg.jpg';
+import heroBg from '../assets/images/auth-one-bg.jpg';
+import zigflyLogo from '../assets/images/zigfly-logo-clean.png';
 
 export default function Login() {
-  // Load legacy scripts for layout and particle animations
-  useEffect(() => {
-    const loadScript = (src) => {
-      return new Promise((resolve, reject) => {
-        const s = document.createElement('script');
-        s.src = src;
-        s.onload = resolve;
-        s.onerror = reject;
-        document.body.appendChild(s);
-      });
-    };
-    
-    // Load scripts sequentially to ensure proper initialization order
-    loadScript('/assets/js/layout.js')
-      .then(() => loadScript('/assets/libs/particles.js/particles.js'))
-      .then(() => {
-        if (window.particlesJS) {
-          window.particlesJS("auth-particles", {
-            particles: {
-              number: { value: 90, density: { enable: true, value_area: 800 } },
-              color: { value: "#ffffff" },
-              shape: {
-                type: "circle",
-                stroke: { width: 0, color: "#000000" },
-                polygon: { nb_sides: 5 }
-              },
-              opacity: {
-                value: 0.8,
-                random: true,
-                anim: { enable: true, speed: 1, opacity_min: 0, sync: false }
-              },
-              size: {
-                value: 4,
-                random: true,
-                anim: { enable: false, speed: 4, size_min: 0.2, sync: false }
-              },
-              line_linked: {
-                enable: false,
-                distance: 150,
-                color: "#ffffff",
-                opacity: 0.4,
-                width: 1
-              },
-              move: {
-                enable: true,
-                speed: 2,
-                direction: "none",
-                random: false,
-                straight: false,
-                out_mode: "out",
-                attract: { enable: false, rotateX: 600, rotateY: 1200 }
-              }
-            },
-            interactivity: {
-              detect_on: "canvas",
-              events: {
-                onhover: { enable: true, mode: "bubble" },
-                onclick: { enable: true, mode: "repulse" },
-                resize: true
-              },
-              modes: {
-                grab: { distance: 400, line_linked: { opacity: 1 } },
-                bubble: { distance: 400, size: 4, duration: 2, opacity: 0.8, speed: 3 },
-                repulse: { distance: 200 },
-                push: { particles_nb: 4 },
-                remove: { particles_nb: 2 }
-              }
-            },
-            retina_detect: true
-          });
-        }
-      })
-      .then(() => loadScript('/assets/js/pages/password-addon.init.js'))
-      .catch(err => console.error('Failed to load script', err));
-      
-    return () => {};
-  }, []);
-
   const [form, setForm] = useState({ user: '', password: '' });
   const [showPass, setShowPass] = useState(false);
+  const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { isDark, setTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -108,10 +32,22 @@ export default function Login() {
     }
     
     setLoading(true);
+    const demoUser = {
+      userId: 'demo001',
+      userName: 'admin',
+      userType: '5f97fc3257f2525529',
+      userImage: 'img/user.jpg',
+      companyName: 'Zigma Global Environ Solutions',
+      mainScreens: [],
+      sections: [],
+      screens: []
+    };
+
     try {
       const res = await client.post('folders/login/crud.php', new URLSearchParams({
         action: 'login', user_name: form.user, password: form.password
       }), { suppressError: true });
+
       if (res.data?.status === 1) {
         if (form.password === 'password') {
           navigate('/password/update?default=true');
@@ -119,7 +55,12 @@ export default function Login() {
         }
         login(res.data.user);
         navigate('/');
-      } else if (res.data?.msg === 'incorrect') {
+        return;
+      }
+
+      // API returned but not a success — fall through to demo mode check below
+      if (res.data?.msg === 'incorrect') {
+        setLoading(false);
         Swal.fire({
           title: 'Incorrect UserName and Password',
           icon: 'error',
@@ -127,294 +68,790 @@ export default function Login() {
           timer: 2000,
           timerProgressBar: true
         });
-      } else {
-        throw new Error('Database connection failed');
+        return;
       }
-    } catch {
-      // Demo mode fallback
-      const demoCredentials = { user: 'admin', password: 'admin123' };
-      if (form.user === demoCredentials.user && form.password === demoCredentials.password) {
-        const demoUser = {
-          userId: 'demo001',
-          userName: form.user,
-          userType: '5f97fc3257f2525529',
-          userImage: 'img/user.jpg',
-          companyName: 'Zigma Global Environ Solutions',
-          mainScreens: [],
-          sections: [],
-          screens: []
-        };
-        login(demoUser);
-        navigate('/');
-      } else {
-        Swal.fire({
-          icon: 'error',
-          title: 'Database Offline / Network Error',
-          html: 'The database is currently unavailable.<br><br>Please use the demo credentials to login:<br><strong>Username:</strong> admin<br><strong>Password:</strong> admin123',
-          showConfirmButton: true,
-          timer: 5000,
-          timerProgressBar: true
-        });
-      }
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      // API error — fall through to demo mode fallback
     }
+
+    // API failed or no valid response — demo mode fallback
+    if (form.user === 'admin' && form.password === 'admin123') {
+      login(demoUser);
+      navigate('/');
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Database Offline / Network Error',
+        html: 'The database is currently unavailable.<br><br>Please use the demo credentials to login:<br><strong>Username:</strong> admin<br><strong>Password:</strong> admin123',
+        showConfirmButton: true,
+        timer: 5000,
+        timerProgressBar: true
+      });
+    }
+    setLoading(false);
   };
 
   const handleKey = (e) => { if (e.key === 'Enter') handleSubmit(); };
 
-  // Fallback if logo fails to load to a known good one
-  const handleLogoError = (e) => {
-    // If the primary zig-fly-logo.png fails, fallback to logo-white.png
-    if (e.target.src.includes('zig-fly-logo.png')) {
-      e.target.src = '../assets/images/logo-white.png';
-    }
-  };
-
   return (
-    <div className="auth-page-wrapper pt-5" onKeyUp={handleKey}>
-      {/* Background Particles & Shape */}
-      <div 
-        className="auth-one-bg-position auth-one-bg" 
-        id="auth-particles" 
-        style={{ backgroundImage: `url(${bgImg})` }}
-      >
-        <div className="bg-overlay"></div>
-        <div className="shape">
-          <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0 0 1440 120">
-            <path d="M 0,36 C 144,53.6 432,123.2 720,124 C 1008,124.8 1296,56.8 1440,40L1440 140L0 140z"></path>
-          </svg>
-        </div>
-      </div>
+    <div className="lp-root" onKeyUp={handleKey}>
+      <div className="lp-split">
 
-      <div className="auth-page-content">
-        <div className="container">
-          <div className="row">
-            <div className="col-lg-12">
-              <div className="text-center mt-sm-5 mb-4 text-white-50">
-                <div>
-                  <a href="/" className="d-inline-block auth-logo" aria-label="Zigfly home">
-                    <img src={logoImg} onError={handleLogoError} alt="Zigfly Logo" height="85" />
-                  </a>
-                </div>
-              </div>
-            </div>
+        {/* ── LEFT: Hero 45% ── */}
+        <div className="lp-hero" style={{ backgroundImage: `url(${heroBg})` }}>
+          {/* Dark green overlay over the larvae photo */}
+          <div className="lp-hero-overlay" aria-hidden="true" />
+          {/* Sunrise glow effect */}
+          <div className="lp-hero-glow" aria-hidden="true" />
+
+          {/* TOP: branding */}
+          <div className="lp-brand">
+            <img src={zigflyLogo} alt="Zigfly" height="120" className="lp-brand-logo-full" />
           </div>
 
-          <div className="row justify-content-center">
-            <div className="col-md-8 col-lg-6 col-xl-5">
-              <div className="card mt-4 glass-card">
-                <div className="card-body p-4 p-sm-5">
-                  <div className="text-center mt-2 mb-4">
-                    <h5 className="welcome-title">Welcome Back !</h5>
-                    <p className="welcome-subtitle">Sign in to continue to Zigfly.</p>
-                  </div>
-                  <div className="p-2">
-                    <form onSubmit={handleSubmit}>
-                      <div className="mb-4">
-                        <label className="form-label custom-label" htmlFor="user_name">Username</label>
-                        <input
-                          className="form-control custom-input"
-                          id="user_name"
-                          name="user"
-                          type="text"
-                          value={form.user}
-                          onChange={handleChange}
-                          autoFocus
-                        />
-                      </div>
-                      
-                      <div className="mb-4">
-                        <label className="form-label custom-label" htmlFor="password">Password</label>
-                        <div className="position-relative auth-pass-inputgroup">
-                          <input
-                            type={showPass ? 'text' : 'password'}
-                            className="form-control custom-input pe-5 password-input"
-                            id="password"
-                            name="password"
-                            value={form.password}
-                            onChange={handleChange}
-                          />
-                          <button
-                            type="button"
-                            className="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon material-shadow-none"
-                            id="password-addon"
-                            onClick={() => setShowPass(!showPass)}
-                            aria-label={showPass ? 'Hide password' : 'Show password'}
-                          >
-                            <i className={showPass ? 'ri-eye-off-fill align-middle fs-5' : 'ri-eye-fill align-middle fs-5'} aria-hidden="true"></i>
-                          </button>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-5">
-                        <button
-                          className="btn custom-btn w-100"
-                          type="submit"
-                          id="login-submit"
-                          disabled={loading}
-                        >
-                          {loading ? 'Signing in...' : 'Sign In'}
-                        </button>
-                      </div>
-                    </form>
-                  </div>
+          {/* CENTER: headline */}
+          <div className="lp-headline-wrap">
+            <div className="lp-accent-bar" aria-hidden="true" />
+            <h1 className="lp-headline">
+              Sustainable Solutions<br />
+              for a <em>Better Tomorrow</em>
+            </h1>
+            <p className="lp-hero-desc">
+              Transforming organic waste into value through black soldier fly innovation.
+            </p>
+          </div>
+
+          {/* BOTTOM: status card + copyright */}
+          <div>
+            <div className="lp-status-card">
+              <div className="lp-status-head">
+                <span>System Status</span>
+                <span className="lp-status-live">
+                  <i className="lp-live-dot" aria-hidden="true" /> Operational
+                </span>
+              </div>
+              <div className="lp-status-row">
+                <div className="lp-status-icon"><i className="ri-refresh-line" aria-hidden="true" /></div>
+                <div className="lp-status-meta">
+                  <span>Live Sync</span>
+                  <span>Last sync: just now</span>
                 </div>
+                <span className="lp-status-pill">LIVE</span>
+              </div>
+              <div className="lp-status-row">
+                <div className="lp-status-icon"><i className="ri-stack-line" aria-hidden="true" /></div>
+                <div className="lp-status-meta">
+                  <span>Active Farms</span>
+                  <span>24 online</span>
+                </div>
+                <span className="lp-status-pill">ONLINE</span>
+              </div>
+              <div className="lp-status-row">
+                <div className="lp-status-icon"><i className="ri-line-chart-line" aria-hidden="true" /></div>
+                <div className="lp-status-meta">
+                  <span>Conversion Rate</span>
+                  <span>96.45%</span>
+                </div>
+                <span className="lp-status-pill lp-pill-up">↑ 3.4%</span>
               </div>
             </div>
+            <p className="lp-copyright">
+              <i className="ri-leaf-fill" aria-hidden="true" /> {new Date().getFullYear()} © Zigfly. All rights reserved.
+            </p>
+          </div>
+        </div>
+
+        {/* ── RIGHT: Form 55% ── */}
+        <div className="lp-form-side">
+
+          {/* Theme toggle — top-right */}
+          <div className="lp-theme-toggle" role="group" aria-label="Theme">
+            <button
+              type="button"
+              className={`lp-theme-btn${!isDark ? ' active' : ''}`}
+              onClick={() => setTheme('light')}
+              aria-label="Light mode"
+              title="Light mode"
+            >
+              <i className="ri-sun-line" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className={`lp-theme-btn lp-theme-btn--moon${isDark ? ' active' : ''}`}
+              onClick={() => setTheme('dark')}
+              aria-label="Dark mode"
+              title="Dark mode"
+            >
+              <i className="ri-moon-line" aria-hidden="true" />
+            </button>
+          </div>
+
+          {/* Login card */}
+          <div className="lp-card">
+            {/* Dot grid decoration — top-right corner of card */}
+            <svg className="lp-card-dots" aria-hidden="true" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+              {Array.from({ length: 6 }, (_, row) =>
+                Array.from({ length: 6 }, (_, col) => (
+                  <circle key={`${row}-${col}`} cx={col * 14 + 5} cy={row * 14 + 5} r="1.5" fill="#25a96b" opacity="0.18" />
+                ))
+              )}
+            </svg>
+
+            <h2 className="lp-card-title">
+              Welcome Back, <span>Admin!</span>
+            </h2>
+            <p className="lp-card-sub">Sign in to continue to Zigfly Admin Dashboard.</p>
+            <div className="lp-card-rule" aria-hidden="true" />
+
+            <form onSubmit={handleSubmit} autoComplete="off" noValidate>
+              <div className="mb-3">
+                <label className="form-label" htmlFor="lp_user">Username <span aria-label="required">*</span></label>
+                <div className="lp-input-wrap">
+                  <i className="ri-user-line" aria-hidden="true" />
+                  <input
+                    className="form-control"
+                    id="lp_user"
+                    name="user"
+                    type="text"
+                    placeholder="Enter your username"
+                    value={form.user}
+                    onChange={handleChange}
+                    required
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label" htmlFor="lp_pass">Password <span aria-label="required">*</span></label>
+                <div className="lp-input-wrap">
+                  <i className="ri-lock-2-line" aria-hidden="true" />
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    className="form-control"
+                    id="lp_pass"
+                    name="password"
+                    placeholder="Enter your password"
+                    value={form.password}
+                    onChange={handleChange}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="lp-pass-toggle"
+                    onClick={() => setShowPass(!showPass)}
+                    aria-label={showPass ? 'Hide password' : 'Show password'}
+                  >
+                    <i className={showPass ? 'ri-eye-off-line' : 'ri-eye-line'} aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="d-flex align-items-center justify-content-between mb-4">
+                <div className="form-check">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id="lp_remember"
+                    checked={remember}
+                    onChange={(e) => setRemember(e.target.checked)}
+                  />
+                  <label className="form-check-label" htmlFor="lp_remember">Remember me</label>
+                </div>
+                <a href="#" className="lp-link" onClick={(e) => e.preventDefault()}>Forgot password?</a>
+              </div>
+
+              <button
+                className="btn lp-submit w-100"
+                type="submit"
+                disabled={loading}
+              >
+                {loading ? 'Signing in…' : (
+                  <><span>Sign In</span><i className="ri-arrow-right-line" aria-hidden="true" /></>
+                )}
+              </button>
+            </form>
+
+            <div className="lp-divider" aria-hidden="true">
+              <span className="lp-divider-line" />
+              <i className="ri-shield-check-line" />
+              <span className="lp-divider-line" />
+            </div>
+
+            <p className="lp-footer-text">
+              Don't have an account?{' '}
+              <a href="#" className="lp-link" onClick={(e) => e.preventDefault()}>Contact Administrator</a>
+            </p>
           </div>
         </div>
       </div>
 
       <style>{`
-        body {
-          font-family: "Inter", sans-serif !important;
-          background-color: #ffffff;
-        }
-        
-        .auth-one-bg {
-          height: 380px;
-          background-position: center;
-          background-size: cover;
-          position: relative;
-        }
-        
-        .auth-one-bg .bg-overlay {
-          background: linear-gradient(to right, rgba(14, 25, 34, 0.5), rgba(18, 38, 51, 0.4));
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          opacity: 1;
-        }
-        
-        .auth-one-bg .shape {
-          position: absolute;
-          bottom: 0;
-          right: 0;
-          left: 0;
-          z-index: 1;
-          pointer-events: none;
-        }
-        
-        .auth-one-bg .shape > svg {
-          width: 100%;
-          height: auto;
-          fill: #ffffff;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-        /* Glassmorphism Card styling matching the reference image */
-        .glass-card {
-          background: rgba(255, 255, 255, 0.25) !important;
-          backdrop-filter: blur(20px) !important;
-          -webkit-backdrop-filter: blur(20px) !important;
-          border: 1px solid rgba(132, 199, 169, 0.6) !important;
-          border-radius: 16px !important;
-          box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important;
+        .lp-root {
+          min-height: 100vh;
+          background: #e8edf2;
+          font-family: 'Inter', system-ui, -apple-system, sans-serif;
+          overflow: hidden;
+        }
+        [data-bs-theme='dark'] .lp-root {
+          background: #0d1117;
+        }
+        [data-bs-theme='dark'] body {
+          background: #0d1117;
+        }
+        .lp-split {
+          display: flex;
+          min-height: 100vh;
           overflow: hidden;
         }
 
-        .welcome-title {
-          color: #ffffff !important;
-          font-weight: 600;
-          font-size: 1.25rem;
-          margin-bottom: 0.5rem;
+        /* ── LEFT HERO (45%) ── */
+        .lp-hero {
+          flex: 0 0 45%;
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 44px 52px;
+          background-size: cover;
+          background-position: center;
+          overflow: hidden;
+          clip-path: inset(0);
         }
-
-        .welcome-subtitle {
-          color: #e2e8f0 !important;
-          font-size: 0.95rem;
-        }
-
-        .custom-label {
-          color: #1e293b !important;
-          font-weight: 500;
-          font-size: 0.9rem;
-          margin-bottom: 0.5rem;
-        }
-
-        /* Inputs styled exactly like the screenshot */
-        .custom-input {
-          background-color: rgba(220, 237, 230, 0.8) !important;
-          border: 1px solid #73bda1 !important;
-          border-radius: 8px !important;
-          padding: 0.65rem 1rem !important;
-          color: #0f172a !important;
-          font-weight: 500;
-          height: 45px;
-          box-shadow: inset 0 1px 2px rgba(0,0,0,0.02) !important;
-          transition: all 0.2s ease;
-        }
-
-        .custom-input:focus {
-          background-color: #ffffff !important;
-          border-color: #27a87c !important;
-          box-shadow: 0 0 0 3px rgba(39, 168, 124, 0.25) !important;
-        }
-
-        .password-addon {
-          height: 45px;
-          padding: 0 1rem;
-          color: #64748b !important;
-          z-index: 10;
-        }
-
-        /* Submit Button */
-        .custom-btn {
-          background-color: #2da97f !important;
-          border-color: #2da97f !important;
-          color: white !important;
-          border-radius: 30px !important; /* Pill shape */
-          height: 45px;
-          font-weight: 500;
-          font-size: 1rem;
-          letter-spacing: 0.3px;
-          box-shadow: 0 4px 10px rgba(45, 169, 127, 0.3) !important;
-          transition: all 0.2s ease;
-        }
-
-        .custom-btn:hover {
-          background-color: #24906b !important;
-          border-color: #24906b !important;
-          transform: translateY(-1px);
-        }
-
-        /* Footer */
-        footer.footer {
-          background-color: transparent !important;
-          border-top: none !important;
+        /* Dark overlay - logo is transparent so shows well on any background
+           bottom vignette fully opaque for status card; upper section shows texture */
+        .lp-hero-overlay {
           position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          padding: 20px 0 !important;
-          font-family: inherit !important;
-          color: #64748b;
+          inset: 0;
+          background:
+            linear-gradient(to top, rgba(2,8,5,0.98) 0%, rgba(3,14,8,0.65) 40%, rgba(8,28,16,0.25) 65%, transparent 75%),
+            linear-gradient(135deg, rgba(6,18,11,0.75), rgba(12,32,20,0.8));
+          pointer-events: none;
+          z-index: 0;
         }
-        
-        .footer-border {
-          border-top: 1px solid rgba(0,0,0,0.05);
+        /* Warmer, more saturated amber sunrise — creates drama */
+        .lp-hero-glow {
+          position: absolute;
+          top: -15%;
+          right: -8%;
+          width: 65%;
+          height: 60%;
+          background: radial-gradient(ellipse at 75% 30%, rgba(255,200,80,0.22) 0%, rgba(255,170,40,0.08) 35%, transparent 60%);
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        .lp-brand {
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+          position: relative;
+          z-index: 1;
+        }
+        .lp-brand-logo-full {
+          display: block;
+          height: auto;
+          max-width: 280px;
+          filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+        }
+
+        .lp-headline-wrap {
+          position: relative;
+          z-index: 1;
+        }
+        .lp-accent-bar {
+          width: 48px;
+          height: 4px;
+          background: #25a96b;
+          border-radius: 2px;
+          margin-bottom: 20px;
+          box-shadow: 0 0 16px rgba(37,169,107,0.4);
+        }
+        .lp-headline {
+          color: #fff;
+          font-size: clamp(1.65rem, 2.5vw, 2.1rem);
+          font-weight: 700;
+          line-height: 1.2;
+          margin-bottom: 16px;
+          font-style: normal;
+          text-shadow: 0 4px 16px rgba(0,0,0,0.5);
+          letter-spacing: -0.015em;
+          text-wrap: balance;
+        }
+        .lp-headline em {
+          font-style: normal;
+          color: #6dd9a0;
+        }
+        .lp-hero-desc {
+          color: rgba(255,255,255,0.65);
+          font-size: 0.91rem;
+          line-height: 1.68;
+          margin: 0;
+          max-width: 320px;
+          text-shadow: 0 1px 6px rgba(0,0,0,0.3);
+        }
+
+        /* Status card — enhanced glassmorphism with green tint */
+        .lp-status-card {
+          background: rgba(2,10,6,0.72);
+          border: 1.5px solid rgba(37,169,107,0.25);
+          border-radius: 16px;
+          padding: 18px 20px;
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          box-shadow:
+            0 8px 32px rgba(0,0,0,0.3),
+            inset 0 1px 1px rgba(255,255,255,0.1),
+            0 0 24px rgba(37,169,107,0.12);
+          max-width: 360px;
+          position: relative;
+          z-index: 1;
+        }
+        @media (max-width: 600px) {
+          .lp-status-card {
+            max-width: 100%;
+            padding: 14px 16px;
+            font-size: 0.9rem;
+          }
+        }
+        .lp-status-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          color: #fff;
+          font-size: 0.85rem;
+          font-weight: 600;
+          margin-bottom: 10px;
+        }
+        .lp-status-live {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 0.68rem;
+          font-weight: 600;
+          color: #6dd9a0;
+          letter-spacing: 0.03em;
+        }
+        .lp-live-dot {
+          display: inline-block;
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #25a96b;
+          box-shadow: 0 0 0 2px rgba(37,169,107,0.3);
+          animation: lpPulse 2s ease-in-out infinite;
+        }
+        @keyframes lpPulse {
+          0%, 100% { box-shadow: 0 0 0 2px rgba(37,169,107,0.3); }
+          50% { box-shadow: 0 0 0 5px rgba(37,169,107,0.08); }
+        }
+        .lp-status-row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 7px 0;
+          border-top: 1px solid rgba(255,255,255,0.07);
+        }
+        .lp-status-icon {
+          width: 30px;
+          height: 30px;
+          flex-shrink: 0;
+          border-radius: 8px;
+          background: rgba(37,169,107,0.2);
+          color: #6dd9a0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.88rem;
+        }
+        .lp-status-meta {
+          display: flex;
+          flex-direction: column;
+          flex-grow: 1;
+          gap: 1px;
+        }
+        .lp-status-meta span:first-child {
+          color: #fff;
+          font-size: 0.8rem;
+          font-weight: 500;
+        }
+        .lp-status-meta span:last-child {
+          color: rgba(255,255,255,0.5);
+          font-size: 0.7rem;
+        }
+        .lp-status-pill {
+          font-size: 0.62rem;
+          font-weight: 700;
+          padding: 2px 8px;
+          border-radius: 999px;
+          background: rgba(37,169,107,0.18);
+          color: #6dd9a0;
+          white-space: nowrap;
+          letter-spacing: 0.06em;
+        }
+        .lp-pill-up { background: rgba(37,169,107,0.22); }
+
+        .lp-copyright {
+          color: rgba(255,255,255,0.38);
+          font-size: 0.7rem;
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          margin: 12px 0 0;
+          position: relative;
+          z-index: 1;
+        }
+
+        /* ── RIGHT FORM SIDE (55%) ── */
+        .lp-form-side {
+          flex: 0 0 55%;
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 48px 48px;
+          background: #e8edf2;
+          overflow: hidden;
+        }
+        [data-bs-theme='dark'] .lp-form-side {
+          background: #0d1117;
+        }
+
+        /* Theme toggle */
+        .lp-theme-toggle {
+          position: absolute;
+          top: 24px;
+          right: 28px;
+          z-index: 10;
+          display: flex;
+          gap: 3px;
+          padding: 4px;
+          border-radius: 999px;
+          background: #fff;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+        }
+        [data-bs-theme='dark'] .lp-theme-toggle {
+          background: #161b22;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+        }
+        .lp-theme-btn {
+          width: 34px;
+          height: 34px;
+          border: none;
+          border-radius: 50%;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          background: transparent;
+          color: #94a3b8;
+          font-size: 1rem;
+          cursor: pointer;
+          transition: background 0.18s, color 0.18s;
+        }
+        .lp-theme-btn.active {
+          background: #f1f5f9;
+          color: #1e293b;
+        }
+        .lp-theme-btn--moon.active {
+          background: #25a96b;
+          color: #fff;
+        }
+        .lp-theme-btn:focus-visible {
+          outline: 2px solid #25a96b;
+          outline-offset: 2px;
+        }
+
+        /* Login card — elevated, dramatic shadow */
+        .lp-card {
+          position: relative;
+          z-index: 3;
           width: 100%;
+          max-width: 480px;
+          background: #ffffff;
+          border-radius: 28px;
+          padding: 44px 48px;
+          box-shadow:
+            0 2px 4px rgba(15,23,42,0.08),
+            0 8px 24px rgba(15,23,42,0.12),
+            0 20px 60px rgba(15,23,42,0.16),
+            0 0 1px rgba(15,23,42,0.05);
+          overflow: hidden;
+        }
+        [data-bs-theme='dark'] .lp-card {
+          background: #161b22;
+          box-shadow:
+            0 1px 2px rgba(0,0,0,0.4),
+            0 4px 16px rgba(0,0,0,0.4),
+            0 16px 48px rgba(0,0,0,0.5);
+        }
+
+        /* Dot grid decoration — top-right */
+        .lp-card-dots {
           position: absolute;
           top: 0;
-          left: 0;
+          right: 0;
+          width: 90px;
+          height: 90px;
+          pointer-events: none;
+        }
+
+        .lp-card {
+          font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        .lp-card .form-label {
+          font-weight: 500;
+          font-size: 0.83rem;
+          color: #374151;
+          letter-spacing: 0.01em;
+        }
+        .lp-card .form-label span {
+          color: #ef4444;
+          margin-left: 2px;
+          font-weight: 600;
+        }
+        [data-bs-theme='dark'] .lp-card .form-label { color: #8b949e; }
+        [data-bs-theme='dark'] .lp-card .form-label span { color: #ff6b6b; }
+        .lp-card-title {
+          font-size: 1.65rem;
+          font-weight: 700;
+          color: #0f172a;
+          margin-bottom: 6px;
+          line-height: 1.2;
+          position: relative;
+          z-index: 1;
+          letter-spacing: -0.02em;
+          text-wrap: balance;
+        }
+        [data-bs-theme='dark'] .lp-card-title { color: #f0f6fc; }
+        .lp-card-title span { color: #25a96b; }
+
+        .lp-card-sub {
+          color: #64748b;
+          font-size: 0.87rem;
+          margin-bottom: 14px;
+          position: relative;
+          z-index: 1;
+        }
+        [data-bs-theme='dark'] .lp-card-sub { color: #8b949e; }
+
+        .lp-card-rule {
+          width: 36px;
+          height: 3px;
+          background: #25a96b;
+          border-radius: 2px;
+          margin-bottom: 26px;
+          position: relative;
+          z-index: 1;
+        }
+
+        /* Input wrapper with inset icon */
+        .lp-input-wrap {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+        .lp-input-wrap > i:first-child {
+          position: absolute;
+          left: 14px;
+          color: #94a3b8;
+          font-size: 1rem;
+          pointer-events: none;
+          z-index: 1;
+        }
+        .lp-input-wrap .form-control {
+          padding-left: 42px;
+          height: 46px;
+          border-radius: 10px;
+          font-size: 0.92rem;
+          border: 1px solid #e5e7eb;
+          transition: border-color 0.2s, box-shadow 0.2s, background-color 0.15s;
+          background-color: #fff;
+        }
+        .lp-input-wrap .form-control:invalid {
+          border-color: #e5e7eb !important;
+          box-shadow: none !important;
+          outline: none !important;
+        }
+        .lp-input-wrap .form-control::placeholder {
+          color: #9ca3af;
+          opacity: 1;
+        }
+        .lp-input-wrap .form-control:hover {
+          border-color: #d1d5db;
+        }
+        .lp-input-wrap .form-control:focus {
+          border-color: #d1d5db;
+          box-shadow: 0 0 0 3px rgba(37,169,107,0.15);
+          background-color: #fafbfc;
+        }
+        [data-bs-theme='dark'] .lp-input-wrap .form-control {
+          border-color: #30363d;
+          background-color: #0d1117;
+          color: #f0f6fc;
+        }
+        [data-bs-theme='dark'] .lp-input-wrap .form-control:invalid {
+          border-color: #30363d;
+          box-shadow: none;
+        }
+        [data-bs-theme='dark'] .lp-input-wrap .form-control::placeholder {
+          color: #6e7681;
+          opacity: 1;
+        }
+        [data-bs-theme='dark'] .lp-input-wrap .form-control:hover {
+          border-color: #424752;
+        }
+        [data-bs-theme='dark'] .lp-input-wrap .form-control:focus {
+          border-color: #30363d;
+          box-shadow: 0 0 0 3px rgba(37,169,107,0.2);
+          background-color: #161b22;
+        }
+        .lp-pass-toggle {
+          position: absolute;
+          right: 12px;
+          background: rgba(37,169,107,0);
+          border: none;
+          color: #94a3b8;
+          font-size: 1rem;
+          cursor: pointer;
+          padding: 6px;
+          display: flex;
+          align-items: center;
+          z-index: 1;
+          transition: all 0.15s;
+          border-radius: 6px;
+        }
+        .lp-pass-toggle:hover {
+          color: #25a96b;
+          background: rgba(37,169,107,0.08);
+        }
+        .lp-pass-toggle:active {
+          transform: scale(0.95);
+        }
+        .lp-pass-toggle:focus-visible {
+          outline: 2px solid #25a96b;
+          outline-offset: 2px;
+          background: rgba(37,169,107,0.12);
+        }
+
+        .lp-link {
+          color: #25a96b;
+          font-size: 0.85rem;
+          font-weight: 500;
+          text-decoration: none;
+          transition: all 0.15s;
+          position: relative;
+        }
+        .lp-link:hover {
+          color: #1d8a56;
+          text-decoration: underline;
+          text-decoration-thickness: 2px;
+          text-underline-offset: 4px;
+        }
+        .lp-link:focus-visible {
+          outline: 2px solid #25a96b;
+          outline-offset: 3px;
+          border-radius: 2px;
+        }
+
+        /* Submit button */
+        .lp-submit {
+          height: 48px;
+          background: linear-gradient(135deg, #1e7a4a 0%, #145c38 100%);
+          border: none;
+          color: #fff;
+          font-weight: 600;
+          font-size: 0.95rem;
+          border-radius: 10px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          letter-spacing: 0.01em;
+          position: relative;
+        }
+        .lp-submit:hover:not(:disabled) {
+          opacity: 0.95;
+          transform: translateY(-2px);
+          box-shadow: 0 8px 28px rgba(20,92,56,0.45);
+        }
+        .lp-submit:active:not(:disabled) {
+          transform: translateY(-1px);
+        }
+        .lp-submit:disabled {
+          opacity: 0.55;
+          cursor: not-allowed;
+        }
+        .lp-submit:focus-visible {
+          outline: 3px solid rgba(37,169,107,0.6);
+          outline-offset: 2px;
+        }
+
+        .lp-divider {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin: 24px 0 18px;
+          color: #cbd5e1;
+          font-size: 1rem;
+        }
+        [data-bs-theme='dark'] .lp-divider { color: #30363d; }
+        .lp-divider-line {
+          flex: 1;
+          height: 1px;
+          background: #e2e8f0;
+        }
+        [data-bs-theme='dark'] .lp-divider-line { background: #30363d; }
+
+        .lp-footer-text {
+          text-align: center;
+          color: #64748b;
+          font-size: 0.84rem;
+          margin: 0;
+        }
+        [data-bs-theme='dark'] .lp-footer-text { color: #8b949e; }
+
+        .form-check-input {
+          cursor: pointer;
+          transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+        }
+        .form-check-input:focus-visible {
+          box-shadow: 0 0 0 3px rgba(37,169,107,0.2);
+          border-color: #25a96b;
+        }
+        .form-check-label {
+          font-size: 0.84rem;
+          color: #374151;
+          cursor: pointer;
+          user-select: none;
+        }
+        [data-bs-theme='dark'] .form-check-label { color: #8b949e; }
+
+        /* ── Responsive ── */
+        @media (max-width: 991px) {
+          .lp-hero { display: none; }
+          .lp-form-side {
+            flex: 1 1 100%;
+            padding: 32px 20px;
+          }
+          .lp-card {
+            max-width: 440px;
+            padding: 36px 28px;
+            border-radius: 20px;
+          }
+        }
+        @media (max-width: 480px) {
+          .lp-card { padding: 28px 20px; border-radius: 16px; }
+          .lp-card-title { font-size: 1.4rem; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .lp-live-dot { animation: none; }
+          .lp-submit { transition: none; }
         }
       `}</style>
-      
-      <footer className="footer">
-        <div className="footer-border"></div>
-        <div className="container-fluid">
-          <div className="row">
-            <div className="col-sm-6 text-sm-start text-center">
-              <p className="mb-0 text-muted">{new Date().getFullYear()} © Zigfly.</p>
-            </div>
-            <div className="col-sm-6 text-sm-end text-center">
-              <p className="mb-0 text-muted">Design & Develop by <span style={{color: '#2da97f'}}>Zigma</span></p>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

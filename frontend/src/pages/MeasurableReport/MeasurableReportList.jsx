@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import client from '../../api/client';
 import DataTable from '../../components/DataTable';
+import DateInput from '../../components/DateInput';
 
 const now = new Date();
 const pad = (n) => n.toString().padStart(2, '0');
@@ -61,22 +62,26 @@ export default function MeasurableReportList() {
             </div>
 
             {/* Filters */}
-            <div className="row mt-2 g-2">
-              <div className="col-md-2">
-                <input type="date" name="from_date" className="form-control form-control-sm" placeholder="From Date"
+            <div className="row mt-2 g-2 align-items-end">
+              <div className="col-6 col-md-2">
+                <label className="form-label mb-1" style={{ fontSize: '0.72rem', color: 'var(--vz-secondary-color)' }}>From Date</label>
+                <DateInput name="from_date" className="form-control form-control-sm"
                   value={filters.from_date} onChange={handleFilterChange} />
               </div>
-              <div className="col-md-2">
-                <input type="date" name="to_date" className="form-control form-control-sm" placeholder="To Date"
+              <div className="col-6 col-md-2">
+                <label className="form-label mb-1" style={{ fontSize: '0.72rem', color: 'var(--vz-secondary-color)' }}>To Date</label>
+                <DateInput name="to_date" className="form-control form-control-sm"
                   value={filters.to_date} onChange={handleFilterChange} />
               </div>
-              <div className="col-md-3">
+              <div className="col-12 col-md-3">
+                <label className="form-label mb-1" style={{ fontSize: '0.72rem', color: 'var(--vz-secondary-color)' }}>Location</label>
                 <select name="location" className="form-select form-select-sm" value={filters.location} onChange={handleFilterChange}>
                   <option value="">All Locations</option>
                   {LOCATIONS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
                 </select>
               </div>
-              <div className="col-md-3">
+              <div className="col-12 col-md-3">
+                <label className="form-label mb-1" style={{ fontSize: '0.72rem', color: 'var(--vz-secondary-color)' }}>Pit</label>
                 <select name="pit_name" className="form-select form-select-sm" value={filters.pit_name} onChange={handleFilterChange}>
                   <option value="">All Pits</option>
                   {pitOptions.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}

@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
+import DateInput from '../../components/DateInput';
 import useAuth from '../../hooks/useAuth';
+import TextInput from '../../components/TextInput';
+import Select from '../../components/Select';
+import FileInput from '../../components/FileInput';
+import Button from '../../components/Button';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -160,68 +165,101 @@ export default function MaterialReceivedForm() {
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="date">Entry Date</label>
-                    <input type="date" id="date" name="date" className="form-control"
-                      value={formData.date} onChange={handleChange} required readOnly={!isAdmin} />
+                  <div className="col-12 col-md-3">
+                    <DateInput
+                      id="date"
+                      name="date"
+                      label="Entry Date"
+                      value={formData.date}
+                      onChange={handleChange}
+                      disabled={!isAdmin}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="supplier_name">Supplier Name</label>
-                    <select id="supplier_name" name="supplier_name" className="form-control"
-                      value={formData.supplier_name} onChange={handleChange} required>
-                      {supplierOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
+                  <div className="col-12 col-md-3">
+                    <Select
+                      label="Supplier Name"
+                      name="supplier_name"
+                      value={formData.supplier_name}
+                      onChange={handleChange}
+                      options={supplierOptions}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="item_name">Item Name</label>
-                    <select id="item_name" name="item_name" className="form-control"
-                      value={formData.item_name} onChange={handleChange} required>
-                      {itemOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
+                  <div className="col-12 col-md-3">
+                    <Select
+                      label="Item Name"
+                      name="item_name"
+                      value={formData.item_name}
+                      onChange={handleChange}
+                      options={itemOptions}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="qty">Qty</label>
-                    <input type="number" step="0.01" min="1" id="qty" name="qty" className="form-control"
-                      value={formData.qty} onChange={handleChange} required />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      type="number"
+                      step="0.01"
+                      min="1"
+                      label="Qty"
+                      name="qty"
+                      value={formData.qty}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="unit_display">Unit</label>
-                    <input type="text" id="unit_display" className="form-control"
-                      value={formData.unit_display} readOnly required />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      label="Unit"
+                      name="unit_display"
+                      value={formData.unit_display}
+                      readOnly
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="invoice_date">Invoice Date</label>
-                    <input type="date" id="invoice_date" name="invoice_date" className="form-control"
-                      value={formData.invoice_date} onChange={handleChange} />
+                  <div className="col-12 col-md-3">
+                    <DateInput
+                      id="invoice_date"
+                      name="invoice_date"
+                      label="Invoice Date"
+                      value={formData.invoice_date}
+                      onChange={handleChange}
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="invoice_no">Invoice Number</label>
-                    <input type="text" id="invoice_no" name="invoice_no" className="form-control"
-                      value={formData.invoice_no} onChange={handleChange} />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      label="Invoice Number"
+                      name="invoice_no"
+                      value={formData.invoice_no}
+                      onChange={handleChange}
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="test_file">Invoice Image Upload</label>
-                    <input type="file" id="test_file" className="form-control" multiple
+                  <div className="col-12 col-md-3">
+                    <FileInput
+                      label="Invoice Image Upload"
+                      name="test_file"
+                      multiple
                       accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"
-                      onChange={e => setFiles(Array.from(e.target.files))} />
+                      onFilesChange={(fl) => setFiles(Array.from(fl))}
+                    />
                   </div>
                 </div>
 
                 <div className="row mt-2">
                   <div className="col-12 text-end mt-3">
-                    <button type="button" onClick={() => navigate('/material_received/list')} className="btn btn-danger me-2">
+                    <Button variant="danger" className="me-2" onClick={() => navigate('/material_received/list')}>
                       Cancel
-                    </button>
-                    <button type="submit" className="btn btn-success" disabled={isLoading}>
+                    </Button>
+                    <Button type="submit" disabled={isLoading}>
                       {isLoading ? 'Saving...' : unique_id ? 'Update' : 'Save'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </form>

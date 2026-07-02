@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
+import DateInput from '../../components/DateInput';
+import TextInput from '../../components/TextInput';
+import Select from '../../components/Select';
+import FileInput from '../../components/FileInput';
+import Button from '../../components/Button';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -97,10 +102,6 @@ export default function FrpStatusUpdateForm() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e) => {
-    setFiles(Array.from(e.target.files));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -155,69 +156,96 @@ export default function FrpStatusUpdateForm() {
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
-                  <div className="col-md-4 mb-3">
-                    <label htmlFor="entry_date">Entry Date</label>
-                    <input type="date" id="entry_date" name="entry_date" className="form-control"
-                      value={formData.entry_date} onChange={handleChange} required readOnly={!!formData.batch_id} />
+                  <div className="col-12 col-md-4">
+                    <DateInput
+                      id="entry_date"
+                      name="entry_date"
+                      label="Entry Date"
+                      value={formData.entry_date}
+                      onChange={handleChange}
+                      required
+                      disabled={!!formData.batch_id}
+                    />
                   </div>
 
-                  <div className="col-md-4 mb-3">
-                    <label htmlFor="batch_id">Batch Id</label>
-                    <select id="batch_id" name="batch_id" className="form-control"
-                      value={formData.batch_id} onChange={handleBatchChange} required>
-                      {batchOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
+                  <div className="col-12 col-md-4">
+                    <Select
+                      label="Batch Id"
+                      name="batch_id"
+                      value={formData.batch_id}
+                      onChange={handleBatchChange}
+                      options={batchOptions}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-4 mb-3">
-                    <label htmlFor="entry_no">Entry No</label>
-                    <input type="text" id="entry_no" name="entry_no" className="form-control"
-                      value={formData.entry_no} readOnly />
-                  </div>
-                  
-                  <div className="col-md-4 mb-3">
-                    <label htmlFor="starting_day">Processing started Day</label>
-                    <input type="date" id="starting_day" name="starting_day" className="form-control"
-                      value={formData.starting_day} readOnly />
+                  <div className="col-12 col-md-4">
+                    <TextInput
+                      label="Entry No"
+                      name="entry_no"
+                      value={formData.entry_no}
+                      readOnly
+                    />
                   </div>
 
-                  <div className="col-md-4 mb-3">
-                    <label htmlFor="day">Day</label>
-                    <input type="text" id="day" name="day" className="form-control"
-                      value={formData.day} readOnly />
+                  <div className="col-12 col-md-4">
+                    <DateInput
+                      id="starting_day"
+                      name="starting_day"
+                      label="Processing started Day"
+                      value={formData.starting_day}
+                      disabled
+                    />
                   </div>
 
-                  <div className="col-md-4 mb-3">
-                    <label htmlFor="hatching_status">FRP Hatching Status</label>
-                    <select id="hatching_status" name="hatching_status" className="form-control"
-                      value={formData.hatching_status} onChange={handleChange} required>
-                      <option value="">Select The Status</option>
-                      <option value="1">Progressing</option>
-                      <option value="2">Completed</option>
-                    </select>
+                  <div className="col-12 col-md-4">
+                    <TextInput
+                      label="Day"
+                      name="day"
+                      value={formData.day}
+                      readOnly
+                    />
                   </div>
 
-                  <div className="col-md-4 mb-3">
-                    <label htmlFor="test_file">FRP egg process Image</label>
-                    <input type="file" id="test_file" name="test_file" className="form-control"
-                      multiple onChange={handleFileChange} />
+                  <div className="col-12 col-md-4">
+                    <Select
+                      label="FRP Hatching Status"
+                      name="hatching_status"
+                      value={formData.hatching_status}
+                      onChange={handleChange}
+                      options={[{ value: '1', label: 'Progressing' }, { value: '2', label: 'Completed' }]}
+                      placeholder="Select The Status"
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-4 mb-3">
-                    <label htmlFor="remarks">Remarks</label>
-                    <input type="text" id="remarks" name="remarks" className="form-control"
-                      value={formData.remarks} onChange={handleChange} />
+                  <div className="col-12 col-md-4">
+                    <FileInput
+                      label="FRP egg process Image"
+                      name="test_file"
+                      multiple
+                      onFilesChange={(fl) => setFiles(Array.from(fl))}
+                    />
+                  </div>
+
+                  <div className="col-12 col-md-4">
+                    <TextInput
+                      label="Remarks"
+                      name="remarks"
+                      value={formData.remarks}
+                      onChange={handleChange}
+                    />
                   </div>
                 </div>
 
                 <div className="row mt-2">
                   <div className="col-12 text-end mt-3">
-                    <button type="button" onClick={() => navigate('/frp_status_update/list')} className="btn btn-danger me-2">
+                    <Button variant="danger" className="me-2" onClick={() => navigate('/frp_status_update/list')}>
                       Cancel
-                    </button>
-                    <button type="submit" className="btn btn-success" disabled={isLoading}>
+                    </Button>
+                    <Button type="submit" disabled={isLoading}>
                       {isLoading ? 'Saving...' : unique_id ? 'Update' : 'Save'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </form>

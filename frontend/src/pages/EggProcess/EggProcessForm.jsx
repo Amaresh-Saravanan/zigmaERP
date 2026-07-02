@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
+import DateInput from '../../components/DateInput';
+import TextInput from '../../components/TextInput';
+import Select from '../../components/Select';
+import Button from '../../components/Button';
 
 export default function EggProcessForm() {
   const [searchParams] = useSearchParams();
@@ -251,57 +255,44 @@ export default function EggProcessForm() {
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
-                  <div className="col-3 mb-3">
-                    <label>Entry No</label>
-                    <h5>{formData.entry_no}</h5>
+                  <div className="col-12 col-md-3 mb-3">
+                    <span className="form-label app-form-label d-block">Entry No</span>
+                    <h5 className="mb-0">{formData.entry_no}</h5>
                   </div>
-                  
+
                   {!unique_id ? (
-                    <div className="col-3 mb-3">
-                      <label htmlFor="entry_date">Entry Date</label>
-                      <input
-                        type="date"
-                        className="form-control"
+                    <div className="col-12 col-md-3 mb-3">
+                      <DateInput
                         id="entry_date"
                         name="entry_date"
+                        label="Entry Date"
                         value={formData.entry_date}
                         onChange={handleChange}
                         required
                       />
                     </div>
                   ) : (
-                    <div className="col-3 mb-3">
-                      <label>Entry Date</label><br/>
+                    <div className="col-12 col-md-3 mb-3">
+                      <span className="form-label app-form-label d-block">Entry Date</span>
                       <span>{formData.entry_date}</span>
                     </div>
                   )}
 
-                  <div className="col-3 mb-3">
-                    <label htmlFor="batch_id">Batch Id</label>
-                    <select
-                      id="batch_id"
+                  <div className="col-12 col-md-3">
+                    <Select
+                      label="Batch Id"
                       name="batch_id"
-                      className="form-control"
                       value={formData.batch_id}
                       onChange={handleChange}
+                      options={[{ value: '', label: 'Select Batch Id' }, ...batchOptions]}
                       required
                       disabled={!!unique_id}
-                    >
-                      <option value="">Select Batch Id</option>
-                      {batchOptions.map((opt, i) => (
-                        <option key={i} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </div>
 
-                  <div className="col-3 mb-3">
-                    <label htmlFor="supplier_name">Supplier Name</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="supplier_name"
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      label="Supplier Name"
                       name="supplier_name"
                       value={formData.supplier_name}
                       readOnly
@@ -309,12 +300,9 @@ export default function EggProcessForm() {
                     />
                   </div>
 
-                  <div className="col-3 mb-3">
-                    <label htmlFor="tot_qty">Total Quantity (Grams)</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="tot_qty"
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      label="Total Quantity (Grams)"
                       name="tot_qty"
                       value={formData.tot_qty}
                       readOnly
@@ -322,12 +310,10 @@ export default function EggProcessForm() {
                     />
                   </div>
 
-                  <div className="col-3 mb-3">
-                    <label htmlFor="tray_utilized">Tray Utilized</label>
-                    <input
+                  <div className="col-12 col-md-3">
+                    <TextInput
                       type="number"
-                      className="form-control"
-                      id="tray_utilized"
+                      label="Tray Utilized"
                       name="tray_utilized"
                       value={formData.tray_utilized}
                       onChange={handleChange}
@@ -336,24 +322,24 @@ export default function EggProcessForm() {
                     />
                   </div>
 
-                  <div className="col-3 mb-3 d-flex align-items-end gap-2">
-                    <button type="button" className="btn btn-success" onClick={() => setShowTrayModal(true)}>
+                  <div className="col-12 col-md-3 mb-3 d-flex align-items-end gap-2">
+                    <Button onClick={() => setShowTrayModal(true)}>
                       Add Tray
-                    </button>
-                    <button type="button" className="btn btn-primary" onClick={() => setShowAddOnModal(true)}>
+                    </Button>
+                    <Button variant="soft-primary" onClick={() => setShowAddOnModal(true)}>
                       Add On
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
                 <div className="row mt-2">
                   <div className="col-12 text-end mt-3">
-                    <button type="button" onClick={() => navigate('/egg_process/list')} className="btn btn-danger me-2">
+                    <Button variant="danger" className="me-2" onClick={() => navigate('/egg_process/list')}>
                       Cancel
-                    </button>
-                    <button type="submit" className="btn btn-success" disabled={isLoading}>
+                    </Button>
+                    <Button type="submit" disabled={isLoading}>
                       {isLoading ? 'Saving...' : unique_id ? 'Update' : 'Save'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </form>
@@ -410,9 +396,9 @@ export default function EggProcessForm() {
               <div className="modal-body">
                 <div className="mb-3">
                   <label className="form-label">Item Name</label>
-                  <select 
-                    multiple 
-                    className="form-control" 
+                  <select
+                    multiple
+                    className="form-select"
                     onChange={handleItemSelectChange}
                     value={Object.keys(selectedItems)}
                     style={{ minHeight: '100px' }}

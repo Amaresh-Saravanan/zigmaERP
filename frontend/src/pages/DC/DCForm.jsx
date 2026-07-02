@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import DateInput from '../../components/DateInput';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -159,22 +160,33 @@ export default function DCForm() {
               {/* Document Details */}
               <div className="row bg-light p-3 rounded mb-4">
                 <div className="col-md-3 mb-3">
-                  <label htmlFor="challanDate">Challan Date</label>
-                  <input type="date" id="challanDate" name="challanDate" className="form-control form-control-sm"
-                    value={formData.challanDate} onChange={handleChange} required />
+                  <DateInput
+                    id="challanDate"
+                    name="challanDate"
+                    label="Challan Date"
+                    value={formData.challanDate}
+                    onChange={handleChange}
+                    className="form-control form-control-sm"
+                    required
+                  />
                 </div>
                 <div className="col-md-3 mb-3">
-                  <label htmlFor="poRef">PO Ref #</label>
+                  <label htmlFor="poRef" className="form-label app-form-label">PO Ref #</label>
                   <input type="text" id="poRef" name="poRef" className="form-control form-control-sm"
                     value={formData.poRef} onChange={handleChange} />
                 </div>
                 <div className="col-md-3 mb-3">
-                  <label htmlFor="poDate">PO Date</label>
-                  <input type="date" id="poDate" name="poDate" className="form-control form-control-sm"
-                    value={formData.poDate} onChange={handleChange} />
+                  <DateInput
+                    id="poDate"
+                    name="poDate"
+                    label="PO Date"
+                    value={formData.poDate}
+                    onChange={handleChange}
+                    className="form-control form-control-sm"
+                  />
                 </div>
                 <div className="col-md-3 mb-3">
-                  <label htmlFor="challanType">Challan Type</label>
+                  <label htmlFor="challanType" className="form-label app-form-label">Challan Type</label>
                   <select id="challanType" name="challanType" className="form-select form-select-sm"
                     value={formData.challanType} onChange={handleChange} required>
                     <option value="Supply of Goods">Supply of Goods</option>
@@ -190,18 +202,18 @@ export default function DCForm() {
                 <div className="col-md-6">
                   <h6 className="fw-bold text-uppercase border-bottom pb-2">Bill To / Ship To</h6>
                   <div className="mb-2">
-                    <label>Company Name</label>
-                    <input type="text" name="billToCompany" className="form-control form-control-sm" 
+                    <label htmlFor="billToCompany" className="form-label app-form-label">Company Name</label>
+                    <input type="text" id="billToCompany" name="billToCompany" className="form-control form-control-sm"
                       value={formData.billToCompany} onChange={handleChange} required />
                   </div>
                   <div className="mb-2">
-                    <label>Address</label>
-                    <textarea name="billToAddress" className="form-control form-control-sm" rows="3"
+                    <label htmlFor="billToAddress" className="form-label app-form-label">Address</label>
+                    <textarea id="billToAddress" name="billToAddress" className="form-control form-control-sm" rows="3"
                       value={formData.billToAddress} onChange={handleChange} required></textarea>
                   </div>
                   <div className="mb-2">
-                    <label>GSTIN</label>
-                    <input type="text" name="billToGst" className="form-control form-control-sm" 
+                    <label htmlFor="billToGst" className="form-label app-form-label">GSTIN</label>
+                    <input type="text" id="billToGst" name="billToGst" className="form-control form-control-sm"
                       value={formData.billToGst} onChange={handleChange} />
                   </div>
                 </div>
@@ -312,7 +324,7 @@ export default function DCForm() {
 
               <div className="row mt-5 pt-5 d-print-none">
                 <div className="col-12 text-end mt-3">
-                  <button type="submit" className="btn btn-success btn-lg">
+                  <button type="submit" className="btn btn-success">
                     <i className="ri-save-3-line me-1"></i> Save DC Locally
                   </button>
                 </div>

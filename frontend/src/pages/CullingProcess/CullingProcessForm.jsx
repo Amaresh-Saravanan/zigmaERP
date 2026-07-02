@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
+import DateInput from '../../components/DateInput';
+import TextInput from '../../components/TextInput';
+import Select from '../../components/Select';
+import FileInput from '../../components/FileInput';
+import Button from '../../components/Button';
 
 const SHIFT_OPTIONS = [{ value: '1', label: 'Day' }, { value: '2', label: 'Night' }, { value: '3', label: 'General' }];
 const CYLINDER_OPTIONS = [{ value: '1', label: 'O2' }, { value: '2', label: 'LPG' }, { value: '3', label: 'Other' }];
@@ -126,97 +131,154 @@ export default function CullingProcessForm() {
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="entry_date">Work Date</label>
-                    <input type="date" id="entry_date" name="entry_date" className="form-control"
-                      value={formData.entry_date} onChange={handleChange} required />
+                  <div className="col-12 col-md-3">
+                    <DateInput
+                      id="entry_date"
+                      name="entry_date"
+                      label="Work Date"
+                      value={formData.entry_date}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="shift_type">Shift Type</label>
-                    <select id="shift_type" name="shift_type" className="form-control"
-                      value={formData.shift_type} onChange={handleChange} required>
-                      {SHIFT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
+                  <div className="col-12 col-md-3">
+                    <Select
+                      label="Shift Type"
+                      name="shift_type"
+                      value={formData.shift_type}
+                      onChange={handleChange}
+                      options={SHIFT_OPTIONS}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="cylinder_type">Cylinder Type</label>
-                    <select id="cylinder_type" name="cylinder_type" className="form-control"
-                      value={formData.cylinder_type} onChange={handleChange} required>
-                      {CYLINDER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
+                  <div className="col-12 col-md-3">
+                    <Select
+                      label="Cylinder Type"
+                      name="cylinder_type"
+                      value={formData.cylinder_type}
+                      onChange={handleChange}
+                      options={CYLINDER_OPTIONS}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="cylinder_no">Cylinder No / ID</label>
-                    <input type="text" id="cylinder_no" name="cylinder_no" className="form-control"
-                      value={formData.cylinder_no} onChange={handleChange} required />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      label="Cylinder No / ID"
+                      name="cylinder_no"
+                      value={formData.cylinder_no}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="starting_weight">Starting Weight (Kg)</label>
-                    <input type="number" step="0.01" id="starting_weight" name="starting_weight" className="form-control"
-                      value={formData.starting_weight} onChange={handleChange} required />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      type="number"
+                      step="0.01"
+                      label="Starting Weight (Kg)"
+                      name="starting_weight"
+                      value={formData.starting_weight}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="ending_weight">Final Weight (Kg)</label>
-                    <input type="number" step="0.01" id="ending_weight" name="ending_weight" className="form-control"
-                      value={formData.ending_weight} onChange={handleChange} required />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      type="number"
+                      step="0.01"
+                      label="Final Weight (Kg)"
+                      name="ending_weight"
+                      value={formData.ending_weight}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="fuel_consumption">Fuel Consumption (Kg)</label>
-                    <input type="number" step="0.01" id="fuel_consumption" name="fuel_consumption" className="form-control"
-                      value={formData.fuel_consumption} readOnly required />
-                    <small className="text-muted">Auto-calculated: Starting − Final</small>
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      type="number"
+                      step="0.01"
+                      label="Fuel Consumption (Kg)"
+                      name="fuel_consumption"
+                      value={formData.fuel_consumption}
+                      readOnly
+                      required
+                    >
+                      <small className="text-muted">Auto-calculated: Starting − Final</small>
+                    </TextInput>
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="raw_material_weight">Raw Material / Live Larvae (Kg)</label>
-                    <input type="number" step="0.01" id="raw_material_weight" name="raw_material_weight" className="form-control"
-                      value={formData.raw_material_weight} onChange={handleChange} required />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      type="number"
+                      step="0.01"
+                      label="Raw Material / Live Larvae (Kg)"
+                      name="raw_material_weight"
+                      value={formData.raw_material_weight}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="final_larvae_weight">Final Larvae After Culling (Kg)</label>
-                    <input type="number" step="0.01" id="final_larvae_weight" name="final_larvae_weight" className="form-control"
-                      value={formData.final_larvae_weight} onChange={handleChange} required />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      type="number"
+                      step="0.01"
+                      label="Final Larvae After Culling (Kg)"
+                      name="final_larvae_weight"
+                      value={formData.final_larvae_weight}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="work_done">Work Done</label>
-                    <select id="work_done" name="work_done" className="form-control"
-                      value={formData.work_done} onChange={handleChange} required>
-                      {WORK_DONE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
+                  <div className="col-12 col-md-3">
+                    <Select
+                      label="Work Done"
+                      name="work_done"
+                      value={formData.work_done}
+                      onChange={handleChange}
+                      options={WORK_DONE_OPTIONS}
+                      required
+                    />
                   </div>
 
                   {/* Conditional: shown only when Work Done = Others (3) */}
                   {showOthersRemarks && (
-                    <div className="col-md-3 mb-3">
-                      <label htmlFor="others_remarks">Others Remarks</label>
-                      <input type="text" id="others_remarks" name="others_remarks" className="form-control"
-                        value={formData.others_remarks} onChange={handleChange} required={showOthersRemarks} />
+                    <div className="col-12 col-md-3">
+                      <TextInput
+                        label="Others Remarks"
+                        name="others_remarks"
+                        value={formData.others_remarks}
+                        onChange={handleChange}
+                        required={showOthersRemarks}
+                      />
                     </div>
                   )}
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="test_file">Image Upload</label>
-                    <input type="file" id="test_file" className="form-control" multiple accept="image/*"
-                      onChange={e => setFiles(Array.from(e.target.files))} />
+                  <div className="col-12 col-md-3">
+                    <FileInput
+                      label="Image Upload"
+                      name="test_file"
+                      multiple
+                      accept="image/*"
+                      onFilesChange={(fl) => setFiles(Array.from(fl))}
+                    />
                   </div>
                 </div>
 
                 <div className="row mt-2">
                   <div className="col-12 text-end mt-3">
-                    <button type="button" onClick={() => navigate('/culling_process/list')} className="btn btn-danger me-2">
+                    <Button variant="danger" className="me-2" onClick={() => navigate('/culling_process/list')}>
                       Cancel
-                    </button>
-                    <button type="submit" className="btn btn-success" disabled={isLoading}>
+                    </Button>
+                    <Button type="submit" disabled={isLoading}>
                       {isLoading ? 'Saving...' : unique_id ? 'Update' : 'Save'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </form>

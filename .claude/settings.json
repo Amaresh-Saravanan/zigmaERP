@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"/c/Users/DELL/House work/Internship/erp/erp/frontend\" && grep -r \"ri-arrow-right\" src --include=\"*.jsx\" --include=\"*.js\")",
+      "Read(//c/Users/DELL/House work/Internship/erp/erp/frontend/**)",
+      "Bash(cd \"/c/Users/DELL/House work/Internship/erp/erp/frontend\" && grep -r \"background.*#\\\\|color.*#\\\\|btn-\" src/pages/Dashboard --include=\"*.jsx\" | head -20)"
+    ]
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true
+  }
+}

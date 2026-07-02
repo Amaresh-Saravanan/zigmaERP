@@ -1,0 +1,1101 @@
+/* ====================================================================
+   Zigfly UX Layer — global experience improvements
+   Covers list pages, filter bars, read-only fields, status badges,
+   action buttons, and form field hierarchy.
+   Zero JSX changes — pure CSS targeting Bootstrap + Velzon classes.
+   ==================================================================== */
+
+/* ── 1. List page card header — title + action button row ── */
+
+.card-header .row.flex-between-end,
+.card-header [class*='row'] {
+  align-items: center;
+}
+
+/* Page title in list/form cards */
+.card-header h5 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--vz-emphasis-color);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Subtle icon prefix on card titles — add it via ::before if needed */
+.card-header h5::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 18px;
+  background: var(--primary-green);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* "Create New" / primary action button in list header */
+.card-header .btn-primary {
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 7px 16px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--primary-green);
+  border-color: var(--primary-green);
+  color: #fff;
+  white-space: nowrap;
+  transition: background 0.2s ease-out, box-shadow 0.2s ease-out, transform 0.2s ease-out;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-header .btn-primary:hover {
+  background: var(--primary-green-dark);
+  border-color: var(--primary-green-dark);
+  box-shadow: 0 4px 12px rgba(37, 169, 107, 0.15);
+  color: #fff;
+  transform: scale(1.02);
+}
+
+.card-header .btn-primary:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: 2px;
+}
+
+.card-header .btn-primary:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 4px rgba(37, 169, 107, 0.1);
+}
+
+.card-header .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── 2. Filter bar — visual grouping ── */
+
+/* Filter row container */
+.card-header .row.mt-2.g-2 {
+  background: var(--vz-tertiary-bg, rgba(0,0,0,0.02));
+  border-radius: 8px;
+  padding: 10px 8px;
+  margin-top: 12px !important;
+  border: 1px solid var(--vz-border-color);
+}
+
+[data-bs-theme='dark'] .card-header .row.mt-2.g-2 {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: #21262d;
+}
+
+/* Filter inputs inside card-header */
+.card-header .form-control-sm,
+.card-header .form-select-sm {
+  border-radius: 6px;
+  font-size: 0.8rem;
+  height: 34px;
+  border-color: var(--vz-border-color);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.card-header .form-control-sm:focus,
+.card-header .form-select-sm:focus {
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(37, 169, 107, 0.15);
+}
+
+/* Date inputs get calendar icon color fix on dark */
+[data-bs-theme='dark'] .card-header input[type='date'] {
+  color-scheme: dark;
+  color: var(--vz-body-color);
+}
+
+/* ── 3. Read-only field — visually distinct ── */
+
+/* Editable fields — normal */
+.form-control:not([readonly]):not(:disabled) {
+  border-color: var(--vz-border-color);
+}
+
+/* Read-only — muted, striped, cursor locked */
+.form-control[readonly],
+.form-control:read-only {
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 4px,
+    rgba(0, 0, 0, 0.025) 4px,
+    rgba(0, 0, 0, 0.025) 8px
+  ) !important;
+  border-style: dashed !important;
+  border-color: var(--vz-border-color) !important;
+  color: var(--vz-secondary-color) !important;
+  cursor: not-allowed;
+  opacity: 1; /* override Bootstrap's 0.65 */
+}
+
+[data-bs-theme='dark'] .form-control[readonly],
+[data-bs-theme='dark'] .form-control:read-only {
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 4px,
+    rgba(255, 255, 255, 0.03) 4px,
+    rgba(255, 255, 255, 0.03) 8px
+  ) !important;
+  border-color: #30363d !important;
+  color: #6e7681 !important;
+}
+
+/* Auto-computed label hint (Day, Entry No, etc.) */
+.form-control[readonly] + .form-text,
+.form-control:read-only + .form-text {
+  font-size: 0.7rem;
+  color: var(--vz-secondary-color);
+  font-style: italic;
+}
+
+/* ── 4. Status badges — color-coded ── */
+
+/* Bootstrap badges returned from PHP backend */
+.badge,
+span.badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+/* Active / success / completed → green */
+.badge.bg-success,
+.badge.badge-soft-success,
+.badge-soft-success {
+  background: rgba(37, 169, 107, 0.15) !important;
+  color: var(--primary-green) !important;
+  border: 1px solid rgba(37, 169, 107, 0.25);
+}
+
+/* Warning / in-progress → amber */
+.badge.bg-warning,
+.badge.badge-soft-warning,
+.badge-soft-warning {
+  background: rgba(247, 184, 75, 0.15) !important;
+  color: var(--warning-amber) !important;
+  border: 1px solid rgba(247, 184, 75, 0.25);
+}
+
+/* Danger / rejected / failed → red */
+.badge.bg-danger,
+.badge.badge-soft-danger,
+.badge-soft-danger {
+  background: rgba(240, 101, 72, 0.15) !important;
+  color: var(--error-coral) !important;
+  border: 1px solid rgba(240, 101, 72, 0.25);
+}
+
+/* Info / processing → blue */
+.badge.bg-info,
+.badge.badge-soft-info,
+.badge-soft-info {
+  background: rgba(41, 182, 246, 0.15) !important;
+  color: var(--info-blue) !important;
+  border: 1px solid rgba(41, 182, 246, 0.25);
+}
+
+/* Primary */
+.badge.bg-primary,
+.badge.badge-soft-primary,
+.badge-soft-primary {
+  background: rgba(37, 169, 107, 0.12) !important;
+  color: var(--primary-green-light) !important;
+  border: 1px solid rgba(37, 169, 107, 0.2);
+}
+
+/* Secondary / muted */
+.badge.bg-secondary,
+.badge.badge-soft-secondary,
+.badge-soft-secondary {
+  background: rgba(139, 148, 158, 0.12) !important;
+  color: #8b949e !important;
+  border: 1px solid rgba(139, 148, 158, 0.2);
+}
+
+/* ── 5. File upload area ── */
+
+input[type='file'].form-control {
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+input[type='file'].form-control::-webkit-file-upload-button {
+  background: rgba(37, 169, 107, 0.1);
+  color: var(--primary-green);
+  border: 1px solid rgba(37, 169, 107, 0.3);
+  border-radius: 4px;
+  padding: 3px 10px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: background 0.15s;
+}
+
+input[type='file'].form-control::-webkit-file-upload-button:hover {
+  background: rgba(37, 169, 107, 0.2);
+}
+
+/* ── 6. Form field visual hierarchy ── */
+
+/* Section divider inside a long form */
+.form-section-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--primary-green);
+  margin: 20px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(37, 169, 107, 0.2);
+}
+
+/* Computed/auto fields — green label hint */
+label[data-computed='true'],
+.label-computed {
+  color: var(--primary-green);
+  font-size: 0.75rem;
+}
+
+label[data-computed='true']::after,
+.label-computed::after {
+  content: ' (auto)';
+  font-size: 0.65rem;
+  opacity: 0.7;
+  font-weight: 400;
+}
+
+/* Required field asterisk */
+.was-validated label::after,
+label.required::after {
+  content: ' *';
+  color: var(--error-coral);
+  font-weight: 400;
+}
+
+/* ── 7. Table status cells — color-coded text ── */
+
+/* Pit status type colors (text returned by PHP) */
+td:has(.text-success) { color: var(--primary-green); }
+td:has(.text-danger)  { color: var(--error-coral); }
+td:has(.text-warning) { color: var(--warning-amber); }
+td:has(.text-info)    { color: var(--info-blue); }
+
+/* Alternate: target common PHP-returned spans */
+.text-success { color: var(--primary-green) !important; }
+.text-warning { color: var(--warning-amber) !important; }
+.text-danger  { color: var(--error-coral) !important; }
+.text-info    { color: var(--info-blue) !important; }
+
+/* ── 8. Loading states — consistent ── */
+
+/* Spinner inside card body */
+.card-body .text-center .spinner-border {
+  color: var(--primary-green) !important;
+  width: 28px;
+  height: 28px;
+  border-width: 2.5px;
+}
+
+/* Saving... state on submit button */
+.btn-success:disabled,
+.btn-success[disabled] {
+  position: relative;
+  color: rgba(255,255,255,0.8);
+}
+
+/* ── 9. Textarea ── */
+
+textarea.form-control {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.5;
+}
+
+/* ── 10. Date input cross-browser ── */
+
+input[type='date'].form-control,
+input[type='month'].form-control {
+  cursor: pointer;
+}
+
+[data-bs-theme='dark'] input[type='date'].form-control,
+[data-bs-theme='dark'] input[type='month'].form-control {
+  color-scheme: dark;
+}
+
+/* ── 11. "Back to list" nav hint on form pages ── */
+
+/* Breadcrumb row above card */
+.breadcrumb-trail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--vz-secondary-color);
+  margin-bottom: 12px;
+}
+
+.breadcrumb-trail a {
+  color: var(--vz-secondary-color);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s;
+}
+
+.breadcrumb-trail a:hover {
+  color: var(--primary-green);
+}
+
+.breadcrumb-trail .separator {
+  opacity: 0.4;
+}
+
+.breadcrumb-trail .current {
+  color: var(--vz-body-color);
+  font-weight: 500;
+}
+
+/* ── 12. Sidebar & Navigation — Enhanced styling ── */
+
+/* Main menu title */
+.navbar-menu .menu-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--vz-secondary-color);
+  padding: 16px 12px 8px;
+  margin: 8px 0 0;
+}
+
+/* Top-level menu item (main category) */
+.navbar-menu .nav-link {
+  position: relative;
+  color: var(--vz-body-color);
+  font-size: 0.87rem;
+  font-weight: 500;
+  padding: 10px 12px 10px 38px;
+  margin: 4px 6px;
+  border-radius: 8px;
+  transition: all var(--anim-duration-fast) var(--anim-ease-out);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  outline: none;
+}
+
+/* Menu icon sizing */
+.navbar-menu .nav-link i {
+  font-size: 1rem;
+  width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Menu item hover state */
+.navbar-menu .nav-link:hover {
+  background-color: rgba(37, 169, 107, 0.08);
+  color: var(--primary-green);
+}
+
+/* Menu item focus state (keyboard navigation) */
+.navbar-menu .nav-link:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: -2px;
+  background-color: rgba(37, 169, 107, 0.1);
+}
+
+/* Active menu item — single clean pill, no border shift */
+.navbar-menu .nav-link.active {
+  background-color: rgba(37, 169, 107, 0.12);
+  color: var(--primary-green);
+  font-weight: 600;
+}
+
+[data-bs-theme='dark'] .navbar-menu .nav-link.active {
+  background-color: rgba(37, 169, 107, 0.18);
+}
+
+/* Submenu items container — indented rail instead of boxed group */
+.navbar-menu .nav-sm {
+  padding: 2px 0;
+  background: none;
+  border-radius: 0;
+  margin: 0 6px 4px 28px;
+  border-left: 1px solid var(--vz-border-color);
+}
+
+[data-bs-theme='dark'] .navbar-menu .nav-sm {
+  background: none;
+  border-left-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Submenu item (nested link) */
+.navbar-menu .nav-sm .nav-link {
+  font-size: 0.84rem;
+  font-weight: 400;
+  padding: 7px 12px 7px 24px;
+  margin: 1px 0 1px 8px;
+  color: var(--vz-secondary-color);
+  border-left: none;
+  position: relative;
+}
+
+/* Dot slot — absolutely positioned so text never shifts */
+.navbar-menu .nav-sm .nav-link::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--vz-border-color);
+  transition: background-color 0.15s ease-out;
+}
+
+[data-bs-theme='dark'] .navbar-menu .nav-sm .nav-link::before {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* Submenu item hover */
+.navbar-menu .nav-sm .nav-link:hover {
+  color: var(--primary-green);
+  background-color: rgba(37, 169, 107, 0.06);
+}
+
+.navbar-menu .nav-sm .nav-link:hover::before {
+  background: var(--primary-green);
+}
+
+/* Submenu item focus state (keyboard navigation) */
+.navbar-menu .nav-sm .nav-link:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: -2px;
+  background-color: rgba(37, 169, 107, 0.1);
+}
+
+/* Submenu item active — green dot + green text, same geometry as idle */
+.navbar-menu .nav-sm .nav-link.active {
+  color: var(--primary-green);
+  background-color: transparent;
+  font-weight: 500;
+}
+
+.navbar-menu .nav-sm .nav-link.active::before,
+[data-bs-theme='dark'] .navbar-menu .nav-sm .nav-link.active::before {
+  background: var(--primary-green);
+  width: 6px;
+  height: 6px;
+}
+
+/* Expand/collapse arrow — no rotation animation */
+.navbar-menu .nav-link[aria-expanded] i {
+  transition: none;
+}
+
+.navbar-menu .nav-link[aria-expanded="true"] i {
+  transform: none;
+}
+
+/* ── 13. Responsive tweaks ── */
+
+@media (max-width: 768px) {
+  .card-header .row.flex-between-end {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 10px;
+  }
+
+  .card-header .col-auto:last-child {
+    width: 100%;
+  }
+
+  .card-header .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .card-header .row.mt-2.g-2 > [class*='col'] {
+    width: 50%;
+    flex: 0 0 50%;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-header .row.mt-2.g-2 > [class*='col'] {
+    width: 100%;
+    flex: 0 0 100%;
+  }
+}
+
+/* ── 13. Accessibility — focus indicators ── */
+
+.btn:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: 2px;
+}
+
+/* Firefox draws its own dotted inner focus ring on <select> using currentColor —
+   combined with the outline above it reads as "two different border styles".
+   Standard fix: make the native ring transparent, keep visible text via text-shadow. */
+select:-moz-focusring {
+  color: transparent;
+  text-shadow: 0 0 0 var(--vz-body-color, #212529);
+}
+
+/* Native selects — consistent solid border everywhere, no dashed states */
+.form-select {
+  border-style: solid;
+  accent-color: var(--primary-green);
+}
+
+/* ── 13b. Pipeline position bar (ScreeningProcessForm) ── */
+
+.pipeline-position-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.pipeline-stage {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--vz-secondary-color);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pipeline-stage--active {
+  color: var(--primary-green);
+  font-weight: 700;
+}
+
+.pipeline-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary-green);
+  display: inline-block;
+  animation: pulseRing 2s ease-out infinite;
+}
+
+.pipeline-arrow {
+  color: var(--vz-border-color);
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+/* ── 13c. Form step indicator ── */
+
+.form-steps {
+  display: flex;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--vz-border-color);
+}
+
+.form-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-step__badge {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--vz-border-color);
+  background: transparent;
+  color: var(--vz-secondary-color);
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: 'IBM Plex Mono', monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.form-step__label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--vz-secondary-color);
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.form-step__connector {
+  flex: 1;
+  height: 2px;
+  background: var(--vz-border-color);
+  margin: 0 8px;
+  min-width: 24px;
+  transition: background 0.3s ease;
+}
+
+.form-step__connector--done {
+  background: var(--primary-green);
+}
+
+/* Active step */
+.form-step--active .form-step__badge {
+  border-color: var(--primary-green);
+  background: rgba(37, 169, 107, 0.12);
+  color: var(--primary-green);
+}
+.form-step--active .form-step__label {
+  color: var(--primary-green);
+  font-weight: 600;
+}
+
+/* Done step */
+.form-step--done .form-step__badge {
+  border-color: var(--primary-green);
+  background: var(--primary-green);
+  color: #fff;
+}
+.form-step--done .form-step__label {
+  color: var(--vz-body-color);
+}
+
+@media (max-width: 480px) {
+  .form-step__label { display: none; }
+  .form-step__connector { min-width: 16px; }
+}
+
+/* ── 14. Raw Bootstrap table polish (DC, LoginHistory, etc.) ── */
+
+.table thead th {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--vz-secondary-color);
+  border-bottom: 2px solid var(--vz-border-color);
+  padding: 10px 12px;
+  white-space: nowrap;
+  background: var(--vz-tertiary-bg, rgba(0,0,0,0.02));
+}
+
+.table tbody td {
+  font-size: 0.82rem;
+  padding: 10px 12px;
+  vertical-align: middle;
+  border-color: var(--vz-border-color);
+  color: var(--vz-body-color);
+}
+
+.table tbody tr:hover {
+  background: rgba(37, 169, 107, 0.04);
+}
+
+[data-bs-theme='dark'] .table thead th {
+  background: #1c2128;
+  color: #6e7681;
+  border-color: #21262d;
+}
+
+[data-bs-theme='dark'] .table tbody td {
+  border-color: #21262d;
+}
+
+/* ── 15. LoginHistory — user info strip ── */
+
+.lh-user-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  background: var(--vz-tertiary-bg, rgba(0,0,0,0.02));
+  border: 1px solid var(--vz-border-color);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+
+[data-bs-theme='dark'] .lh-user-strip {
+  background: #1c2128;
+  border-color: #21262d;
+}
+
+.lh-user-strip__label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--vz-secondary-color);
+  margin-bottom: 3px;
+}
+
+.lh-user-strip__value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--vz-emphasis-color);
+}
+
+/* ── 16. LoginHistory — timeline sessions ── */
+
+.lh-timeline {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  position: relative;
+}
+
+.lh-timeline::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--vz-border-color);
+}
+
+[data-bs-theme='dark'] .lh-timeline::before {
+  background: #21262d;
+}
+
+.lh-session {
+  display: flex;
+  gap: 14px;
+  padding: 12px 0 12px 42px;
+  position: relative;
+  border-bottom: 1px solid var(--vz-border-color);
+}
+
+[data-bs-theme='dark'] .lh-session {
+  border-color: #21262d;
+}
+
+.lh-session:last-child {
+  border-bottom: none;
+}
+
+.lh-session__dot {
+  position: absolute;
+  left: 9px;
+  top: 18px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--primary-green);
+  background: var(--vz-body-bg, #fff);
+  flex-shrink: 0;
+}
+
+[data-bs-theme='dark'] .lh-session__dot {
+  background: #0d1117;
+}
+
+.lh-session__times {
+  flex: 1;
+  min-width: 0;
+}
+
+.lh-session__time-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+  color: var(--vz-body-color);
+  margin-bottom: 4px;
+}
+
+.lh-session__time-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--vz-secondary-color);
+  min-width: 54px;
+}
+
+.lh-session__time-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--vz-emphasis-color);
+}
+
+.lh-session__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.lh-session__worked {
+  font-size: 0.72rem;
+  color: var(--vz-secondary-color);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lh-session__worked strong {
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--primary-green);
+  font-size: 0.78rem;
+}
+
+.lh-total-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(37, 169, 107, 0.07);
+  border: 1px solid rgba(37, 169, 107, 0.2);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-top: 16px;
+}
+
+.lh-total-bar__label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--vz-secondary-color);
+}
+
+.lh-total-bar__value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary-green);
+}
+
+/* ── 17. Smooth page load ── */
+
+.card {
+  animation: cardFadeIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Stagger cards within a row so the page cascades in instead of popping at once */
+.row > [class*='col'] .card:nth-child(1),
+.row > [class*='col']:nth-child(1) .card { animation-delay: 0ms; }
+.row > [class*='col']:nth-child(2) .card { animation-delay: 40ms; }
+.row > [class*='col']:nth-child(3) .card { animation-delay: 80ms; }
+.row > [class*='col']:nth-child(4) .card { animation-delay: 120ms; }
+.row > [class*='col']:nth-child(5) .card { animation-delay: 160ms; }
+.row > [class*='col']:nth-child(6) .card { animation-delay: 200ms; }
+
+/* Subtle hover lift — professional, not bouncy */
+.card {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+.card.card-hover-lift:hover,
+a .card:hover,
+[role='button'] .card:hover,
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+[data-bs-theme='dark'] .card.card-hover-lift:hover,
+[data-bs-theme='dark'] a .card:hover,
+[data-bs-theme='dark'] [role='button'] .card:hover,
+[data-bs-theme='dark'] .card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* KPI / stat tiles — quick fade-in without the translateY jump (they're small) */
+.kpi-card {
+  animation: fadeIn 0.25s ease both;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Button press feedback — crisp, no bounce */
+.btn {
+  transition: transform 0.12s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+
+/* ── 18. Keyboard focus — global interactive elements (Phase 4) ── */
+
+a:focus-visible,
+button:focus-visible,
+[role='button']:focus-visible,
+.nav-link:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* DataTable — ensure all cells are keyboard accessible */
+.dt-table td:has(button) {
+  position: relative;
+}
+
+.dt-table button:focus-visible,
+.dt-action-btn:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: 1px;
+}
+
+/* Pagination buttons — 44px minimum for accessibility */
+.pagination .page-link {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-out;
+}
+
+.pagination .page-link:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: 2px;
+}
+
+.pagination .page-link:hover {
+  background-color: rgba(37, 169, 107, 0.08);
+  color: var(--primary-green);
+}
+
+/* Action buttons in tables — 44px minimum + focus ring */
+.action-btn {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.action-btn:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: 1px;
+}
+
+/* Links should have visible focus */
+a:focus-visible {
+  text-decoration: underline;
+}
+
+/* Ensure text doesn't disappear on dark backgrounds when focused */
+[data-bs-theme='dark'] a:focus-visible,
+[data-bs-theme='dark'] button:focus-visible {
+  outline-color: var(--primary-green-light);
+}
+
+/* ── 19. Mobile breakpoints (U-36) ── */
+
+/* Efficiency strip — collapse stat dividers on mobile */
+@media (max-width: 640px) {
+  .efficiency-stat {
+    border-left: none !important;
+    border-top: 1px solid var(--vz-border-color);
+    padding: 10px 20px !important;
+  }
+}
+
+/* Timeline — compact on small screens */
+@media (max-width: 576px) {
+  .lh-timeline::before { left: 11px; }
+
+  .lh-session {
+    padding-left: 32px;
+    gap: 8px;
+  }
+
+  .lh-session__dot {
+    left: 5px;
+    width: 12px;
+    height: 12px;
+  }
+
+  .lh-session__time-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .lh-user-strip {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .lh-total-bar {
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+}
+
+/* Filter bar — single column on very small screens */
+@media (max-width: 375px) {
+  .card-header .row.mt-2.g-2 > [class*='col'] {
+    width: 100%;
+    flex: 0 0 100%;
+  }
+}
+
+/* ── 20. Reduced motion — all animations ── */
+@media (prefers-reduced-motion: reduce) {
+  .card { animation: none; }
+  .kpi-card { animation: none; }
+  .lh-session__dot { animation: none; }
+  .pipeline-dot { animation: none; }
+  .card.card-hover-lift:hover,
+  a .card:hover,
+  [role='button'] .card:hover { transform: none; }
+  .btn:active { transform: none; }
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+
+/* ── 21. Static (fixed) sidebar — no SimpleBar JS is loaded, so Velzon's
+   base CSS has no overflow rule on #scrollbar; without it the sidebar's
+   content can push the whole panel along with page scroll. Pin the panel
+   to the viewport and let only its nav list scroll internally. ── */
+@media (min-width: 992px) {
+  .app-menu.navbar-menu {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    height: 100vh !important;
+  }
+
+  .app-menu #scrollbar {
+    height: calc(100vh - 70px);
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+}

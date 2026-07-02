@@ -75,7 +75,7 @@ export default function Sidebar() {
   // When DB menu is empty (offline/demo), use static fallback
   const activeMenu = menu.length ? menu : DEMO_MENU;
 
-  // Auto-open matching category from fallback on first render
+  // Auto-expand the category containing the current page
   useEffect(() => {
     if (!openId) {
       const active = activeMenu.find(m =>
@@ -157,14 +157,13 @@ export default function Sidebar() {
               return (
                 <li className="nav-item" key={main.unique_id}>
                   <a
-                    className={`nav-link menu-link ${isActive ? 'active' : ''}`}
+                    className="nav-link menu-link"
                     href="#"
                     onClick={e => { e.preventDefault(); toggle(main.unique_id); }}
                     aria-expanded={isOpen}
                   >
                     {main.icon_name && <i className={main.icon_name}></i>}
                     <span>{main.screen_main_name}</span>
-                    <i className={`ri-arrow-right-s-line ms-auto transition-transform ${isOpen ? 'rotate-90' : ''}`}></i>
                   </a>
 
                   {/* React-controlled collapse — no Bootstrap JS needed */}

@@ -4,6 +4,6 @@ frontend/dist-ssr/
 .agents/
 error_log
 *.log
-PRD.md
-auth.md
+legacy/PRD_v1.md
+legacy/auth.md
 Migration_Tracker.md

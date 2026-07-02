@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import client from '../../api/client';
+import DateInput from '../../components/DateInput';
 import DataTable from '../../components/DataTable';
 
 const TODAY = new Date().toISOString().split('T')[0];
@@ -85,13 +86,21 @@ export default function EggProcessReportList() {
             <div className="row mt-2 g-2">
               <div className="col-md-2">
                 <label className="form-label mb-0" style={{fontSize: '12px'}}>From Date</label>
-                <input type="date" name="from_date" className="form-control form-control-sm" 
-                  value={filters.from_date} onChange={handleFilterChange} />
+                <DateInput
+                  name="from_date"
+                  value={filters.from_date}
+                  onChange={handleFilterChange}
+                  className="form-control form-control-sm"
+                />
               </div>
               <div className="col-md-2">
                 <label className="form-label mb-0" style={{fontSize: '12px'}}>To Date</label>
-                <input type="date" name="to_date" className="form-control form-control-sm" 
-                  value={filters.to_date} onChange={handleFilterChange} />
+                <DateInput
+                  name="to_date"
+                  value={filters.to_date}
+                  onChange={handleFilterChange}
+                  className="form-control form-control-sm"
+                />
               </div>
               <div className="col-md-3">
                 <label className="form-label mb-0" style={{fontSize: '12px'}}>Batch Id</label>

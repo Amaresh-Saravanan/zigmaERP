@@ -1,0 +1,401 @@
+/* ====================================================================
+   Zigfly Forms — global form styling
+   Covers U-18 (card wrapper), U-21 (submit button), U-23 (validation).
+   All form pages use Bootstrap classes — zero JSX changes needed.
+   ==================================================================== */
+
+/* ── U-18: Card wrapper + consistent heading ── */
+
+/* Uniform card header padding across all form pages */
+.card .card-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--vz-border-color);
+}
+
+/* Form page heading (h5 inside card-header) */
+.card .card-header h5 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--vz-emphasis-color);
+  margin: 0;
+  gap: 8px;
+}
+
+/* Card body padding consistent */
+.card .card-body {
+  padding: 20px;
+}
+
+/* Form row gap — every row gets consistent bottom spacing */
+form .row > [class*='col'] {
+  margin-bottom: 16px;
+}
+
+/* Labels — consistent style across all forms */
+form label,
+form .form-label {
+  display: block;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--vz-body-color);
+  margin-bottom: 5px;
+  letter-spacing: 0.01em;
+  transition: color 0.15s ease-out;
+}
+
+/* Shared-component labels — one consistent style, both themes */
+form .app-form-label,
+.app-form-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--vz-secondary-color);
+  margin-bottom: 0.4rem;
+}
+
+/* Label color changes on associated input focus */
+form input:focus + label,
+form input:focus ~ label,
+form select:focus + label,
+form select:focus ~ label,
+form textarea:focus + label,
+form textarea:focus ~ label {
+  color: var(--primary-green);
+}
+
+/* Placeholder — smooth fade on focus (Phase 3) */
+.form-control::placeholder,
+.form-select::placeholder {
+  color: var(--vz-secondary-color);
+  transition: opacity 0.15s ease-out;
+  opacity: 1;
+}
+
+.form-control:focus::placeholder,
+.form-select:focus::placeholder {
+  opacity: 0;
+}
+
+/* Read-only inputs — visually distinct, not editable */
+form input[readonly],
+form input:read-only {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--vz-tertiary-bg, #f8f9fa);
+}
+
+[data-bs-theme='dark'] form input[readonly],
+[data-bs-theme='dark'] form input:read-only {
+  background: #1c2128;
+  color: var(--vz-secondary-color);
+}
+
+/* Filled input style — soft fill at rest, lifts to solid on focus */
+.form-control,
+.form-select {
+  background-color: rgba(0, 0, 0, 0.035);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+  transition: border-color 0.2s ease-out,
+              box-shadow 0.2s ease-out,
+              background-color 0.2s ease-out;
+}
+
+.form-control:hover:not(:disabled):not(:focus):not([readonly]),
+.form-select:hover:not(:disabled):not(:focus) {
+  border-color: var(--vz-border-color);
+}
+
+.form-control:focus,
+.form-select:focus {
+  background-color: var(--vz-card-bg, #ffffff);
+  border-color: var(--primary-green) !important;
+  box-shadow: 0 0 0 3px rgba(37, 169, 107, 0.1) !important;
+  transition: border-color 0.15s ease-out,
+              box-shadow 0.2s ease-out;
+  outline: none;
+}
+
+/* ── U-21: Submit button — primary green, consistent size ── */
+
+/* btn-success → Zigfly green (all form save/update buttons) */
+.btn-success {
+  --vz-btn-bg: var(--primary-green);
+  --vz-btn-border-color: var(--primary-green);
+  --vz-btn-hover-bg: var(--primary-green-dark);
+  --vz-btn-hover-border-color: var(--primary-green-dark);
+  --vz-btn-active-bg: var(--primary-green-darker);
+  --vz-btn-color: #ffffff;
+  --vz-btn-hover-color: #ffffff;
+  --vz-btn-active-color: #ffffff;
+  background-color: var(--primary-green);
+  border-color: var(--primary-green);
+  color: #ffffff;
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  padding: 8px 20px;
+  border-radius: 6px;
+  transition: background 0.2s ease-out, border-color 0.2s ease-out, box-shadow 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: var(--primary-green-dark);
+  border-color: var(--primary-green-dark);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(37, 169, 107, 0.15);
+  transform: scale(1.02);
+}
+
+.btn-success:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: 2px;
+  background-color: var(--primary-green-dark);
+  border-color: var(--primary-green-dark);
+  color: #ffffff;
+}
+
+.btn-success:active:not(:disabled) {
+  background-color: var(--primary-green-darker);
+  border-color: var(--primary-green-darker);
+  transform: scale(0.98);
+  box-shadow: 0 2px 4px rgba(37, 169, 107, 0.2);
+}
+
+.btn-success:disabled {
+  background-color: var(--primary-green);
+  border-color: var(--primary-green);
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Cancel button — consistent sizing with hover effects */
+.btn-danger {
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+  padding: 8px 20px;
+  border-radius: 6px;
+  transition: background 0.2s ease-out, border-color 0.2s ease-out, box-shadow 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.btn-danger:hover:not(:disabled) {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(240, 101, 72, 0.15);
+}
+
+.btn-danger:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Button loading state (Phase 3) */
+.btn.btn-loading {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.btn.btn-loading .spinner-border {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Button success state (Phase 3) */
+.btn.btn-success-state {
+  animation: successPulse 0.4s ease-out;
+}
+
+@keyframes successPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Secondary button — subtle styling */
+.btn-secondary {
+  transition: background 0.2s ease-out, border-color 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.1);
+  transform: none;
+}
+
+.btn-secondary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Ghost button — minimal style */
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--vz-border-color);
+  transition: background 0.15s ease-out, color 0.15s ease-out, transform 0.2s ease-out;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: rgba(37, 169, 107, 0.08);
+  color: var(--primary-green);
+  border-color: var(--primary-green);
+}
+
+.btn-ghost:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Form action row (Cancel + Save) */
+form .row .col-12.text-end {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── U-23: Validation error styles ── */
+
+/* Invalid field — red border + glow */
+.form-control:invalid,
+.was-validated .form-control:invalid,
+.was-validated .form-select:invalid {
+  border-color: var(--error-coral) !important;
+  box-shadow: 0 0 0 3px rgba(240, 101, 72, 0.1) !important;
+  transition: border-color 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.form-control:invalid:focus,
+.was-validated .form-control:invalid:focus,
+.was-validated .form-select:invalid:focus {
+  border-color: var(--error-coral) !important;
+  box-shadow: 0 0 0 3px rgba(240, 101, 72, 0.15) !important;
+}
+
+/* Valid field — subtle green confirmation */
+.was-validated .form-control:valid,
+.was-validated .form-select:valid {
+  border-color: var(--primary-green) !important;
+  box-shadow: none !important;
+  background-image: none !important; /* remove Bootstrap's checkmark icon */
+}
+
+/* Inline error message — slide in animation */
+.invalid-feedback {
+  display: none;
+  font-size: var(--font-size-xs);
+  color: var(--error-coral);
+  margin-top: 4px;
+  gap: 4px;
+  align-items: center;
+  animation: slideInError 0.3s ease-out forwards;
+}
+
+@keyframes slideInError {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.was-validated .form-control:invalid ~ .invalid-feedback,
+.was-validated .form-select:invalid ~ .invalid-feedback {
+  display: flex;
+}
+
+/* Error message with icon — works if you add <i class="ri-error-warning-line"></i> before text */
+.invalid-feedback i {
+  font-size: var(--font-size-lg);
+  flex-shrink: 0;
+}
+
+/* Valid feedback — hidden by default, we only show errors */
+.valid-feedback {
+  display: none !important;
+}
+
+/* ── Loading spinner inside form (replace text) ── */
+form .spinner-border.text-primary {
+  color: var(--primary-green) !important;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-width: 2px;
+}
+
+/* ── Accessibility: Touch targets ── */
+.btn,
+.form-control,
+.form-select,
+.form-check-input,
+a[role='button'],
+button,
+input[type='button'],
+input[type='submit'],
+input[type='reset'] {
+  min-height: var(--min-touch-target);
+  /* ponytail: 44px minimum for touch accessibility per WCAG */
+}
+
+.btn,
+.btn-primary,
+.btn-success,
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--min-touch-target);
+}
+
+/* ── Responsive ── */
+@media (max-width: 576px) {
+  .card .card-header { padding: 14px 16px 10px; }
+  .card .card-body   { padding: 16px; }
+
+  form .row .col-12.text-end {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  form .row .col-12.text-end .btn {
+    width: 100%;
+    margin: 0 !important;
+  }
+}
+
+/* ── Dark mode refinements ── */
+[data-bs-theme='dark'] .btn-success {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-bs-theme='dark'] .btn-success:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-bs-theme='dark'] .btn-success:active:not(:disabled) {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-bs-theme='dark'] .btn-danger:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(240, 101, 72, 0.2);
+}
+
+[data-bs-theme='dark'] .form-control:invalid,
+[data-bs-theme='dark'] .was-validated .form-control:invalid {
+  border-color: var(--error-coral) !important;
+  box-shadow: 0 0 0 3px rgba(240, 101, 72, 0.2) !important;
+}
+
+[data-bs-theme='dark'] .invalid-feedback {
+  color: #f3846d;
+}

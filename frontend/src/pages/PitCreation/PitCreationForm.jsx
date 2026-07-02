@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
+import TextInput from '../../components/TextInput';
+import Textarea from '../../components/Textarea';
+import Toggle from '../../components/Toggle';
+import Button from '../../components/Button';
 
 export default function PitCreationForm() {
   const [searchParams] = useSearchParams();
@@ -130,12 +134,9 @@ export default function PitCreationForm() {
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
-                  <div className="col-4 mb-3">
-                    <label htmlFor="pit_name">Pit Name </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="pit_name"
+                  <div className="col-12 col-md-4">
+                    <TextInput
+                      label="Pit Name"
                       name="pit_name"
                       placeholder="PIT-01"
                       value={formData.pit_name}
@@ -143,104 +144,86 @@ export default function PitCreationForm() {
                       required
                     />
                   </div>
-                  <div className="col-4 mb-3">
-                    <label htmlFor="location">Location</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="location"
+                  <div className="col-12 col-md-4">
+                    <TextInput
+                      label="Location"
                       name="location"
                       value={formData.location}
                       onChange={handleChange}
                       required
                     />
                   </div>
-                  <div className="col-4 mb-3">
-                    <label htmlFor="length"> Length (Meter) </label>
-                    <input
+                  <div className="col-12 col-md-4">
+                    <TextInput
                       type="number"
                       step="0.01"
-                      className="form-control"
-                      id="length"
+                      label="Length (Meter)"
                       name="length"
                       value={formData.length}
                       onChange={handleChange}
                       required
                     />
                   </div>
-                  <div className="col-4 mb-3">
-                    <label htmlFor="width"> Width(Meter) </label>
-                    <input
+                  <div className="col-12 col-md-4">
+                    <TextInput
                       type="number"
                       step="0.01"
-                      className="form-control"
-                      id="width"
+                      label="Width (Meter)"
                       name="width"
                       value={formData.width}
                       onChange={handleChange}
                       required
                     />
                   </div>
-                  <div className="col-4 mb-3">
-                    <label htmlFor="height"> Height(Meter) </label>
-                    <input
+                  <div className="col-12 col-md-4">
+                    <TextInput
                       type="number"
                       step="0.01"
-                      className="form-control"
-                      id="height"
+                      label="Height (Meter)"
                       name="height"
                       value={formData.height}
                       onChange={handleChange}
                       required
                     />
                   </div>
-                  <div className="col-4 mb-3">
-                    <label htmlFor="volume"> Capacity (Volume-m³) </label>
-                    <input
+                  <div className="col-12 col-md-4">
+                    <TextInput
                       type="number"
                       step="0.01"
-                      className="form-control"
-                      id="volume"
+                      label="Capacity (Volume-m³)"
                       name="volume"
                       value={formData.volume}
                       readOnly
                       required
                     />
                   </div>
-                  <div className="col-4 mb-3">
-                    <label htmlFor="description">Description</label>
-                    <textarea
+                  <div className="col-12 col-md-4">
+                    <Textarea
+                      label="Description"
                       name="description"
-                      id="description"
-                      rows="2"
-                      className="form-control"
+                      rows={2}
                       value={formData.description}
                       onChange={handleChange}
                     />
                   </div>
-                  <div className="col-4 mb-3">
-                    <label htmlFor="active_status">Active Status</label>
-                    <select
+                  <div className="col-12 col-md-4">
+                    <Toggle
+                      label="Active Status"
                       name="active_status"
-                      id="active_status"
-                      className="form-control"
                       value={formData.active_status}
                       onChange={handleChange}
-                      required
-                    >
-                      <option value="1">Active</option>
-                      <option value="0">Inactive</option>
-                    </select>
+                      helperText={formData.active_status === '1' ? 'Active' : 'Inactive'}
+                    />
                   </div>
                 </div>
                 <div className="row mt-2">
                   <div className="col-12 text-end mt-3">
-                    <button type="button" onClick={() => navigate('/pit_creation/list')} className="btn btn-danger me-2">
+                    <Button variant="danger" className="me-2" onClick={() => navigate('/pit_creation/list')}>
                       Cancel
-                    </button>
-                    <button type="submit" className="btn btn-success" disabled={isLoading}>
+                    </Button>
+                    <Button type="submit" disabled={isLoading}>
                       {isLoading ? 'Saving...' : unique_id ? 'Update' : 'Save'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </form>

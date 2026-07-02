@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
+import TextInput from '../../components/TextInput';
+import Select from '../../components/Select';
+import Toggle from '../../components/Toggle';
+import Button from '../../components/Button';
 
 export default function UserForm() {
   const [searchParams] = useSearchParams();
@@ -129,25 +133,20 @@ export default function UserForm() {
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
-                  <div className="col-4 mb-3">
-                    <label htmlFor="emp_id">Emp Id</label>
-                    <input
+                  <div className="col-12 col-md-4">
+                    <TextInput
                       type="number"
-                      className="form-control"
-                      id="emp_id"
+                      label="Employee ID"
                       name="emp_id"
                       value={formData.emp_id}
                       onChange={handleChange}
                       required
                     />
                   </div>
-                  
-                  <div className="col-4 mb-3">
-                    <label htmlFor="user_name">User Name</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="user_name"
+
+                  <div className="col-12 col-md-4">
+                    <TextInput
+                      label="User Name"
                       name="user_name"
                       value={formData.user_name}
                       onChange={handleChange}
@@ -155,26 +154,22 @@ export default function UserForm() {
                     />
                   </div>
 
-                  <div className="col-4 mb-3">
-                    <label htmlFor="password">Password</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="password"
+                  <div className="col-12 col-md-4">
+                    <TextInput
+                      type="password"
+                      label="Password"
                       name="password"
                       maxLength="15"
+                      helperText="Max 15 characters"
                       value={formData.password}
                       onChange={handleChange}
                       required
                     />
                   </div>
 
-                  <div className="col-4 mb-3">
-                    <label htmlFor="first_name">First Name</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="first_name"
+                  <div className="col-12 col-md-4">
+                    <TextInput
+                      label="First Name"
                       name="first_name"
                       value={formData.first_name}
                       onChange={handleChange}
@@ -182,12 +177,9 @@ export default function UserForm() {
                     />
                   </div>
 
-                  <div className="col-4 mb-3">
-                    <label htmlFor="last_name">Last Name</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="last_name"
+                  <div className="col-12 col-md-4">
+                    <TextInput
+                      label="Last Name"
                       name="last_name"
                       value={formData.last_name}
                       onChange={handleChange}
@@ -195,12 +187,10 @@ export default function UserForm() {
                     />
                   </div>
 
-                  <div className="col-4 mb-3">
-                    <label htmlFor="email">Email</label>
-                    <input
+                  <div className="col-12 col-md-4">
+                    <TextInput
                       type="email"
-                      className="form-control"
-                      id="email"
+                      label="Email"
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
@@ -208,48 +198,36 @@ export default function UserForm() {
                     />
                   </div>
 
-                  <div className="col-4 mb-3">
-                    <label htmlFor="user_type_unique_id">User Type</label>
-                    <select
-                      className="form-control"
-                      id="user_type_unique_id"
+                  <div className="col-12 col-md-4">
+                    <Select
+                      label="User Type"
                       name="user_type_unique_id"
                       value={formData.user_type_unique_id}
                       onChange={handleChange}
+                      options={userTypeOptions}
                       required
-                    >
-                      {userTypeOptions.map((opt, i) => (
-                        <option key={i} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </div>
 
-                  <div className="col-4 mb-3">
-                    <label htmlFor="is_active">Active Status</label>
-                    <select
-                      className="form-control"
-                      id="is_active"
+                  <div className="col-12 col-md-4">
+                    <Toggle
+                      label="Active Status"
                       name="is_active"
                       value={formData.is_active}
                       onChange={handleChange}
-                      required
-                    >
-                      <option value="1">Active</option>
-                      <option value="0">Inactive</option>
-                    </select>
+                      helperText={formData.is_active === '1' ? 'Active' : 'Inactive'}
+                    />
                   </div>
                 </div>
-                
+
                 <div className="row mt-2">
                   <div className="col-12 text-end mt-3">
-                    <button type="button" onClick={() => navigate('/user/list')} className="btn btn-danger me-2">
+                    <Button variant="danger" className="me-2" onClick={() => navigate('/user/list')}>
                       Cancel
-                    </button>
-                    <button type="submit" className="btn btn-success" disabled={isLoading}>
+                    </Button>
+                    <Button type="submit" disabled={isLoading}>
                       {isLoading ? 'Saving...' : unique_id ? 'Update' : 'Save'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </form>

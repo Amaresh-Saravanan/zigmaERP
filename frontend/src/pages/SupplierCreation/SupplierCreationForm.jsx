@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
+import TextInput from '../../components/TextInput';
+import Textarea from '../../components/Textarea';
+import Toggle from '../../components/Toggle';
+import Button from '../../components/Button';
 
 export default function SupplierCreationForm() {
   const [searchParams] = useSearchParams();
@@ -131,12 +135,9 @@ export default function SupplierCreationForm() {
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
-                  <div className="col-4 mb-3">
-                    <label htmlFor="supplier_name"> Supplier Name </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="supplier_name"
+                  <div className="col-12 col-md-4">
+                    <TextInput
+                      label="Supplier Name"
                       name="supplier_name"
                       value={formData.supplier_name}
                       onChange={handleChange}
@@ -144,99 +145,86 @@ export default function SupplierCreationForm() {
                     />
                   </div>
 
-                  <div className="col-4 mb-3">
-                    <label htmlFor="label"> Label </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="label"
+                  <div className="col-12 col-md-4">
+                    <TextInput
+                      label="Supplier Code"
                       name="label"
                       maxLength="3"
+                      placeholder="ABC"
+                      helperText="3-letter code"
                       value={formData.label}
                       onChange={handleLabelChange}
                       required
                     />
                   </div>
 
-                  <div className="col-4 mb-3">
-                    <label htmlFor="address"> Address </label>
-                    <textarea
-                      className="form-control"
-                      rows="2"
-                      id="address"
+                  <div className="col-12 col-md-4">
+                    <Textarea
+                      label="Address"
                       name="address"
+                      rows={2}
                       value={formData.address}
                       onChange={handleChange}
                       required
                     />
                   </div>
 
-                  <div className="col-4 mb-3">
-                    <label htmlFor="contact_no"> Contact Number </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="contact_no"
+                  <div className="col-12 col-md-4">
+                    <TextInput
+                      label="Contact Number"
                       name="contact_no"
                       minLength="1"
                       maxLength="10"
+                      helperText="10-digit mobile number"
                       value={formData.contact_no}
                       onChange={handleContactChange}
                       required
                     />
                   </div>
 
-                  <div className="col-4 mb-3">
-                    <label htmlFor="email"> Email </label>
-                    <input
+                  <div className="col-12 col-md-4">
+                    <TextInput
                       type="email"
-                      className="form-control"
-                      id="email"
+                      label="Email"
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
                     />
                   </div>
 
-                  <div className="col-4 mb-3">
-                    <label htmlFor="gst_no">GST No</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="gst_no"
+                  <div className="col-12 col-md-4">
+                    <TextInput
+                      label="GST No"
                       name="gst_no"
                       maxLength="15"
+                      helperText="15 characters, e.g. 22ABCDE1234F1Z2"
                       value={formData.gst_no}
                       onChange={handleGstChange}
                       pattern="^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$"
                       required
-                    />
-                    <div className="invalid-feedback">Please enter a valid GST No in the format: 22ABCDE1234F1Z2</div>
+                    >
+                      <div className="invalid-feedback">Please enter a valid GST No in the format: 22ABCDE1234F1Z2</div>
+                    </TextInput>
                   </div>
 
-                  <div className="col-4 mb-3">
-                    <label htmlFor="active_status">Active Status </label>
-                    <select
+                  <div className="col-12 col-md-4">
+                    <Toggle
+                      label="Active Status"
                       name="active_status"
-                      id="active_status"
-                      className="form-control"
                       value={formData.active_status}
                       onChange={handleChange}
-                      required
-                    >
-                      <option value="1">Active</option>
-                      <option value="0">Inactive</option>
-                    </select>
+                      helperText={formData.active_status === '1' ? 'Active' : 'Inactive'}
+                    />
                   </div>
                 </div>
                 <div className="row mt-2">
                   <div className="col-12 text-end mt-3">
-                    <button type="button" onClick={() => navigate('/supplier_creation/list')} className="btn btn-danger me-2">
+                    <Button variant="danger" className="me-2" onClick={() => navigate('/supplier_creation/list')}>
                       Cancel
-                    </button>
-                    <button type="submit" className="btn btn-success" disabled={isLoading}>
+                    </Button>
+                    <Button type="submit" disabled={isLoading}>
                       {isLoading ? 'Saving...' : unique_id ? 'Update' : 'Save'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </form>

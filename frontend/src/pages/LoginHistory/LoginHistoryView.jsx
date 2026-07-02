@@ -7,56 +7,46 @@ export default function LoginHistoryView() {
   const unique_id = searchParams.get('unique_id');
   const entry_date = searchParams.get('entry_date');
   const navigate = useNavigate();
-  
+
   const [sessions, setSessions] = useState([]);
   const [totalHours, setTotalHours] = useState('');
   const [userInfo, setUserInfo] = useState({ name: '', type: '', date: '' });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (unique_id && entry_date) {
-      fetchViewData();
-    }
+    if (unique_id && entry_date) fetchViewData();
   }, [unique_id, entry_date]);
 
   const fetchViewData = async () => {
     setIsLoading(true);
     try {
-      const res = await client.get(`folders/login_history/view.php?unique_id=${unique_id}&entry_date=${entry_date}`, { responseType: 'text' });
+      const res = await client.get(
+        `folders/login_history/view.php?unique_id=${unique_id}&entry_date=${entry_date}`,
+        { responseType: 'text' }
+      );
       const doc = new DOMParser().parseFromString(res.data, 'text/html');
-      
-      // Extract Header Info
-      const userName = doc.querySelector('#user_id')?.textContent?.trim() || '';
-      const userType = doc.querySelector('#user_type')?.textContent?.trim() || '';
-      const dateStr = doc.querySelector('#entry_date')?.textContent?.trim() || entry_date;
-      
-      setUserInfo({ name: userName, type: userType, date: dateStr });
 
-      // Extract Table Rows
+      setUserInfo({
+        name: doc.querySelector('#user_id')?.textContent?.trim() || '',
+        type: doc.querySelector('#user_type')?.textContent?.trim() || '',
+        date: doc.querySelector('#entry_date')?.textContent?.trim() || entry_date,
+      });
+
       const rows = Array.from(doc.querySelectorAll('tbody tr'));
-      const parsedSessions = [];
+      const parsed = [];
       let total = '';
 
       rows.forEach(tr => {
         const tds = Array.from(tr.querySelectorAll('td')).map(td => td.textContent.trim());
-        
         if (tds.length === 6) {
-          parsedSessions.push({
-            sno: tds[0],
-            date: tds[1],
-            login: tds[2],
-            logout: tds[3],
-            worked: tds[4],
-            type: tds[5]
-          });
+          parsed.push({ sno: tds[0], date: tds[1], login: tds[2], logout: tds[3], worked: tds[4], type: tds[5] });
         } else if (tds.length === 3 && tds[0].includes('Total Worked Hours')) {
           total = tds[1];
         }
       });
 
-      setSessions(parsedSessions);
+      setSessions(parsed);
       setTotalHours(total);
-      
     } catch (err) {
       console.error('Error fetching view data', err);
     } finally {
@@ -64,98 +54,104 @@ export default function LoginHistoryView() {
     }
   };
 
+  const typeBadgeClass = (type) => {
+    if (type === 'Logout') return 'badge-soft-success';
+    if (type === 'Login')  return 'badge-soft-info';
+    return 'badge-soft-warning';
+  };
+
   return (
     <div className="row g-3 mb-3">
       <div className="col-12">
-        <div className="card h-md-100 ecommerce-card-min-width">
-          <div className="card-header pt-3 pb-2">
-            <div className="row flex-between-end">
-              <div className="col-auto align-self-center">
-                <h5 className="d-flex align-items-center">Login History Details</h5>
-              </div>
-              <div className="col-auto">
-                <button onClick={() => navigate('/login_history/list')} className="btn btn-secondary btn-sm">
-                  Back to List
-                </button>
-              </div>
+        <div className="card">
+          <div className="card-header">
+            <div className="d-flex align-items-center justify-content-between">
+              <h5>Login History Details</h5>
+              <button
+                onClick={() => navigate('/login_history/list')}
+                className="btn btn-sm"
+                style={{ fontSize: '0.78rem', color: 'var(--vz-secondary-color)', border: '1px solid var(--vz-border-color)', borderRadius: 6 }}
+              >
+                <i className="ri-arrow-left-s-line me-1"></i>Back to list
+              </button>
             </div>
           </div>
 
           <div className="card-body">
             {isLoading ? (
-              <div className="text-center py-4">
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Loading...</span>
+              <div className="text-center py-5">
+                <div className="spinner-border" role="status" style={{ color: '#25a96b', width: 28, height: 28, borderWidth: 2.5 }}>
+                  <span className="visually-hidden">Loading…</span>
                 </div>
+                <p className="mt-2 mb-0" style={{ fontSize: '0.8rem', color: 'var(--vz-secondary-color)' }}>Loading sessions…</p>
               </div>
             ) : (
               <>
-                {/* User Info Header */}
-                <div className="row bg-light p-3 rounded mb-4">
-                  <div className="col-md-4">
-                    <p className="mb-0 text-muted">User Name</p>
-                    <h6 className="fw-bold fs-15">{userInfo.name || 'N/A'}</h6>
+                {/* User info strip */}
+                <div className="lh-user-strip">
+                  <div>
+                    <div className="lh-user-strip__label">User Name</div>
+                    <div className="lh-user-strip__value">{userInfo.name || '—'}</div>
                   </div>
-                  <div className="col-md-4">
-                    <p className="mb-0 text-muted">User Type</p>
-                    <h6 className="fw-bold fs-15">{userInfo.type || 'N/A'}</h6>
+                  <div>
+                    <div className="lh-user-strip__label">User Type</div>
+                    <div className="lh-user-strip__value">{userInfo.type || '—'}</div>
                   </div>
-                  <div className="col-md-4">
-                    <p className="mb-0 text-muted">Date</p>
-                    <h6 className="fw-bold fs-15">{userInfo.date}</h6>
+                  <div>
+                    <div className="lh-user-strip__label">Date</div>
+                    <div className="lh-user-strip__value">{userInfo.date}</div>
+                  </div>
+                  <div>
+                    <div className="lh-user-strip__label">Sessions</div>
+                    <div className="lh-user-strip__value">{sessions.length}</div>
                   </div>
                 </div>
 
-                {/* Sessions Table */}
-                <div className="table-responsive">
-                  <table className="table table-bordered table-striped align-middle">
-                    <thead className="table-light">
-                      <tr>
-                        <th>S.No</th>
-                        <th>Entry Date</th>
-                        <th>Login Time</th>
-                        <th>Logout Time</th>
-                        <th>Total Worked Hours</th>
-                        <th>Logout Type</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sessions.length === 0 ? (
-                        <tr>
-                          <td colSpan="6" className="text-center py-4 text-muted">
-                            No login sessions found for this date.
-                          </td>
-                        </tr>
-                      ) : (
-                        sessions.map((s, idx) => (
-                          <tr key={idx}>
-                            <td>{s.sno}</td>
-                            <td>{s.date}</td>
-                            <td>{s.login}</td>
-                            <td>{s.logout}</td>
-                            <td>{s.worked}</td>
-                            <td>
-                              <span className={`badge bg-${s.type === 'Logout' ? 'success' : s.type === 'Login' ? 'info' : 'warning'}`}>
-                                {s.type}
+                {/* Timeline */}
+                {sessions.length === 0 ? (
+                  <div className="text-center py-5" style={{ color: 'var(--vz-secondary-color)' }}>
+                    <i className="ri-time-line" style={{ fontSize: 32, opacity: 0.3 }}></i>
+                    <p className="mt-2 mb-0" style={{ fontSize: '0.85rem' }}>No login sessions found for this date.</p>
+                  </div>
+                ) : (
+                  <>
+                    <ul className="lh-timeline">
+                      {sessions.map((s, idx) => (
+                        <li key={idx} className="lh-session">
+                          <span className="lh-session__dot"></span>
+                          <div className="lh-session__times">
+                            <div className="lh-session__time-row">
+                              <span className="lh-session__time-label">Login</span>
+                              <span className="lh-session__time-val">{s.login || '—'}</span>
+                              <i className="ri-arrow-right-line" style={{ color: 'var(--vz-border-color)', fontSize: '0.75rem' }}></i>
+                              <span className="lh-session__time-label">Logout</span>
+                              <span className="lh-session__time-val">{s.logout || '—'}</span>
+                            </div>
+                            <div className="lh-session__meta">
+                              <span className="lh-session__worked">
+                                <i className="ri-time-line"></i>
+                                Worked: <strong>{s.worked || '—'}</strong>
                               </span>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
+                              <span className={`badge ${typeBadgeClass(s.type)}`}>{s.type}</span>
+                            </div>
+                          </div>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--vz-tertiary-color)', fontFamily: "'IBM Plex Mono', monospace", flexShrink: 0 }}>
+                            #{s.sno}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+
                     {totalHours && (
-                      <tfoot>
-                        <tr className="bg-light">
-                          <td colSpan="4" className="text-end fw-bold text-dark fs-15">
-                            Total Worked Hours:
-                          </td>
-                          <td className="fw-bold text-primary fs-15">{totalHours}</td>
-                          <td></td>
-                        </tr>
-                      </tfoot>
+                      <div className="lh-total-bar">
+                        <span className="lh-total-bar__label">
+                          <i className="ri-timer-line me-2"></i>Total Worked Hours
+                        </span>
+                        <span className="lh-total-bar__value">{totalHours}</span>
+                      </div>
                     )}
-                  </table>
-                </div>
+                  </>
+                )}
               </>
             )}
           </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import client from '../../api/client';
+import DateInput from '../../components/DateInput';
 import DataTable from '../../components/DataTable';
 import useAuth from '../../hooks/useAuth';
 
@@ -85,21 +86,31 @@ export default function MaterialReceivedList() {
             {/* Filters */}
             <div className="row mt-2 g-2">
               <div className="col-md-2">
-                <input type="date" name="from_date" className="form-control form-control-sm" placeholder="From Date"
-                  value={filters.from_date} onChange={handleFilterChange} />
+                <DateInput
+                  name="from_date"
+                  value={filters.from_date}
+                  onChange={handleFilterChange}
+                  className="form-control form-control-sm"
+                  placeholder="From Date"
+                />
               </div>
               <div className="col-md-2">
-                <input type="date" name="to_date" className="form-control form-control-sm" placeholder="To Date"
-                  value={filters.to_date} onChange={handleFilterChange} />
+                <DateInput
+                  name="to_date"
+                  value={filters.to_date}
+                  onChange={handleFilterChange}
+                  className="form-control form-control-sm"
+                  placeholder="To Date"
+                />
               </div>
               <div className="col-md-3">
-                <select name="supplier_name" className="form-control form-control-sm" value={filters.supplier_name} onChange={handleFilterChange}>
+                <select name="supplier_name" className="form-select form-select-sm" value={filters.supplier_name} onChange={handleFilterChange}>
                   <option value="">All Suppliers</option>
                   {supplierOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
               <div className="col-md-3">
-                <select name="item_name" className="form-control form-control-sm" value={filters.item_name} onChange={handleFilterChange}>
+                <select name="item_name" className="form-select form-select-sm" value={filters.item_name} onChange={handleFilterChange}>
                   <option value="">All Items</option>
                   {itemOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>

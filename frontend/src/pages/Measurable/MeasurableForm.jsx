@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
+import DateInput from '../../components/DateInput';
+import TextInput from '../../components/TextInput';
+import Select from '../../components/Select';
+import Button from '../../components/Button';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -103,47 +107,70 @@ export default function MeasurableForm() {
             <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
               <div className="row">
                 <div className="col-md-4 mb-3">
-                  <label htmlFor="entry_date">Entry Date</label>
-                  <input type="date" id="entry_date" name="entry_date" className="form-control"
-                    value={formData.entry_date} onChange={handleChange} required />
+                  <DateInput
+                    id="entry_date"
+                    name="entry_date"
+                    label="Entry Date"
+                    value={formData.entry_date}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
 
-                <div className="col-md-4 mb-3">
-                  <label htmlFor="location">Location</label>
-                  <select id="location" name="location" className="form-select"
-                    value={formData.location} onChange={handleChange} required>
-                    <option value="">Select Location</option>
-                    {LOCATIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
+                <div className="col-12 col-md-4">
+                  <Select
+                    label="Location"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleChange}
+                    options={LOCATIONS}
+                    placeholder="Select Location"
+                    required
+                  />
                 </div>
 
-                <div className="col-md-4 mb-3">
-                  <label htmlFor="temp">Temperature (C)</label>
-                  <input type="number" step="0.01" id="temp" name="temp" className="form-control"
-                    value={formData.temp} onChange={handleChange} required />
+                <div className="col-12 col-md-4">
+                  <TextInput
+                    type="number"
+                    step="0.01"
+                    label="Temperature (C)"
+                    name="temp"
+                    value={formData.temp}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
 
-                <div className="col-md-4 mb-3">
-                  <label htmlFor="humi">Humidity (%)</label>
-                  <input type="number" step="0.01" id="humi" name="humi" className="form-control"
-                    value={formData.humi} onChange={handleChange} required />
+                <div className="col-12 col-md-4">
+                  <TextInput
+                    type="number"
+                    step="0.01"
+                    label="Humidity (%)"
+                    name="humi"
+                    value={formData.humi}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
 
-                <div className="col-md-4 mb-3">
-                  <label htmlFor="remarks">Remarks</label>
-                  <input type="text" id="remarks" name="remarks" className="form-control"
-                    value={formData.remarks} onChange={handleChange} />
+                <div className="col-12 col-md-4">
+                  <TextInput
+                    label="Remarks"
+                    name="remarks"
+                    value={formData.remarks}
+                    onChange={handleChange}
+                  />
                 </div>
               </div>
 
               <div className="row mt-2">
                 <div className="col-12 text-end mt-3">
-                  <button type="button" onClick={() => navigate('/measurable/list')} className="btn btn-danger me-2">
+                  <Button variant="danger" className="me-2" onClick={() => navigate('/measurable/list')}>
                     Cancel
-                  </button>
-                  <button type="submit" className="btn btn-success" disabled={isLoading}>
+                  </Button>
+                  <Button type="submit" disabled={isLoading}>
                     {isLoading ? 'Saving...' : unique_id ? 'Update' : 'Save'}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </form>

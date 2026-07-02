@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
+import DateInput from '../../components/DateInput';
+import TextInput from '../../components/TextInput';
+import Select from '../../components/Select';
+import Button from '../../components/Button';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -135,29 +139,43 @@ export default function FrpTrayProcessForm() {
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="entry_date">Entry Date</label>
-                    <input type="date" id="entry_date" name="entry_date" className="form-control"
-                      value={formData.entry_date} onChange={handleChange} required />
+                  <div className="col-12 col-md-3">
+                    <DateInput
+                      id="entry_date"
+                      name="entry_date"
+                      label="Entry Date"
+                      value={formData.entry_date}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="egg_batch_id">Egg Batch Id</label>
-                    <select id="egg_batch_id" name="egg_batch_id" className="form-control"
-                      value={formData.egg_batch_id} onChange={handleChange} required>
-                      {batchOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
+                  <div className="col-12 col-md-3">
+                    <Select
+                      label="Egg Batch Id"
+                      name="egg_batch_id"
+                      value={formData.egg_batch_id}
+                      onChange={handleChange}
+                      options={batchOptions}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="frp_tray_count">FRP Tray Count</label>
-                    <input type="number" min="1" id="frp_tray_count" name="frp_tray_count" className="form-control"
-                      value={formData.frp_tray_count} onChange={handleChange} required />
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      type="number"
+                      min="1"
+                      label="FRP Tray Count"
+                      name="frp_tray_count"
+                      value={formData.frp_tray_count}
+                      onChange={handleChange}
+                      required
+                    />
                   </div>
 
-                  <div className="col-md-3 mb-3">
-                    <label htmlFor="frp_tray_name">FRP Tray Name</label>
-                    <select id="frp_tray_name" name="frp_tray_name" className="form-control"
+                  <div className="col-12 col-md-3 mb-3">
+                    <label htmlFor="frp_tray_name" className="form-label app-form-label">FRP Tray Name</label>
+                    <select id="frp_tray_name" name="frp_tray_name" className="form-select app-form-control"
                       multiple size="5" value={formData.frp_tray_name} onChange={handleChange} required>
                       {trayOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
@@ -167,12 +185,12 @@ export default function FrpTrayProcessForm() {
 
                 <div className="row mt-2">
                   <div className="col-12 text-end mt-3">
-                    <button type="button" onClick={() => navigate('/frp_tray_process/list')} className="btn btn-danger me-2">
+                    <Button variant="danger" className="me-2" onClick={() => navigate('/frp_tray_process/list')}>
                       Cancel
-                    </button>
-                    <button type="submit" className="btn btn-success" disabled={isLoading}>
+                    </Button>
+                    <Button type="submit" disabled={isLoading}>
                       {isLoading ? 'Saving...' : unique_id ? 'Update' : 'Save'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </form>

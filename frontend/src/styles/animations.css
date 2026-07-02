@@ -1,0 +1,638 @@
+/* ====================================================================
+   Zigfly Animations — Professional transitions across the entire app
+   150-250ms timing, ease-out curves, task-focused motion.
+   Respects prefers-reduced-motion for accessibility.
+   ==================================================================== */
+
+/* ── Timing & Easing Tokens ── */
+:root {
+  --anim-duration-fast: 150ms;
+  --anim-duration-normal: 200ms;
+  --anim-duration-slow: 300ms;
+  --anim-ease-out: cubic-bezier(0.25, 1, 0.5, 1);
+  --anim-ease-out-snappy: cubic-bezier(0.22, 1, 0.36, 1);
+  --anim-ease-out-sharp: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ────────────────────────────────────────────────────────────────
+   1. FORM INTERACTIONS
+   ──────────────────────────────────────────────────────────────── */
+
+/* Input focus glow */
+.form-control:focus,
+.form-select:focus,
+.form-control-sm:focus,
+.form-select-sm:focus {
+  border-color: #25a96b;
+  box-shadow: 0 0 0 3px rgba(37, 169, 107, 0.15);
+  transition: border-color var(--anim-duration-fast) var(--anim-ease-out),
+              box-shadow var(--anim-duration-normal) var(--anim-ease-out),
+              background-color var(--anim-duration-fast) var(--anim-ease-out);
+}
+
+.form-control,
+.form-select {
+  transition: border-color var(--anim-duration-fast) var(--anim-ease-out),
+              box-shadow var(--anim-duration-fast) var(--anim-ease-out),
+              background-color var(--anim-duration-fast) var(--anim-ease-out);
+}
+
+/* Checkbox, radio & switch smooth animation */
+.form-check-input {
+  transition: border-color var(--anim-duration-fast) var(--anim-ease-out),
+              background-color var(--anim-duration-fast) var(--anim-ease-out),
+              box-shadow var(--anim-duration-fast) var(--anim-ease-out),
+              all 0.25s ease-out;
+}
+
+.form-check-input:checked {
+  animation: checkmarkPulse var(--anim-duration-normal) var(--anim-ease-out) forwards;
+}
+
+/* Form switch (toggle) focus ring */
+.form-switch .form-check-input:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: 2px;
+}
+
+@keyframes checkmarkPulse {
+  0% { transform: scale(0.8); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+/* Validation state transitions */
+.form-control.is-invalid,
+.form-select.is-invalid {
+  animation: invalidShake var(--anim-duration-normal) var(--anim-ease-out);
+  border-color: #dc3545;
+}
+
+@keyframes invalidShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.form-control.is-valid,
+.form-select.is-valid {
+  border-color: #28a745;
+  animation: validPulse var(--anim-duration-normal) var(--anim-ease-out) forwards;
+}
+
+@keyframes validPulse {
+  0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.3); }
+  100% { box-shadow: 0 0 0 8px rgba(40, 167, 69, 0); }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   2. BUTTON & ACTION FEEDBACK
+   ──────────────────────────────────────────────────────────────── */
+
+/* All buttons — consistent smooth transitions */
+.btn {
+  transition: background-color 0.2s ease-out,
+              border-color 0.2s ease-out,
+              box-shadow 0.2s ease-out,
+              transform 0.2s ease-out,
+              color 0.2s ease-out;
+}
+
+/* Primary button hover */
+.btn-primary {
+  transition: background-color 0.2s ease-out,
+              border-color 0.2s ease-out,
+              box-shadow 0.2s ease-out,
+              transform 0.2s ease-out;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(37, 169, 107, 0.15);
+}
+
+.btn-primary:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: 2px;
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: scale(0.98);
+  box-shadow: 0 2px 4px rgba(37, 169, 107, 0.1);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Button with loading state */
+.btn.btn-loading {
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   3. NAVIGATION & PAGE LAYOUT
+   ──────────────────────────────────────────────────────────────── */
+
+/* Sidebar smooth transitions — use transform instead of margin for performance */
+#layout-wrapper {
+  transition: transform var(--anim-duration-normal) var(--anim-ease-out);
+}
+
+.sidebar {
+  transition: transform var(--anim-duration-normal) var(--anim-ease-out),
+              opacity var(--anim-duration-normal) var(--anim-ease-out);
+}
+
+/* Menu item hover */
+.nav-link {
+  transition: color var(--anim-duration-fast) var(--anim-ease-out),
+              background-color var(--anim-duration-fast) var(--anim-ease-out),
+              padding-left var(--anim-duration-fast) var(--anim-ease-out);
+}
+
+.nav-link:hover {
+  padding-left: calc(1.5rem + 2px);
+}
+
+.nav-link.active {
+  background-color: rgba(37, 169, 107, 0.15);
+  color: #25a96b;
+  border-left: 1px solid #25a96b;
+  padding-left: calc(1.5rem - 1px);
+}
+
+/* Collapse/expand arrow rotation */
+.nav-link[aria-expanded] .fas,
+.nav-link[aria-expanded] .ri {
+  transition: transform var(--anim-duration-normal) var(--anim-ease-out);
+}
+
+.nav-link[aria-expanded="true"] .fas,
+.nav-link[aria-expanded="true"] .ri {
+  transform: rotate(180deg);
+}
+
+/* Submenu collapse animation — Bootstrap handles height, we animate opacity only */
+.collapse {
+  transition: opacity var(--anim-duration-normal) var(--anim-ease-out);
+}
+
+.collapse:not(.show) {
+  opacity: 0;
+}
+
+/* Breadcrumb link animation */
+.breadcrumb a {
+  transition: color var(--anim-duration-fast) var(--anim-ease-out);
+}
+
+/* ────────────────────────────────────────────────────────────────
+   4. LIST & CARD ANIMATIONS
+   ──────────────────────────────────────────────────────────────── */
+
+/* Card entrance animation with stagger support */
+.card {
+  animation: cardEntrance var(--anim-duration-normal) var(--anim-ease-out) forwards;
+  animation-delay: calc(var(--index, 0) * 50ms);
+  opacity: 0;
+}
+
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Smooth card hover */
+.card {
+  transition: box-shadow var(--anim-duration-normal) var(--anim-ease-out),
+              transform var(--anim-duration-normal) var(--anim-ease-out);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+[data-bs-theme='dark'] .card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* Table row hover animation */
+tbody tr {
+  transition: background-color var(--anim-duration-fast) var(--anim-ease-out);
+}
+
+tbody tr:hover {
+  background-color: rgba(37, 169, 107, 0.05);
+}
+
+[data-bs-theme='dark'] tbody tr:hover {
+  background-color: rgba(37, 169, 107, 0.1);
+}
+
+/* Badge and status animations */
+.badge {
+  transition: background-color var(--anim-duration-fast) var(--anim-ease-out),
+              color var(--anim-duration-fast) var(--anim-ease-out),
+              box-shadow var(--anim-duration-fast) var(--anim-ease-out);
+}
+
+.badge:hover {
+  box-shadow: 0 0 0 3px rgba(37, 169, 107, 0.2);
+}
+
+/* Status indicator pulse */
+.status-dot {
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(37, 169, 107, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(37, 169, 107, 0); }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   5. MODAL & DRAWER ANIMATIONS
+   ──────────────────────────────────────────────────────────────── */
+
+/* Modal backdrop fade */
+.modal-backdrop {
+  animation: backdropFade var(--anim-duration-normal) var(--anim-ease-out) forwards;
+}
+
+@keyframes backdropFade {
+  from { opacity: 0; }
+  to { opacity: 0.5; }
+}
+
+/* Modal content slide + fade */
+.modal-content {
+  animation: modalSlideIn var(--anim-duration-normal) var(--anim-ease-out) forwards;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-24px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   6. LOADING & SKELETON STATES
+   ──────────────────────────────────────────────────────────────── */
+
+/* Loading spinner */
+.spinner-border {
+  animation: spinnerRotate 1s linear infinite;
+}
+
+@keyframes spinnerRotate {
+  to { transform: rotate(360deg); }
+}
+
+/* Skeleton loading — shimmer effect (Phase 5) */
+.skeleton {
+  animation: skeletonShimmer 1.5s ease-in-out infinite;
+  background: linear-gradient(90deg,
+    var(--vz-secondary-bg) 0%,
+    rgba(255, 255, 255, 0.12) 50%,
+    var(--vz-secondary-bg) 100%);
+  background-size: 200% 100%;
+  background-position: 0 0;
+}
+
+@keyframes skeletonShimmer {
+  0%, 100% {
+    background-position: 200% 0;
+    opacity: 0.7;
+  }
+  50% {
+    background-position: -200% 0;
+    opacity: 0.95;
+  }
+}
+
+[data-bs-theme='dark'] .skeleton {
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.05) 100%);
+}
+
+/* ────────────────────────────────────────────────────────────────
+   7. CHART & METRIC ANIMATIONS
+   ──────────────────────────────────────────────────────────────── */
+
+/* Chart entrance */
+.chart-container {
+  animation: chartFade var(--anim-duration-slow) var(--anim-ease-out) forwards;
+  opacity: 0;
+}
+
+@keyframes chartFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* KPI value counter (for number animations) */
+.kpi-value {
+  animation: valuePulse var(--anim-duration-normal) var(--anim-ease-out) forwards;
+}
+
+@keyframes valuePulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   8. TOAST & ALERT ANIMATIONS
+   ──────────────────────────────────────────────────────────────── */
+
+/* Toast entrance */
+.toast {
+  animation: toastSlideIn var(--anim-duration-normal) var(--anim-ease-out) forwards;
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Alert entrance */
+.alert {
+  animation: alertFade var(--anim-duration-normal) var(--anim-ease-out) forwards;
+  opacity: 0;
+}
+
+@keyframes alertFade {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   9. ACCESSIBILITY: RESPECT PREFERS-REDUCED-MOTION
+   ──────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .card {
+    animation: none;
+    opacity: 1;
+  }
+
+  .sidebar {
+    transition: none;
+  }
+
+  .nav-link {
+    transition: none;
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    transition: none;
+  }
+
+  /* Button states — no transform animations */
+  .btn:hover,
+  .btn:active,
+  .btn-primary:hover,
+  .btn-primary:active,
+  .btn-success:hover,
+  .btn-success:active,
+  .btn-danger:hover,
+  .btn-danger:active {
+    transform: none !important;
+  }
+
+  /* Error message animation — instant */
+  .invalid-feedback {
+    animation: none;
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   10. UTILITY CLASSES FOR ANIMATIONS (Phase 5)
+   ──────────────────────────────────────────────────────────────── */
+
+/* Fade in */
+.fade-in {
+  animation: fadeInUtil var(--anim-duration-normal) var(--anim-ease-out) forwards;
+}
+
+@keyframes fadeInUtil {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Page transition fade-in (Phase 5) */
+.page-transition {
+  animation: pageTransitionFade 0.15s ease-out;
+}
+
+@keyframes pageTransitionFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Card stagger animation on load (Phase 5) */
+.card-stagger {
+  animation: cardStaggerLoad 0.3s ease-out backwards;
+}
+
+@keyframes cardStaggerLoad {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Stagger delay for multiple cards */
+.card-stagger:nth-child(1) { animation-delay: 0ms; }
+.card-stagger:nth-child(2) { animation-delay: 50ms; }
+.card-stagger:nth-child(3) { animation-delay: 100ms; }
+.card-stagger:nth-child(4) { animation-delay: 150ms; }
+.card-stagger:nth-child(5) { animation-delay: 200ms; }
+.card-stagger:nth-child(6) { animation-delay: 250ms; }
+
+/* Slide up */
+.slide-up {
+  animation: slideUpUtil var(--anim-duration-normal) var(--anim-ease-out) forwards;
+}
+
+@keyframes slideUpUtil {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scale in */
+.scale-in {
+  animation: scaleInUtil var(--anim-duration-normal) var(--anim-ease-out) forwards;
+}
+
+@keyframes scaleInUtil {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Pulse */
+.pulse {
+  animation: pulseUtil 2s ease-in-out infinite;
+}
+
+@keyframes pulseUtil {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Pulsing ring expansion */
+@keyframes pulseRing {
+  0% { box-shadow: 0 0 0 0 rgba(37, 169, 107, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(37, 169, 107, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 169, 107, 0); }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   11. BADGE & STATUS ANIMATIONS (Phase 5)
+   ──────────────────────────────────────────────────────────────── */
+
+/* Badge hover animation */
+.badge {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, color 0.2s ease-out;
+}
+
+.badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 3px rgba(37, 169, 107, 0.15);
+}
+
+/* Status indicator subtle pulse (Phase 5) */
+.status-indicator {
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(37, 169, 107, 0.5);
+  }
+  50% {
+    opacity: 0.8;
+    box-shadow: 0 0 0 4px rgba(37, 169, 107, 0.1);
+  }
+}
+
+/* Success checkmark animation — smooth scale-in (Phase 5) */
+.success-checkmark {
+  animation: checkmarkScaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes checkmarkScaleIn {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Error shake animation (Phase 5) */
+.error-shake {
+  animation: errorShake 0.4s ease-out;
+}
+
+@keyframes errorShake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   12. TOOLTIP & HELP TEXT ANIMATIONS (Phase 5)
+   ──────────────────────────────────────────────────────────────── */
+
+/* Tooltip fade in */
+.tooltip-fade {
+  animation: tooltipFadeIn 0.15s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Help text slide up (Phase 5) */
+.help-text-slide {
+  animation: helpTextSlideUp 0.2s ease-out;
+}
+
+@keyframes helpTextSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

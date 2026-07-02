@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import client from '../../api/client';
+import TextInput from '../../components/TextInput';
+import Select from '../../components/Select';
+import Textarea from '../../components/Textarea';
+import Button from '../../components/Button';
 
 export default function UserScreenForm() {
   const [searchParams] = useSearchParams();
@@ -156,30 +160,20 @@ export default function UserScreenForm() {
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
-                  <div className="col-4 mb-3">
-                    <label htmlFor="screen_main_name">Main Screen</label>
-                    <select
-                      className="form-control"
-                      id="screen_main_name"
+                  <div className="col-12 col-md-4">
+                    <Select
+                      label="Main Screen"
                       name="screen_main_name"
                       value={formData.screen_main_name}
                       onChange={handleChange}
+                      options={mainScreenOptions}
                       required
-                    >
-                      {mainScreenOptions.map((opt, i) => (
-                        <option key={i} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </div>
-                  
-                  <div className="col-4 mb-3">
-                    <label htmlFor="screen_name">Screen Name</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="screen_name"
+
+                  <div className="col-12 col-md-4">
+                    <TextInput
+                      label="Screen Name"
                       name="screen_name"
                       value={formData.screen_name}
                       onChange={handleChange}
@@ -187,12 +181,9 @@ export default function UserScreenForm() {
                     />
                   </div>
 
-                  <div className="col-4 mb-3">
-                    <label htmlFor="folder_name">Folder Name</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="folder_name"
+                  <div className="col-12 col-md-4">
+                    <TextInput
+                      label="Folder Name"
                       name="folder_name"
                       value={formData.folder_name}
                       onChange={handleChange}
@@ -200,12 +191,10 @@ export default function UserScreenForm() {
                     />
                   </div>
 
-                  <div className="col-4 mb-3">
-                    <label htmlFor="order_no">Order No</label>
-                    <input
+                  <div className="col-12 col-md-4">
+                    <TextInput
                       type="number"
-                      className="form-control"
-                      id="order_no"
+                      label="Order No"
                       name="order_no"
                       value={formData.order_no}
                       onChange={handleChange}
@@ -213,27 +202,23 @@ export default function UserScreenForm() {
                     />
                   </div>
 
-                  <div className="col-4 mb-3">
-                    <label htmlFor="active_status">Active Status</label>
-                    <select
-                      className="form-control"
-                      id="active_status"
+                  <div className="col-12 col-md-4">
+                    <Select
+                      label="Active Status"
                       name="active_status"
                       value={formData.active_status}
                       onChange={handleChange}
+                      options={[
+                        { value: '1', label: 'Active' },
+                        { value: '0', label: 'Inactive' },
+                      ]}
                       required
-                    >
-                      <option value="1">Active</option>
-                      <option value="0">Inactive</option>
-                    </select>
+                    />
                   </div>
-                  
-                  <div className="col-4 mb-3">
-                    <label htmlFor="icon_name">Icon</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="icon_name"
+
+                  <div className="col-12 col-md-4">
+                    <TextInput
+                      label="Icon"
                       name="icon_name"
                       value={formData.icon_name}
                       onChange={handleChange}
@@ -241,20 +226,18 @@ export default function UserScreenForm() {
                     />
                   </div>
 
-                  <div className="col-4 mb-3">
-                    <label htmlFor="description">Description</label>
-                    <textarea
-                      className="form-control"
-                      id="description"
+                  <div className="col-12 col-md-4">
+                    <Textarea
+                      label="Description"
                       name="description"
-                      rows="2"
+                      rows={2}
                       value={formData.description}
                       onChange={handleChange}
                     />
                   </div>
 
-                  <div className="col-6 mb-3">
-                    <label>Actions</label>
+                  <div className="col-12 col-md-6 mb-3">
+                    <span className="form-label app-form-label d-block">Actions</span>
                     <div>
                       <ul className="ks-cboxtags d-flex flex-wrap gap-2 list-unstyled">
                         {actionOptions.map((opt, i) => (
@@ -275,12 +258,12 @@ export default function UserScreenForm() {
                 
                 <div className="row mt-2">
                   <div className="col-12 text-end mt-3">
-                    <button type="button" onClick={() => navigate('/user_screen/list')} className="btn btn-danger me-2">
+                    <Button variant="danger" className="me-2" onClick={() => navigate('/user_screen/list')}>
                       Cancel
-                    </button>
-                    <button type="submit" className="btn btn-success" disabled={isLoading}>
+                    </Button>
+                    <Button type="submit" disabled={isLoading}>
                       {isLoading ? 'Saving...' : unique_id ? 'Update' : 'Save'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </form>
