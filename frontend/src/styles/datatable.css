@@ -93,7 +93,7 @@
 
 /* Data rows (U-13) */
 .dt-row {
-  transition: background 0.12s ease;
+  transition: background 0.2s ease-out;
 }
 
 .dt-td {
@@ -112,13 +112,15 @@
   background: rgba(255, 255, 255, 0.025);
 }
 
-/* Hover state */
+/* Hover state — smooth transition with green tint */
 .dt-row:hover .dt-td {
   background: rgba(37, 169, 107, 0.05);
+  transition: background 0.2s ease-out;
 }
 
 [data-bs-theme='dark'] .dt-row:hover .dt-td {
-  background: rgba(37, 169, 107, 0.07);
+  background: rgba(37, 169, 107, 0.08);
+  transition: background 0.2s ease-out;
 }
 
 /* Last row — no bottom border */
@@ -131,18 +133,30 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  min-width: 44px;
+  min-height: 44px;
+  width: 44px;
+  height: 44px;
   border: none;
   border-radius: 6px;
   font-size: 0.95rem;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  transition: background 0.2s ease-out, color 0.2s ease-out, transform 0.2s ease-out, box-shadow 0.2s ease-out;
   background: transparent;
+  position: relative;
 }
 
 .dt-action-btn:hover {
-  transform: scale(1.1);
+  transform: scale(1.05);
+}
+
+.dt-action-btn:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: 2px;
+}
+
+.dt-action-btn:active {
+  transform: scale(0.98);
 }
 
 .dt-action-view {

@@ -47,14 +47,33 @@
   border-color: var(--primary-green);
   color: #fff;
   white-space: nowrap;
-  transition: background 0.15s, box-shadow 0.15s;
+  transition: background 0.2s ease-out, box-shadow 0.2s ease-out, transform 0.2s ease-out;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
 }
 
 .card-header .btn-primary:hover {
-  background: #1e8f5a;
-  border-color: #1e8f5a;
-  box-shadow: 0 0 0 3px rgba(37, 169, 107, 0.2);
+  background: var(--primary-green-dark);
+  border-color: var(--primary-green-dark);
+  box-shadow: 0 4px 12px rgba(37, 169, 107, 0.15);
   color: #fff;
+  transform: scale(1.02);
+}
+
+.card-header .btn-primary:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: 2px;
+}
+
+.card-header .btn-primary:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 4px rgba(37, 169, 107, 0.1);
+}
+
+.card-header .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* ── 2. Filter bar — visual grouping ── */
@@ -892,17 +911,19 @@ select:-moz-focusring {
 
 /* Subtle hover lift — professional, not bouncy */
 .card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
 }
 .card.card-hover-lift:hover,
 a .card:hover,
-[role='button'] .card:hover {
+[role='button'] .card:hover,
+.card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 [data-bs-theme='dark'] .card.card-hover-lift:hover,
 [data-bs-theme='dark'] a .card:hover,
-[data-bs-theme='dark'] [role='button'] .card:hover {
+[data-bs-theme='dark'] [role='button'] .card:hover,
+[data-bs-theme='dark'] .card:hover {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 

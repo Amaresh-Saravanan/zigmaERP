@@ -40,6 +40,17 @@ form .form-label {
   color: var(--vz-body-color);
   margin-bottom: 5px;
   letter-spacing: 0.01em;
+  transition: color 0.15s ease-out;
+}
+
+/* Label color changes on associated input focus */
+form input:focus + label,
+form input:focus ~ label,
+form select:focus + label,
+form select:focus ~ label,
+form textarea:focus + label,
+form textarea:focus ~ label {
+  color: var(--primary-green);
 }
 
 /* Read-only inputs — visually distinct, not editable */
@@ -59,15 +70,18 @@ form input:read-only {
 /* Enhanced form input focus states — smooth transitions */
 .form-control,
 .form-select {
-  transition: border-color var(--transition-standard),
-              box-shadow var(--transition-standard),
-              background-color var(--transition-standard);
+  transition: border-color 0.2s ease-out,
+              box-shadow 0.2s ease-out,
+              background-color 0.2s ease-out;
 }
 
 .form-control:focus,
 .form-select:focus {
-  transition: border-color var(--transition-standard),
-              box-shadow var(--transition-standard);
+  border-color: var(--primary-green) !important;
+  box-shadow: 0 0 0 3px rgba(37, 169, 107, 0.1) !important;
+  transition: border-color 0.15s ease-out,
+              box-shadow 0.2s ease-out;
+  outline: none;
 }
 
 /* ── U-21: Submit button — primary green, consistent size ── */
@@ -89,35 +103,92 @@ form input:read-only {
   font-weight: 500;
   padding: 8px 20px;
   border-radius: 6px;
-  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  transition: background 0.2s ease-out, border-color 0.2s ease-out, box-shadow 0.2s ease-out, transform 0.2s ease-out;
 }
 
-.btn-success:hover,
-.btn-success:focus {
+.btn-success:hover:not(:disabled) {
   background-color: var(--primary-green-dark);
   border-color: var(--primary-green-dark);
   color: #ffffff;
-  box-shadow: 0 0 0 3px rgba(37, 169, 107, 0.25);
+  box-shadow: 0 4px 12px rgba(37, 169, 107, 0.15);
+  transform: scale(1.02);
 }
 
-.btn-success:active {
+.btn-success:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: 2px;
+  background-color: var(--primary-green-dark);
+  border-color: var(--primary-green-dark);
+  color: #ffffff;
+}
+
+.btn-success:active:not(:disabled) {
   background-color: var(--primary-green-darker);
   border-color: var(--primary-green-darker);
+  transform: scale(0.98);
+  box-shadow: 0 2px 4px rgba(37, 169, 107, 0.2);
 }
 
 .btn-success:disabled {
   background-color: var(--primary-green);
   border-color: var(--primary-green);
-  opacity: 0.55;
+  opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
 }
 
-/* Cancel button — consistent sizing */
+/* Cancel button — consistent sizing with hover effects */
 .btn-danger {
   font-size: var(--font-size-lg);
   font-weight: 500;
   padding: 8px 20px;
   border-radius: 6px;
+  transition: background 0.2s ease-out, border-color 0.2s ease-out, box-shadow 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.btn-danger:hover:not(:disabled) {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(240, 101, 72, 0.15);
+}
+
+.btn-danger:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Secondary button — subtle styling */
+.btn-secondary {
+  transition: background 0.2s ease-out, border-color 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.1);
+  transform: none;
+}
+
+.btn-secondary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Ghost button — minimal style */
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--vz-border-color);
+  transition: background 0.15s ease-out, color 0.15s ease-out, transform 0.2s ease-out;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: rgba(37, 169, 107, 0.08);
+  color: var(--primary-green);
+  border-color: var(--primary-green);
+}
+
+.btn-ghost:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 /* Form action row (Cancel + Save) */
@@ -130,10 +201,18 @@ form .row .col-12.text-end {
 
 /* ── U-23: Validation error styles ── */
 
-/* Invalid field — red border + shadow */
+/* Invalid field — red border + glow */
 .form-control:invalid,
 .was-validated .form-control:invalid,
 .was-validated .form-select:invalid {
+  border-color: var(--error-coral) !important;
+  box-shadow: 0 0 0 3px rgba(240, 101, 72, 0.1) !important;
+  transition: border-color 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.form-control:invalid:focus,
+.was-validated .form-control:invalid:focus,
+.was-validated .form-select:invalid:focus {
   border-color: var(--error-coral) !important;
   box-shadow: 0 0 0 3px rgba(240, 101, 72, 0.15) !important;
 }
@@ -146,7 +225,7 @@ form .row .col-12.text-end {
   background-image: none !important; /* remove Bootstrap's checkmark icon */
 }
 
-/* Inline error message */
+/* Inline error message — slide in animation */
 .invalid-feedback {
   display: none;
   font-size: var(--font-size-xs);
@@ -154,6 +233,18 @@ form .row .col-12.text-end {
   margin-top: 4px;
   gap: 4px;
   align-items: center;
+  animation: slideInError 0.3s ease-out forwards;
+}
+
+@keyframes slideInError {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .was-validated .form-control:invalid ~ .invalid-feedback,
@@ -225,8 +316,16 @@ input[type='reset'] {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
-[data-bs-theme='dark'] .btn-success:hover {
-  box-shadow: 0 0 0 3px rgba(37, 169, 107, 0.3), 0 2px 8px rgba(0, 0, 0, 0.3);
+[data-bs-theme='dark'] .btn-success:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-bs-theme='dark'] .btn-success:active:not(:disabled) {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-bs-theme='dark'] .btn-danger:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(240, 101, 72, 0.2);
 }
 
 [data-bs-theme='dark'] .form-control:invalid,

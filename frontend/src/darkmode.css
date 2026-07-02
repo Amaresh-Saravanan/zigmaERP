@@ -373,6 +373,16 @@ body,
   --vz-btn-active-bg: var(--primary-green-darker);
   --vz-btn-color: #ffffff;
   --vz-btn-hover-color: #ffffff;
+  transition: background 0.2s ease-out, border-color 0.2s ease-out, box-shadow 0.2s ease-out, transform 0.2s ease-out;
+}
+
+[data-bs-theme='dark'] .btn-primary:hover:not(:disabled) {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-bs-theme='dark'] .btn-primary:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 [data-bs-theme='dark'] .btn-soft-primary,
