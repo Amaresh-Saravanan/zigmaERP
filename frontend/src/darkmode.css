@@ -315,9 +315,14 @@ body,
    ------------------------------------------------------------------ */
 [data-bs-theme='dark'] .form-control,
 [data-bs-theme='dark'] .form-select {
-  background-color: #0d1117;
-  border-color: #30363d;
+  background-color: rgba(255, 255, 255, 0.045);
+  border-color: transparent;
   color: #c9d1d9;
+}
+
+[data-bs-theme='dark'] .form-control:hover:not(:disabled):not(:focus):not([readonly]),
+[data-bs-theme='dark'] .form-select:hover:not(:disabled):not(:focus) {
+  border-color: #30363d;
 }
 
 [data-bs-theme='dark'] .form-control:focus,
@@ -345,24 +350,8 @@ body,
   border-color: var(--primary-green);
 }
 
-/* Shared form components (TextInput, Select, Textarea) — Stitch mockup styling */
-[data-bs-theme='dark'] .app-form-label {
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  color: #8b949e;
-  margin-bottom: 0.4rem;
-}
-
-[data-bs-theme='dark'] .app-form-control {
-  border-radius: 8px;
-  padding: 0.55rem 0.9rem;
-}
-
-[data-bs-theme='dark'] .app-form-control:hover:not(:disabled):not(:focus) {
-  border-color: #545d68;
-}
+/* Shared form components: label + filled input styles unified in
+   styles/forms.css for both themes — dark overrides removed. */
 
 /* ------------------------------------------------------------------
    9. Buttons — primary green
@@ -795,72 +784,9 @@ body,
 }
 
 /* ------------------------------------------------------------------
-   22A. Sidebar active item left-border pill — Light Mode (U-07)
+   22. Sidebar active indicators live in styles/ux.css (single pill +
+   stable dot slot). Duplicated stripe/dot rules removed — one signal.
    ------------------------------------------------------------------ */
-[data-bs-theme='light'] .navbar-nav .nav-link.menu-link {
-  position: relative;
-}
-
-[data-bs-theme='light'] .navbar-nav .nav-link.menu-link.active::after,
-[data-bs-theme='light'] .navbar-nav .nav-link.menu-link[aria-expanded='true']::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 60%;
-  background: var(--primary-green);
-  border-radius: 0 2px 2px 0;
-}
-
-/* ------------------------------------------------------------------
-   22B. Sidebar active item left-border pill — Dark Mode (U-07)
-   ------------------------------------------------------------------ */
-[data-bs-theme='dark'] .navbar-nav .nav-link.menu-link {
-  position: relative;
-}
-
-[data-bs-theme='dark'] .navbar-nav .nav-link.menu-link.active::after,
-[data-bs-theme='dark'] .navbar-nav .nav-link.menu-link[aria-expanded='true']::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 60%;
-  background: var(--primary-green);
-  border-radius: 0 2px 2px 0;
-}
-
-/* Sub-item active dot indicator — Light Mode */
-[data-bs-theme='light'] .nav-sm .nav-link.active::before,
-[data-bs-theme='light'] .nav-sm .nav-item.active .nav-link::before {
-  content: '';
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--primary-green);
-  margin-right: 8px;
-  vertical-align: middle;
-  flex-shrink: 0;
-}
-
-/* Sub-item active dot indicator — Dark Mode */
-[data-bs-theme='dark'] .nav-sm .nav-link.active::before,
-[data-bs-theme='dark'] .nav-sm .nav-item.active .nav-link::before {
-  content: '';
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--primary-green);
-  margin-right: 8px;
-  vertical-align: middle;
-  flex-shrink: 0;
-}
 
 /* ------------------------------------------------------------------
    Flatpickr dark theme overrides

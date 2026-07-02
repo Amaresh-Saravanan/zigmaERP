@@ -43,6 +43,17 @@ form .form-label {
   transition: color 0.15s ease-out;
 }
 
+/* Shared-component labels — one consistent style, both themes */
+form .app-form-label,
+.app-form-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--vz-secondary-color);
+  margin-bottom: 0.4rem;
+}
+
 /* Label color changes on associated input focus */
 form input:focus + label,
 form input:focus ~ label,
@@ -80,16 +91,26 @@ form input:read-only {
   color: var(--vz-secondary-color);
 }
 
-/* Enhanced form input focus states — smooth transitions */
+/* Filled input style — soft fill at rest, lifts to solid on focus */
 .form-control,
 .form-select {
+  background-color: rgba(0, 0, 0, 0.035);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
   transition: border-color 0.2s ease-out,
               box-shadow 0.2s ease-out,
               background-color 0.2s ease-out;
 }
 
+.form-control:hover:not(:disabled):not(:focus):not([readonly]),
+.form-select:hover:not(:disabled):not(:focus) {
+  border-color: var(--vz-border-color);
+}
+
 .form-control:focus,
 .form-select:focus {
+  background-color: var(--vz-card-bg, #ffffff);
   border-color: var(--primary-green) !important;
   box-shadow: 0 0 0 3px rgba(37, 169, 107, 0.1) !important;
   transition: border-color 0.15s ease-out,
