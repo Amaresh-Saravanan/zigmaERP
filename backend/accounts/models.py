@@ -42,6 +42,10 @@ class User(Document):
     def is_authenticated(self):
         return True
 
+    def has_screen(self, screen_id):
+        """screens is stored comma-separated (mirrors legacy PHP's $_SESSION['screens'])."""
+        return screen_id in (s.strip() for s in self.screens.split(',') if s.strip())
+
 
 class AuthToken(Document):
     """MongoEngine-backed session token — DRF's rest_framework.authtoken needs a

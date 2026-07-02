@@ -13,10 +13,10 @@
 | Field | Value |
 |-------|-------|
 | **Architecture** | **React (Vite) + Django REST + MongoDB Atlas + Docker + Vercel** (NOT PHP → Django migration; greenfield Django build using legacy PHP as reference for business logic only). |
-| **Current Phase** | Phase 1 (React): 100%. Phase 2 (UI Modernization): 100%. Phase 3 (Django Backend): TASK-B01–B03 done, TASK-B04 next. Phase 4 (Deployment): 0%. |
-| **Current Task** | TASK-B04 — Permission enforcement (server-side `screens` check). |
-| **Last Completed Task** | TASK-B03: `AuthToken` MongoEngine model (one token per user, `secrets.token_hex(32)`), `MongoTokenAuthentication` DRF class, `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`. 9 pytest tests (6 model, 3→9 after adding API tests) passing against mongomock + DRF `APIClient`. |
-| **Overall Progress** | Frontend: 100% complete. Backend: TASK-B01, B02, B03 done (3/14). |
+| **Current Phase** | Phase 1 (React): 100%. Phase 2 (UI Modernization): 100%. Phase 3 (Django Backend): TASK-B01–B04 done, TASK-B05 next. Phase 4 (Deployment): 0%. |
+| **Current Task** | TASK-B05 — Menu endpoint (`main_screens`/`screens` tree). |
+| **Last Completed Task** | TASK-B04: `User.has_screen()`, `accounts.permissions.HasScreenPermission` DRF permission class (supports `view.required_screen` or per-action `view.required_screens` dict for ViewSets). 4 new unit tests (13 total in accounts/tests.py). Not yet wired into a real endpoint — no CRUD views exist until TASK-B06; ready for B06+ to declare `required_screen`/`required_screens` on their ViewSets. |
+| **Overall Progress** | Frontend: 100% complete. Backend: TASK-B01–B04 done (4/14). |
 | **Active Blocker** | Real MongoDB Atlas cluster + connection string still needed (placeholder URI in `backend/.env` is local/fake) before TASK-B02+ can hit a live DB. |
 | **Tech Stack** | See TECH_STACK.md (React, Django 4.2+, MongoEngine, MongoDB, Vercel, Docker). |
 | **Legacy Reference** | `legacy/` folder (PHP source code — read for business logic understanding; do NOT migrate code). |
@@ -512,7 +512,7 @@ Estimated:     2 hours
 | TASK-B01 | Django + MongoEngine scaffold, MongoDB Atlas cluster (`backend/`, apps, settings) | **Done** | None | `backend/` scaffolded: 5 apps (accounts, inventory, process, reports, core), `config/settings.py` wired to MongoEngine via `.env`, `requirements.txt`, `.gitignore`. Verified `manage.py check` and `runserver` boot cleanly, `/api/health` returns 200. **Still needed: a real MongoDB Atlas cluster** — `backend/.env` has a local placeholder `MONGODB_URI`, not a live connection string (see BACKEND_START.md step 3). |
 | TASK-B02 | MongoEngine `Document` models (per-entity, `is_deleted`/`unique_id` handling) | **Done** | TASK-B01 (done) | `accounts/models.py`: `UserType`, `User` (unique_id, is_deleted, is_active). 3 pytest tests vs mongomock passing (`accounts/tests.py`). Other entities' models arrive with their own tasks (Item/Unit in B06, process/report entities in B08/B09). |
 | TASK-B03 | Auth (token-based) + login endpoint returning full profile in one response | **Done** | TASK-B02 (done) | `accounts/models.AuthToken` (MongoEngine, not DRF's relational `authtoken`), `accounts/authentication.MongoTokenAuthentication`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`. Also removed `django.contrib.auth`/`contenttypes` from `INSTALLED_APPS` (dead weight, no relational DB) and set `REST_FRAMEWORK.UNAUTHENTICATED_USER = None` to stop DRF importing Django's `AnonymousUser` (which needs contenttypes). 9 pytest tests passing (mongomock + DRF `APIClient`). |
-| TASK-B04 | Permission enforcement (server-side `screens` check) | Not Started | TASK-B03 (done) | Closes a gap legacy PHP never had (§15.6) |
+| TASK-B04 | Permission enforcement (server-side `screens` check) | **Done** | TASK-B03 (done) | `accounts/permissions.HasScreenPermission` + `User.has_screen()`. Infrastructure only — first real consumer is TASK-B06's Item/Unit ViewSets. |
 | TASK-B05 | Menu endpoint (`main_screens`/`screens` tree, returned from login or a dedicated endpoint) | Not Started | TASK-B02 | Closes KI-003 |
 | TASK-B06 | Core CRUD APIs (Item, Tray, Pit, Unit, Supplier) | Not Started | TASK-B04 | Item is the reference implementation — see BACKEND_START.md "Reference Implementation: Item Module"; clone the pattern for the rest |
 | TASK-B07 | User management APIs (User, Type, Permission, Screen) | Not Started | TASK-B06 | |

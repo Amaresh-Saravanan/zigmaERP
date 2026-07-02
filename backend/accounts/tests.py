@@ -5,9 +5,10 @@ import mongoengine as me
 import mongomock
 import pytest
 from django.contrib.auth.hashers import make_password
-from rest_framework.test import APIClient
+from rest_framework.test import APIClient, APIRequestFactory
 
 from accounts.models import AuthToken, User, UserType
+from accounts.permissions import HasScreenPermission
 
 
 @pytest.fixture(autouse=True)
@@ -111,3 +112,39 @@ def test_logout_revokes_token(client, active_user):
 
     me_res = client.get('/api/auth/me')
     assert me_res.status_code == 401
+
+
+def _fake_request(user):
+    request = APIRequestFactory().get('/')
+    request.user = user
+    return request
+
+
+def test_screen_permission_denies_user_without_screen(active_user):
+    view = type('View', (), {'required_screen': 'item_delete'})()
+    assert HasScreenPermission().has_permission(_fake_request(active_user), view) is False
+
+
+def test_screen_permission_allows_user_with_screen(active_user):
+    active_user.screens = 'item_view,item_create'
+    active_user.save()
+    view = type('View', (), {'required_screen': 'item_create'})()
+    assert HasScreenPermission().has_permission(_fake_request(active_user), view) is True
+
+
+def test_screen_permission_action_map_for_viewsets(active_user):
+    active_user.screens = 'item_view'
+    active_user.save()
+    view = type('View', (), {
+        'required_screens': {'list': 'item_view', 'destroy': 'item_delete'},
+        'action': 'destroy',
+    })()
+    assert HasScreenPermission().has_permission(_fake_request(active_user), view) is False
+
+    view.action = 'list'
+    assert HasScreenPermission().has_permission(_fake_request(active_user), view) is True
+
+
+def test_screen_permission_open_when_view_declares_nothing(active_user):
+    view = type('View', (), {})()
+    assert HasScreenPermission().has_permission(_fake_request(active_user), view) is True
