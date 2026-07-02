@@ -303,19 +303,26 @@ tbody tr:hover {
   to { transform: rotate(360deg); }
 }
 
-/* Skeleton loading pulse */
+/* Skeleton loading — shimmer effect (Phase 5) */
 .skeleton {
-  animation: skeletonPulse 1.5s ease-in-out infinite;
+  animation: skeletonShimmer 1.5s ease-in-out infinite;
   background: linear-gradient(90deg,
     var(--vz-secondary-bg) 0%,
-    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.12) 50%,
     var(--vz-secondary-bg) 100%);
   background-size: 200% 100%;
+  background-position: 0 0;
 }
 
-@keyframes skeletonPulse {
-  0%, 100% { background-position: 200% 0; }
-  50% { background-position: 0 0; }
+@keyframes skeletonShimmer {
+  0%, 100% {
+    background-position: 200% 0;
+    opacity: 0.7;
+  }
+  50% {
+    background-position: -200% 0;
+    opacity: 0.95;
+  }
 }
 
 [data-bs-theme='dark'] .skeleton {
@@ -443,7 +450,7 @@ tbody tr:hover {
 }
 
 /* ────────────────────────────────────────────────────────────────
-   10. UTILITY CLASSES FOR ANIMATIONS
+   10. UTILITY CLASSES FOR ANIMATIONS (Phase 5)
    ──────────────────────────────────────────────────────────────── */
 
 /* Fade in */
@@ -455,6 +462,40 @@ tbody tr:hover {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* Page transition fade-in (Phase 5) */
+.page-transition {
+  animation: pageTransitionFade 0.15s ease-out;
+}
+
+@keyframes pageTransitionFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Card stagger animation on load (Phase 5) */
+.card-stagger {
+  animation: cardStaggerLoad 0.3s ease-out backwards;
+}
+
+@keyframes cardStaggerLoad {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Stagger delay for multiple cards */
+.card-stagger:nth-child(1) { animation-delay: 0ms; }
+.card-stagger:nth-child(2) { animation-delay: 50ms; }
+.card-stagger:nth-child(3) { animation-delay: 100ms; }
+.card-stagger:nth-child(4) { animation-delay: 150ms; }
+.card-stagger:nth-child(5) { animation-delay: 200ms; }
+.card-stagger:nth-child(6) { animation-delay: 250ms; }
 
 /* Slide up */
 .slide-up {
@@ -503,4 +544,95 @@ tbody tr:hover {
   0% { box-shadow: 0 0 0 0 rgba(37, 169, 107, 0.4); }
   50% { box-shadow: 0 0 0 6px rgba(37, 169, 107, 0); }
   100% { box-shadow: 0 0 0 0 rgba(37, 169, 107, 0); }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   11. BADGE & STATUS ANIMATIONS (Phase 5)
+   ──────────────────────────────────────────────────────────────── */
+
+/* Badge hover animation */
+.badge {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, color 0.2s ease-out;
+}
+
+.badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 3px rgba(37, 169, 107, 0.15);
+}
+
+/* Status indicator subtle pulse (Phase 5) */
+.status-indicator {
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(37, 169, 107, 0.5);
+  }
+  50% {
+    opacity: 0.8;
+    box-shadow: 0 0 0 4px rgba(37, 169, 107, 0.1);
+  }
+}
+
+/* Success checkmark animation — smooth scale-in (Phase 5) */
+.success-checkmark {
+  animation: checkmarkScaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes checkmarkScaleIn {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Error shake animation (Phase 5) */
+.error-shake {
+  animation: errorShake 0.4s ease-out;
+}
+
+@keyframes errorShake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   12. TOOLTIP & HELP TEXT ANIMATIONS (Phase 5)
+   ──────────────────────────────────────────────────────────────── */
+
+/* Tooltip fade in */
+.tooltip-fade {
+  animation: tooltipFadeIn 0.15s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Help text slide up (Phase 5) */
+.help-text-slide {
+  animation: helpTextSlideUp 0.2s ease-out;
+}
+
+@keyframes helpTextSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
