@@ -944,7 +944,7 @@ a .card:hover,
   transform: scale(0.97);
 }
 
-/* ── 18. Keyboard focus — global interactive elements ── */
+/* ── 18. Keyboard focus — global interactive elements (Phase 4) ── */
 
 a:focus-visible,
 button:focus-visible,
@@ -953,6 +953,59 @@ button:focus-visible,
   outline: 2px solid var(--primary-green);
   outline-offset: 2px;
   border-radius: 3px;
+}
+
+/* DataTable — ensure all cells are keyboard accessible */
+.dt-table td:has(button) {
+  position: relative;
+}
+
+.dt-table button:focus-visible,
+.dt-action-btn:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: 1px;
+}
+
+/* Pagination buttons — 44px minimum for accessibility */
+.pagination .page-link {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease-out;
+}
+
+.pagination .page-link:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: 2px;
+}
+
+.pagination .page-link:hover {
+  background-color: rgba(37, 169, 107, 0.08);
+  color: var(--primary-green);
+}
+
+/* Action buttons in tables — 44px minimum + focus ring */
+.action-btn {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.action-btn:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: 1px;
+}
+
+/* Links should have visible focus */
+a:focus-visible {
+  text-decoration: underline;
+}
+
+/* Ensure text doesn't disappear on dark backgrounds when focused */
+[data-bs-theme='dark'] a:focus-visible,
+[data-bs-theme='dark'] button:focus-visible {
+  outline-color: var(--primary-green-light);
 }
 
 /* ── 19. Mobile breakpoints (U-36) ── */
