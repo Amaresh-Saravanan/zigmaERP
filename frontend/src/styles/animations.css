@@ -37,15 +37,22 @@
               background-color var(--anim-duration-fast) var(--anim-ease-out);
 }
 
-/* Checkbox & radio smooth animation */
+/* Checkbox, radio & switch smooth animation */
 .form-check-input {
   transition: border-color var(--anim-duration-fast) var(--anim-ease-out),
               background-color var(--anim-duration-fast) var(--anim-ease-out),
-              box-shadow var(--anim-duration-fast) var(--anim-ease-out);
+              box-shadow var(--anim-duration-fast) var(--anim-ease-out),
+              all 0.25s ease-out;
 }
 
 .form-check-input:checked {
   animation: checkmarkPulse var(--anim-duration-normal) var(--anim-ease-out) forwards;
+}
+
+/* Form switch (toggle) focus ring */
+.form-switch .form-check-input:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: 2px;
 }
 
 @keyframes checkmarkPulse {

@@ -12,6 +12,8 @@ export default function TextInput({
   disabled,
   readOnly,
   maxLength,
+  helperText,
+  error,
   children,
   ...rest
 }) {
@@ -30,7 +32,7 @@ export default function TextInput({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="form-control app-form-control"
+        className={`form-control app-form-control ${error ? 'is-invalid' : ''}`}
         required={required}
         pattern={pattern}
         disabled={disabled}
@@ -38,6 +40,8 @@ export default function TextInput({
         maxLength={maxLength}
         {...rest}
       />
+      {error && <div className="invalid-feedback d-block" style={{ animation: 'slideInError 0.3s ease-out' }}>{error}</div>}
+      {helperText && !error && <small className="form-text text-muted d-block mt-1">{helperText}</small>}
       {children}
     </div>
   );

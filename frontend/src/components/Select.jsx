@@ -9,6 +9,8 @@ export default function Select({
   required,
   disabled,
   placeholder,
+  helperText,
+  error,
   ...rest
 }) {
   return (
@@ -24,7 +26,7 @@ export default function Select({
         id={name}
         value={value}
         onChange={onChange}
-        className="form-select app-form-control"
+        className={`form-select app-form-control ${error ? 'is-invalid' : ''}`}
         required={required}
         disabled={disabled}
         {...rest}
@@ -34,6 +36,8 @@ export default function Select({
           <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
       </select>
+      {error && <div className="invalid-feedback d-block" style={{ animation: 'slideInError 0.3s ease-out' }}>{error}</div>}
+      {helperText && !error && <small className="form-text text-muted d-block mt-1">{helperText}</small>}
     </div>
   );
 }

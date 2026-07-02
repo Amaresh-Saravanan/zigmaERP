@@ -23,7 +23,8 @@ export default function Toggle({ name, label, value, onChange, disabled, helperT
           onChange={handleChange}
           disabled={disabled}
           style={{
-            transition: 'var(--transition-standard)',
+            transition: 'all 0.25s ease-out',
+            cursor: disabled ? 'not-allowed' : 'pointer',
           }}
         />
         {helperText && (
