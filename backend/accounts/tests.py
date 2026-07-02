@@ -4,7 +4,7 @@ Model + API smoke tests — run against mongomock, not the real Atlas cluster in
 import mongoengine as me
 import mongomock
 import pytest
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import check_password, make_password
 from rest_framework.test import APIClient, APIRequestFactory
 
 from accounts.models import AuthToken, User, UserType
@@ -148,3 +148,125 @@ def test_screen_permission_action_map_for_viewsets(active_user):
 def test_screen_permission_open_when_view_declares_nothing(active_user):
     view = type('View', (), {})()
     assert HasScreenPermission().has_permission(_fake_request(active_user), view) is True
+
+
+# ── UserType / User management CRUD (TASK-B07) ──
+
+def authed_client(user):
+    client = APIClient()
+    res = client.post('/api/auth/login', {'user_name': user.user_name, 'password': 'correcthorse'}, format='json')
+    client.credentials(HTTP_AUTHORIZATION=f"Token {res.data['data']['access_token']}")
+    return client
+
+
+def manager_user(screens):
+    ut = UserType(type_name='Manager').save()
+    return User(
+        user_name='manager1',
+        password_hash=make_password('correcthorse'),
+        user_type=ut,
+        screens=screens,
+    ).save()
+
+
+def test_user_type_create_and_list():
+    client = authed_client(manager_user('user_type_create,user_type_view'))
+    res = client.post('/api/user-types', {'type_name': 'Operator'}, format='json')
+    assert res.status_code == 201
+
+    list_res = client.get('/api/user-types')
+    # includes the 'Manager' type created by the fixture too
+    names = [t['type_name'] for t in list_res.data['results']]
+    assert 'Operator' in names
+
+
+def test_user_create_hashes_password():
+    manager = manager_user('user_create,user_view')
+    client = authed_client(manager)
+
+    res = client.post('/api/users', {
+        'user_name': 'newhire',
+        'password': 'plaintext123',
+        'first_name': 'New',
+        'last_name': 'Hire',
+        'user_type': {'unique_id': manager.user_type.unique_id},
+    }, format='json')
+
+    assert res.status_code == 201
+    assert 'password' not in res.data['data']
+
+    created = User.objects.get(user_name='newhire')
+    assert created.password_hash != 'plaintext123'
+    assert check_password('plaintext123', created.password_hash)
+
+
+def test_user_create_requires_password():
+    manager = manager_user('user_create')
+    client = authed_client(manager)
+    res = client.post('/api/users', {
+        'user_name': 'newhire',
+        'user_type': {'unique_id': manager.user_type.unique_id},
+    }, format='json')
+    assert res.status_code == 400
+
+
+def test_user_update_without_password_keeps_existing_hash():
+    manager = manager_user('user_create,user_edit')
+    client = authed_client(manager)
+
+    created = client.post('/api/users', {
+        'user_name': 'newhire',
+        'password': 'original-pass',
+        'user_type': {'unique_id': manager.user_type.unique_id},
+    }, format='json')
+    user_id = created.data['data']['unique_id']
+    original_hash = User.objects.get(unique_id=user_id).password_hash
+
+    update_res = client.put(f'/api/users/{user_id}', {
+        'user_name': 'newhire',
+        'first_name': 'Updated',
+        'user_type': {'unique_id': manager.user_type.unique_id},
+    }, format='json')
+
+    assert update_res.status_code == 200
+    assert update_res.data['data']['first_name'] == 'Updated'
+    assert User.objects.get(unique_id=user_id).password_hash == original_hash
+
+
+def test_user_create_rejects_unknown_user_type():
+    manager = manager_user('user_create')
+    client = authed_client(manager)
+    res = client.post('/api/users', {
+        'user_name': 'newhire',
+        'password': 'pw',
+        'user_type': {'unique_id': 'ghost'},
+    }, format='json')
+    assert res.status_code == 400
+
+
+def test_user_delete_is_soft_and_revokes_access():
+    manager = manager_user('user_create,user_delete,user_view')
+    client = authed_client(manager)
+
+    created = client.post('/api/users', {
+        'user_name': 'newhire',
+        'password': 'pw12345',
+        'user_type': {'unique_id': manager.user_type.unique_id},
+    }, format='json')
+    new_user = User.objects.get(unique_id=created.data['data']['unique_id'])
+
+    new_client = authed_client_for_password(new_user, 'pw12345')
+    assert new_client.get('/api/auth/me').status_code == 200
+
+    client.delete(f"/api/users/{created.data['data']['unique_id']}")
+    assert User.objects.get(unique_id=new_user.unique_id).is_deleted is True
+
+    # Existing token for the now-deleted user must stop working.
+    assert new_client.get('/api/auth/me').status_code == 401
+
+
+def authed_client_for_password(user, password):
+    client = APIClient()
+    res = client.post('/api/auth/login', {'user_name': user.user_name, 'password': password}, format='json')
+    client.credentials(HTTP_AUTHORIZATION=f"Token {res.data['data']['access_token']}")
+    return client

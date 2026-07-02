@@ -3,8 +3,9 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 
-from accounts.models import AuthToken
-from accounts.serializers import LoginSerializer, UserSerializer
+from accounts.models import AuthToken, User, UserType
+from accounts.serializers import LoginSerializer, UserManageSerializer, UserSerializer, UserTypeManageSerializer
+from core.mongo_viewset import MongoModelViewSet
 
 
 @api_view(['POST'])
@@ -55,3 +56,33 @@ def me(request):
         'data': UserSerializer(request.user).data,
         'error': '',
     })
+
+
+class UserTypeViewSet(MongoModelViewSet):
+    document_class = UserType
+    serializer_class = UserTypeManageSerializer
+    required_screens = {
+        'list': 'user_type_view',
+        'retrieve': 'user_type_view',
+        'create': 'user_type_create',
+        'update': 'user_type_edit',
+        'destroy': 'user_type_delete',
+    }
+
+    def filter_search(self, queryset, term):
+        return queryset.filter(type_name__icontains=term)
+
+
+class UserViewSet(MongoModelViewSet):
+    document_class = User
+    serializer_class = UserManageSerializer
+    required_screens = {
+        'list': 'user_view',
+        'retrieve': 'user_view',
+        'create': 'user_create',
+        'update': 'user_edit',
+        'destroy': 'user_delete',
+    }
+
+    def filter_search(self, queryset, term):
+        return queryset.filter(user_name__icontains=term)

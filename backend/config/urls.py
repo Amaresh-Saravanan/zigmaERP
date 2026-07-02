@@ -2,8 +2,8 @@ from django.http import JsonResponse
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from accounts.views import login, logout, me
-from core.views import menu
+from accounts.views import UserTypeViewSet, UserViewSet, login, logout, me
+from core.views import MainScreenViewSet, ScreenViewSet, menu
 from inventory.views import ItemViewSet, PitViewSet, SupplierViewSet, TrayViewSet, UnitViewSet
 
 
@@ -17,6 +17,10 @@ router.register(r'items', ItemViewSet, basename='item')
 router.register(r'trays', TrayViewSet, basename='tray')
 router.register(r'pits', PitViewSet, basename='pit')
 router.register(r'suppliers', SupplierViewSet, basename='supplier')
+router.register(r'user-types', UserTypeViewSet, basename='user-type')
+router.register(r'users', UserViewSet, basename='user')
+router.register(r'main-screens', MainScreenViewSet, basename='main-screen')
+router.register(r'screens', ScreenViewSet, basename='screen')
 
 urlpatterns = [
     path('api/health', health, name='health'),

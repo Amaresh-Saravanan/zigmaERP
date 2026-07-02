@@ -115,3 +115,59 @@ def test_menu_excludes_inactive_and_deleted_screens(menu_fixture):
     res = authed_client(user, 'pw').get('/api/menu')
     folder_names = [s['folder_name'] for s in res.data['data'][0]['sub_screens']]
     assert 'hidden' not in folder_names
+
+
+# ── MainScreen / Screen management CRUD (TASK-B07) ──
+
+def manager_user(screens):
+    ut = UserType(type_name='Manager').save()
+    return User(user_name='manager1', password_hash=make_password('pw'), user_type=ut, screens=screens).save()
+
+
+def test_main_screen_create_denied_without_screen():
+    client = authed_client(manager_user(''), 'pw')
+    res = client.post('/api/main-screens', {'screen_main_name': 'Reports'}, format='json')
+    assert res.status_code == 403
+
+
+def test_main_screen_create_and_list():
+    client = authed_client(manager_user('main_screen_create,main_screen_view'), 'pw')
+    res = client.post('/api/main-screens', {'screen_main_name': 'Reports', 'icon_name': 'ri-file-line'}, format='json')
+    assert res.status_code == 201
+
+    list_res = client.get('/api/main-screens')
+    assert list_res.data['count'] == 1
+
+
+def test_screen_create_rejects_unknown_main_screen():
+    client = authed_client(manager_user('screen_create'), 'pw')
+    res = client.post('/api/screens', {
+        'screen_name': 'New Screen',
+        'folder_name': 'new_screen',
+        'main_screen': {'unique_id': 'ghost'},
+    }, format='json')
+    assert res.status_code == 400
+
+
+def test_screen_create_and_update():
+    client = authed_client(manager_user('screen_create,screen_view,screen_edit,main_screen_create'), 'pw')
+    main = client.post('/api/main-screens', {'screen_main_name': 'Reports'}, format='json').data['data']
+
+    created = client.post('/api/screens', {
+        'screen_name': 'Sales Report',
+        'folder_name': 'sales_report',
+        'main_screen': {'unique_id': main['unique_id']},
+        'order_no': 1,
+    }, format='json')
+    assert created.status_code == 201
+    screen_id = created.data['data']['unique_id']
+
+    update_res = client.put(f'/api/screens/{screen_id}', {
+        'screen_name': 'Sales Report V2',
+        'folder_name': 'sales_report',
+        'main_screen': {'unique_id': main['unique_id']},
+        'order_no': 2,
+    }, format='json')
+    assert update_res.status_code == 200
+    assert update_res.data['data']['screen_name'] == 'Sales Report V2'
+    assert update_res.data['data']['order_no'] == 2

@@ -13,10 +13,10 @@
 | Field | Value |
 |-------|-------|
 | **Architecture** | **React (Vite) + Django REST + MongoDB Atlas + Docker + Vercel** (NOT PHP → Django migration; greenfield Django build using legacy PHP as reference for business logic only). |
-| **Current Phase** | Phase 1 (React): 100%. Phase 2 (UI Modernization): 100%. Phase 3 (Django Backend): TASK-B01–B06 done, TASK-B07 next. Phase 4 (Deployment): 0%. |
-| **Current Task** | TASK-B07 — User management APIs (User, Type, Permission, Screen). |
-| **Last Completed Task** | TASK-B06 (finished): `inventory.models.Tray`/`Pit`/`Supplier` cloning the Item/Unit `MongoModelViewSet` pattern at `/api/trays`, `/api/pits`, `/api/suppliers`. `Tray.tray_type` is a fixed choice field (`EGG Tray`/`FRP Tray`, matches legacy's hardcoded options). `Pit.volume` is server-computed from length×width×height in `Document.save()` — the API rejects/ignores any client-supplied `volume`. `Supplier` normalizes `label`/`contact_no`/`gst_no` server-side (alpha-only+uppercase, digits-only, uppercase) rather than trusting the frontend's client-side sanitization alone. 15 new tests (33 total across the whole backend). |
-| **Overall Progress** | Frontend: 100% complete. Backend: TASK-B01–B06 done (6/14). |
+| **Current Phase** | Phase 1 (React): 100%. Phase 2 (UI Modernization): 100%. Phase 3 (Django Backend): TASK-B01–B07 done, TASK-B08 next. Phase 4 (Deployment): 0%. |
+| **Current Task** | TASK-B08 — Process module APIs (Screening, Egg, Culling, Oven, Dry, Leachate, Material Received, Status Update, Pit Status, FRP*). |
+| **Last Completed Task** | TASK-B07: `UserType`/`User` CRUD (`accounts` app), `MainScreen`/`Screen` CRUD (`core` app), all on `MongoModelViewSet`/`HasScreenPermission`. **Deliberate design decision, confirmed with the user**: permissions stay per-User (`screens`/`main_screens` directly on `User`, as built in B02/B03) rather than refactoring to legacy's per-`UserType` model — more flexible, avoids reworking all prior tests, and this project is explicitly greenfield rather than a literal port. Added `emp_id`/`first_name`/`last_name` to `User` and `is_active`/`is_deleted` to `UserType` to match the existing frontend forms' field contracts. Password hashing: required on create, optional on update (blank/omitted keeps the existing hash) — write-only, never appears in responses. Soft-deleting a user immediately revokes their token (`MongoTokenAuthentication` already checks `is_deleted`). Routes: `/api/user-types`, `/api/users`, `/api/main-screens`, `/api/screens`. 10 new tests (43 total across the backend). |
+| **Overall Progress** | Frontend: 100% complete. Backend: TASK-B01–B07 done (7/14). |
 | **Active Blocker** | Real MongoDB Atlas cluster + connection string still needed (placeholder URI in `backend/.env` is local/fake) before TASK-B02+ can hit a live DB. |
 | **Tech Stack** | See TECH_STACK.md (React, Django 4.2+, MongoEngine, MongoDB, Vercel, Docker). |
 | **Legacy Reference** | `legacy/` folder (PHP source code — read for business logic understanding; do NOT migrate code). |
@@ -105,7 +105,7 @@ Workstream A: continue the theme rollout past Login/Dashboard to Sidebar, Header
 | Auth (login endpoint, token gen, login endpoint parity with legacy) | Not Started | 0% | TASK-B01 done |
 | Item module (reference impl: Item, Unit CRUD) | Not Started | 0% | Auth working |
 | Core CRUD modules (Tray, Pit, Supplier, clone from Item pattern) | Not Started | 0% | Item reference complete |
-| User management (User, UserType, Permissions, Screens) | Not Started | 0% | Core CRUD done |
+| User management (User, UserType, Permissions, Screens) | Done | 100% | Core CRUD done |
 | Process modules (Screening, Egg, Culling, Oven, Dry, Leachate, etc.) | Not Started | 0% | User mgmt done |
 | Reports modules (Logsheet, DC, Measurable, *_Report) | Not Started | 0% | Process modules done |
 | Frontend `client.js` repointed to Django API | Not Started | 0% | Enough modules live (Item minimum) |
@@ -515,7 +515,7 @@ Estimated:     2 hours
 | TASK-B04 | Permission enforcement (server-side `screens` check) | **Done** | TASK-B03 (done) | `accounts/permissions.HasScreenPermission` + `User.has_screen()`. Infrastructure only — first real consumer is TASK-B06's Item/Unit ViewSets. |
 | TASK-B05 | Menu endpoint (`main_screens`/`screens` tree, returned from login or a dedicated endpoint) | **Done** | TASK-B02 (done) | `core.models.MainScreen`/`Screen`, `GET /api/menu` (dedicated endpoint, not folded into login). Filters to the user's permitted `main_screens`/`screens` — legacy's equivalent was unfiltered. 5 tests, all passing. |
 | TASK-B06 | Core CRUD APIs (Item, Tray, Pit, Unit, Supplier) | **Done** | TASK-B04 (done) | All 5 in `inventory` app on `core.mongo_viewset.MongoModelViewSet`. Routes: `/api/units`, `/api/items`, `/api/trays`, `/api/pits`, `/api/suppliers`. 15 tests for Tray/Pit/Supplier + 9 for Item/Unit, all passing. |
-| TASK-B07 | User management APIs (User, Type, Permission, Screen) | Not Started | TASK-B06 | |
+| TASK-B07 | User management APIs (User, Type, Permission, Screen) | **Done** | TASK-B06 (done) | "Permission" = per-User `screens`/`main_screens` (decision confirmed with user, deviates from legacy's per-role model — see AI Continuity notes). Routes: `/api/user-types`, `/api/users`, `/api/main-screens`, `/api/screens`. 10 tests, all passing. |
 | TASK-B08 | Process module APIs (Screening, Egg, Culling, Oven, Dry, Leachate, Material Received, Status Update, Pit Status, FRP*) | Not Started | TASK-B06 | |
 | TASK-B09 | Reports APIs (Logsheet, DC, Measurable, *Report) | Not Started | TASK-B08 | |
 | TASK-B10 | Frontend `client.js` repointed per module (module-by-module cutover) | Not Started | Each module's API task | Old `crud.php` removed only after this is verified |

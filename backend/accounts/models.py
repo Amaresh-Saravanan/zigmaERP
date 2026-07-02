@@ -9,6 +9,8 @@ class UserType(Document):
     unique_id = StringField(unique=True, required=True, default=lambda: str(uuid.uuid4()))
     type_name = StringField(unique=True, required=True)
     description = StringField(default='')
+    is_active = BooleanField(default=True)
+    is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
 
     meta = {
@@ -19,8 +21,11 @@ class UserType(Document):
 
 class User(Document):
     unique_id = StringField(unique=True, required=True, default=lambda: str(uuid.uuid4()))
+    emp_id = StringField(default='')
     user_name = StringField(unique=True, required=True)
     password_hash = StringField(required=True)
+    first_name = StringField(default='')
+    last_name = StringField(default='')
     user_type = ReferenceField(UserType, required=True)
     user_email = StringField(default='')
     user_image = StringField(default='')
