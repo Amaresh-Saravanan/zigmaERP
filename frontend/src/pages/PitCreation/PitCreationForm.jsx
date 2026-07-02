@@ -168,7 +168,7 @@ export default function PitCreationForm() {
                     <TextInput
                       type="number"
                       step="0.01"
-                      label="Width(Meter)"
+                      label="Width (Meter)"
                       name="width"
                       value={formData.width}
                       onChange={handleChange}
@@ -179,7 +179,7 @@ export default function PitCreationForm() {
                     <TextInput
                       type="number"
                       step="0.01"
-                      label="Height(Meter)"
+                      label="Height (Meter)"
                       name="height"
                       value={formData.height}
                       onChange={handleChange}

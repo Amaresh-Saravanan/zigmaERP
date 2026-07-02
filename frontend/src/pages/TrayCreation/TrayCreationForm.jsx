@@ -115,7 +115,7 @@ export default function TrayCreationForm() {
                 <div className="row">
                   <div className="col-12 col-md-4">
                     <Select
-                      label="Type"
+                      label="Tray Type"
                       name="tray_type"
                       value={formData.tray_type}
                       onChange={handleChange}

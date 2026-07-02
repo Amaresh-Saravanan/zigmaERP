@@ -37,25 +37,13 @@ export default function ItemCreationList() {
 
   return (
     <div className="container-fluid p-0">
-      <div className="row">
-        <div className="col-12 col-sm-6 col-md-3 col-lg-2 mb-3">
-          <label htmlFor="is_active">Active Status </label>
-          <select name="active_status" id="active_status" className="form-select" required>
-            <option value="">Select Status Type</option>
-            <option value="all">All</option>
-            <option value="1">Active</option>
-            <option value="0">In Active</option>
-          </select>
-        </div>
-      </div>
-
       <div className="row g-3 mb-3">
         <div className="col-12">
           <div className="card h-md-100 ecommerce-card-min-width">
             <div className="card-header pt-3 pb-2">
               <div className="row flex-between-end">
                 <div className="col-auto align-self-center">
-                  <h5 className="d-flex align-items-center">Item creation List</h5>
+                  <h5 className="d-flex align-items-center">Item Creation List</h5>
                 </div>
                 <div className="col-auto ms-auto">
                   <button
@@ -64,6 +52,17 @@ export default function ItemCreationList() {
                   >
                     Create New Item
                   </button>
+                </div>
+              </div>
+              <div className="row mt-2 g-2">
+                <div className="col-12 col-sm-6 col-md-3 col-lg-2">
+                  <label htmlFor="active_status" className="form-label app-form-label">Active Status</label>
+                  <select name="active_status" id="active_status" className="form-select">
+                    <option value="">Select Status Type</option>
+                    <option value="all">All</option>
+                    <option value="1">Active</option>
+                    <option value="0">In Active</option>
+                  </select>
                 </div>
               </div>
             </div>

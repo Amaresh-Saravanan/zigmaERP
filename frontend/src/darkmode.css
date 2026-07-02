@@ -757,7 +757,7 @@ body,
 }
 
 .page-title-box .page-title {
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   font-weight: 600;
   color: var(--vz-emphasis-color);
   margin: 0;
@@ -768,7 +768,7 @@ body,
   margin: 0;
   padding: 0;
   background: transparent;
-  font-size: 0.78rem;
+  font-size: 0.85rem;
 }
 
 .page-title-box .breadcrumb-item {

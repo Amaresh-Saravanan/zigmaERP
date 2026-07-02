@@ -136,7 +136,7 @@ export default function UserForm() {
                   <div className="col-12 col-md-4">
                     <TextInput
                       type="number"
-                      label="Emp Id"
+                      label="Employee ID"
                       name="emp_id"
                       value={formData.emp_id}
                       onChange={handleChange}
@@ -156,9 +156,11 @@ export default function UserForm() {
 
                   <div className="col-12 col-md-4">
                     <TextInput
+                      type="password"
                       label="Password"
                       name="password"
                       maxLength="15"
+                      helperText="Max 15 characters"
                       value={formData.password}
                       onChange={handleChange}
                       required

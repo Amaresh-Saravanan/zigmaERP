@@ -147,9 +147,11 @@ export default function SupplierCreationForm() {
 
                   <div className="col-12 col-md-4">
                     <TextInput
-                      label="Label"
+                      label="Supplier Code"
                       name="label"
                       maxLength="3"
+                      placeholder="ABC"
+                      helperText="3-letter code"
                       value={formData.label}
                       onChange={handleLabelChange}
                       required
@@ -173,6 +175,7 @@ export default function SupplierCreationForm() {
                       name="contact_no"
                       minLength="1"
                       maxLength="10"
+                      helperText="10-digit mobile number"
                       value={formData.contact_no}
                       onChange={handleContactChange}
                       required
@@ -194,6 +197,7 @@ export default function SupplierCreationForm() {
                       label="GST No"
                       name="gst_no"
                       maxLength="15"
+                      helperText="15 characters, e.g. 22ABCDE1234F1Z2"
                       value={formData.gst_no}
                       onChange={handleGstChange}
                       pattern="^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$"

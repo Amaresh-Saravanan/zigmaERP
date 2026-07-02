@@ -101,10 +101,10 @@ export default function ItemCreationForm() {
     <div className="row g-3 mb-3">
       <div className="col-12">
         <div className="card h-md-100 ecommerce-card-min-width">
-          <div className="card-header pb-0">
+          <div className="card-header pt-3 pb-2">
             <div className="row flex-between-end">
               <div className="col-auto align-self-center">
-                <h5 className="mb-0 mt-2 d-flex align-items-center">
+                <h5 className="d-flex align-items-center">
                   Item Creation {unique_id ? 'Update' : 'Create'}
                 </h5>
               </div>
