@@ -38,6 +38,19 @@ export default function EggProcessForm() {
     fetchFormHtml();
   }, [unique_id]);
 
+  // Close whichever modal is open on Escape
+  useEffect(() => {
+    if (!showTrayModal && !showAddOnModal) return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        setShowTrayModal(false);
+        setShowAddOnModal(false);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [showTrayModal, showAddOnModal]);
+
   const fetchFormHtml = async () => {
     setIsLoading(true);
     try {
@@ -350,7 +363,15 @@ export default function EggProcessForm() {
 
       {/* Tray Selection Modal */}
       {showTrayModal && (
-        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <div
+          className="modal show d-block"
+          tabIndex="-1"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Select Trays"
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowTrayModal(false); }}
+        >
           <div className="modal-dialog modal-lg">
             <div className="modal-content">
               <div className="modal-header">
@@ -386,7 +407,15 @@ export default function EggProcessForm() {
 
       {/* Add-On Modal */}
       {showAddOnModal && (
-        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <div
+          className="modal show d-block"
+          tabIndex="-1"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Add On Details"
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowAddOnModal(false); }}
+        >
           <div className="modal-dialog modal-lg">
             <div className="modal-content">
               <div className="modal-header">
