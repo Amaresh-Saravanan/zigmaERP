@@ -1,8 +1,10 @@
 # Zigma ERP — Migration Tracker
 
-> **LIVING DOCUMENT** — Update after every completed task. This is the single source of truth for the entire migration, now spanning two parallel workstreams (see [Workstream Overview](#workstream-overview)): **Workstream A — UI Modernization** and **Workstream B — Django Backend Migration**.
+> **LIVING DOCUMENT** — Update after every completed task. This is the single source of truth for the project, now spanning two parallel workstreams (see [Workstream Overview](#workstream-overview)): **Workstream A — UI Modernization** and **Workstream B — Django Backend (Greenfield Build)**.
 >
-> Sections 1–15 below are the original, unchanged record of Workstream A / Phase 1 (PHP → React parity migration), which is complete. They are preserved as history and are not being rewritten. New work is tracked in the Workstream Overview and Sections 16–17.
+> **Target architecture: React + Django REST + MongoDB Atlas + Docker + Vercel.** Legacy PHP (`legacy/`) is reference material only — used to understand business logic during frontend development (Phase 1/2) and to inform Django's business rules (Phase 3), but never deployed and never ported directly. See `TECH_STACK.md` for the full stack and `BACKEND_START.md` to start Workstream B.
+>
+> Sections 1–15 below are the original, unchanged record of Workstream A / Phase 1 (building the React UI against legacy PHP as a reference backend), which is complete. They are preserved as history and are not being rewritten. New work is tracked in the Workstream Overview and Sections 16–17.
 
 ---
 
@@ -12,12 +14,14 @@
 
 | Field | Value |
 |-------|-------|
-| **Current Phase** | Phase 2 (UI Modernization) complete. Phase 3 (Django Backend) ready to start. |
-| **Current Module** | Workstream A: UI modernization 100% complete (theme, charts, animations, calendar, forms, reports). Workstream B: ready to scaffold Django backend. |
-| **Current Task** | Django backend scaffolding (Phase 3, Workstream B) or continue UI refinements if needed. |
-| **Last Completed Task** | TASK-A08: Built flatpickr DateInput wrapper component, migrated all 26+ form and list pages to use calendar picker, all native date inputs replaced. |
-| **Overall Progress** | Phase 1 (React migration): 100%. Phase 2 (UI Modernization): 100% — dark theme, animations, dashboard, calendar all live. Phase 3 (Django Backend): 0%, ready to start. Phase 4 (Deployment): 0%, not started. |
-| **Active Blocker** | None |
+| **Architecture** | **React (Vite) + Django REST + MongoDB Atlas + Docker + Vercel** (NOT PHP → Django migration; greenfield Django build using legacy PHP as reference for business logic only). |
+| **Current Phase** | Phase 1 (React): 100%. Phase 2 (UI Modernization): 100%. Phase 3 (Django Backend): 0% — ready to scaffold. Phase 4 (Deployment): 0%. |
+| **Current Task** | Django backend scaffolding (TASK-B01 in §17). See BACKEND_START.md for hands-on setup. |
+| **Last Completed Task** | TASK-A08: flatpickr DateInput integration complete across all 26+ form/list pages. |
+| **Overall Progress** | Frontend: 100% complete. Backend: To start (TASK-B01). |
+| **Active Blocker** | None — ready to start Django scaffold. |
+| **Tech Stack** | See TECH_STACK.md (React, Django 4.2+, MongoEngine, MongoDB, Vercel, Docker). |
+| **Legacy Reference** | `legacy/` folder (PHP source code — read for business logic understanding; do NOT migrate code). |
 
 ### Completed Work (Phase 1 + Phase 2 in progress)
 
@@ -57,16 +61,18 @@
 - **Responsive design**: mobile-first breakpoints added to all pages
 
 ### Next Recommended Action
-Workstream A: continue the theme rollout past Login/Dashboard to Sidebar, Header, Tables, Forms (§16). Workstream B: scaffold the Django project structure per TDD_Blueprint.md §15 (§17, TASK-B01).
+Workstream A: continue the theme rollout past Login/Dashboard to Sidebar, Header, Tables, Forms (§16). Workstream B: **start here → `BACKEND_START.md`** (30-min Django + MongoDB Atlas scaffold with working login + Item CRUD reference), then TDD_Blueprint.md §15 for full technical design (§17, TASK-B01).
 
 ### Key Constraints (never forget)
-- **2026-07-01 repo cleanup**: the legacy PHP backend (`index.php`, `body.php`, `logout.php`, `inc/`, `config/`, `folders/`, `vendors/`, `db_setup/`, `assets/`, `uploads/`, `generate_logsheet.py`) was moved into `legacy/` to keep the repo root focused on the React frontend + docs. **The PHP app still runs from there** — this was a move, not a deletion, since Django doesn't exist yet. If PHP stops responding at `http://localhost`, repoint the Apache/XAMPP docroot (or vhost/alias) to `legacy/` — that's outside this repo and wasn't changed by this cleanup.
-- Workstream A (UI): still talks to the existing PHP `crud.php` endpoints — this is a visual/UX-only workstream, no new backend calls.
-- Workstream B (Django): PHP backend is being replaced module-by-module, NOT changed in place. A module's PHP `crud.php` is only removed after its Django equivalent is verified end-to-end (see §17 rules).
-- Auth today = PHP sessions (NOT JWT, NOT localStorage). Django backend may keep session auth or move to token auth — decide at Phase 4 per deployment topology (see PRD §12.3/12.4), not before.
-- POST format to existing PHP endpoints = application/x-www-form-urlencoded with withCredentials: true. Django endpoints will be JSON REST (see TDD_Blueprint.md §15.4).
+- **Architecture is React + Django + MongoDB Atlas + Docker + Vercel.** Not a PHP→Django code migration — Django is a greenfield build. See `TECH_STACK.md` for the full stack and `BACKEND_START.md` for hands-on setup.
+- **2026-07-01 repo cleanup**: the legacy PHP backend (`index.php`, `body.php`, `logout.php`, `inc/`, `config/`, `folders/`, `vendors/`, `db_setup/`, `assets/`, `uploads/`, `generate_logsheet.py`) was moved into `legacy/` to keep the repo root focused on the React frontend + docs. **The PHP app still runs from there for reference during Phase 1/2 development** — it is never deployed to production and is not the system of record once Django is live. If PHP stops responding at `http://localhost`, repoint the Apache/XAMPP docroot (or vhost/alias) to `legacy/` — that's outside this repo and wasn't changed by this cleanup.
+- Workstream A (UI): still talks to the legacy PHP `crud.php` endpoints during development — this is a visual/UX-only workstream, no new backend calls. It will be repointed to Django once Workstream B has enough module coverage.
+- Workstream B (Django): built from scratch against **MongoDB Atlas** via **MongoEngine**. Legacy PHP `crud.php` files are read as reference for business rules (duplicate checks, auto-code generation, permission logic) — no PHP code is ported or run in production. See `BACKEND_START.md` "Reference Implementation: Item Module" for the pattern to clone across all other modules.
+- Auth: legacy PHP uses sessions (reference only). Django backend uses **token-based auth (DRF TokenAuthentication or JWT)** since the Vercel-hosted frontend and containerized Django backend are different origins in production — see TDD_Blueprint.md §15.5 and TECH_STACK.md "Authentication & Authorization".
+- POST format to legacy PHP reference endpoints = application/x-www-form-urlencoded. **Django endpoints are JSON REST** (see TDD_Blueprint.md §15.4, TECH_STACK.md "API Contract").
+- Database: **MongoDB Atlas only** — no local Dockerized MongoDB, no MySQL/PostgreSQL. Every environment (dev/staging/prod) connects to its own Atlas cluster/database via `MONGODB_URI`. See TECH_STACK.md "Database Stack".
 - Velzon/Bootstrap CSS already imported in main.jsx — do NOT re-import per component. New dark-theme tokens live in `DESIGN.md` / `darkmode.css` — do NOT hardcode colors in components.
-- No TypeScript — plain .jsx / .js on the frontend. Backend is Python/Django.
+- No TypeScript — plain .jsx / .js on the frontend. Backend is Python/Django + MongoEngine.
 - Ponytail FULL mode: YAGNI, no unnecessary abstractions — applies to both workstreams.
 - Extract unique ID dynamically from backend HTML columns in the DataTable to avoid changing PHP (still applies until a module's DataTable is repointed to its Django endpoint).
 
@@ -95,21 +101,24 @@ Workstream A: continue the theme rollout past Login/Dashboard to Sidebar, Header
 | Reports pages styling | Done | 100% | Filter labels, timeline (LoginHistory), badge colors, table headers — all covered via CSS |
 | Responsive improvements (redesign-specific) | Done | 100% | Mobile breakpoints in `ux.css` §19, `datatable.css`, `forms.css` |
 
-### Workstream B — Django Backend Migration
+### Workstream B — Django Backend (Greenfield Build)
+
+> **Important:** This is NOT a PHP → Django migration. Workstream B builds Django from scratch (greenfield) using legacy PHP as a reference for business logic only. See BACKEND_START.md for hands-on setup.
 
 | Item | Status | Progress | Dependencies |
 |------|--------|----------|---------------|
-| Django project setup (structure, settings, DRF) | Not Started | 0% | None |
-| Database migration (MySQL schema → Django models) | Not Started | 0% | Django setup |
-| Authentication (session/token, permission enforcement) | Not Started | 0% | Database migration |
-| API implementation (per-module viewsets/routers) | Not Started | 0% | Authentication |
-| CRUD modules (Item, Tray, Pit, Unit, Supplier, User, Process modules, Reports) | Not Started | 0% | API implementation |
-| Integrations (frontend `client.js` repointed per module) | Not Started | 0% | Each module's CRUD endpoint |
-| Remove PHP modules (per-module, only after Django parity verified) | Not Started | 0% | Integrations |
-| Testing (pytest-django / DRF APITestCase) | Not Started | 0% | Alongside each module |
-| Docker (backend + frontend + DB compose) | Not Started | 0% | Django setup functional locally |
-| Deployment (Vercel frontend + containerized backend) | Not Started | 0% | Docker, sufficient module coverage |
-| Production readiness (env vars, secrets, CORS, logging) | Not Started | 0% | Deployment |
+| Django + MongoEngine scaffold (TASK-B01) | Not Started | 0% | None — see BACKEND_START.md quick-start |
+| Auth (login endpoint, token gen, login endpoint parity with legacy) | Not Started | 0% | TASK-B01 |
+| Item module (reference impl: Item, Unit CRUD) | Not Started | 0% | Auth working |
+| Core CRUD modules (Tray, Pit, Supplier, clone from Item pattern) | Not Started | 0% | Item reference complete |
+| User management (User, UserType, Permissions, Screens) | Not Started | 0% | Core CRUD done |
+| Process modules (Screening, Egg, Culling, Oven, Dry, Leachate, etc.) | Not Started | 0% | User mgmt done |
+| Reports modules (Logsheet, DC, Measurable, *_Report) | Not Started | 0% | Process modules done |
+| Frontend `client.js` repointed to Django API | Not Started | 0% | Enough modules live (Item minimum) |
+| pytest-django test suite | Not Started | 0% | Alongside each module |
+| Docker (Dockerfile, docker-compose.yml, production config) | Not Started | 0% | Django setup functional locally |
+| Deployment (Vercel frontend + containerized backend to cloud) | Not Started | 0% | Docker working, CORS/secrets set |
+| Production hardening (env vars, MongoDB Atlas, secrets, logging) | Not Started | 0% | Deployment live |
 
 ---
 
@@ -498,44 +507,44 @@ Estimated:     2 hours
 
 ---
 
-## 17. Workstream B — Django Backend Migration (Detail)
+## 17. Workstream B — Django Backend (Greenfield Build) (Detail)
 
-> Tracks PRD_React_Migration.md §12.3 and TDD_Blueprint.md §15. Nothing in this workstream has started; PHP backend is untouched and still serving Workstream A.
+> Tracks PRD_React_Migration.md §12.3, TDD_Blueprint.md §15, TECH_STACK.md, and BACKEND_START.md. Nothing in this workstream has started. **This is a greenfield Django + MongoDB Atlas build** — legacy PHP (`legacy/`) stays untouched throughout, used only as a business-logic reference, and continues serving Workstream A during frontend development.
 
 ### 17.1 Task Queue
 
 | Task | Title | Status | Depends On | Notes |
 |------|-------|--------|------------|-------|
-| TASK-B01 | Django project scaffold (`backend/`, apps, settings) | Not Started | None | Per TDD_Blueprint.md §15.2 |
-| TASK-B02 | Database models (per-table, `is_delete`/`unique_id` handling) | Not Started | TASK-B01 | §15.3 |
-| TASK-B03 | Auth (session/token) + login endpoint parity (`get_profile`) | Not Started | TASK-B02 | Closes KI-002 |
-| TASK-B04 | Permission enforcement (server-side `screens` check) | Not Started | TASK-B03 | Closes a gap PHP never had |
-| TASK-B05 | Menu endpoint (`get_menu` equivalent) | Not Started | TASK-B02 | Closes KI-003 |
-| TASK-B06 | Core CRUD APIs (Item, Tray, Pit, Unit, Supplier) | Not Started | TASK-B04 | Reference implementation module first |
+| TASK-B01 | Django + MongoEngine scaffold, MongoDB Atlas cluster (`backend/`, apps, settings) | Not Started | None | Per BACKEND_START.md Quick Start (30 min) and TDD_Blueprint.md §15.2 |
+| TASK-B02 | MongoEngine `Document` models (per-entity, `is_deleted`/`unique_id` handling) | Not Started | TASK-B01 | §15.3 — see BACKEND_START.md model examples |
+| TASK-B03 | Auth (token-based) + login endpoint returning full profile in one response | Not Started | TASK-B02 | Closes KI-002 by design — see BACKEND_START.md step 7 `login()` view |
+| TASK-B04 | Permission enforcement (server-side `screens` check) | Not Started | TASK-B03 | Closes a gap legacy PHP never had (§15.6) |
+| TASK-B05 | Menu endpoint (`main_screens`/`screens` tree, returned from login or a dedicated endpoint) | Not Started | TASK-B02 | Closes KI-003 |
+| TASK-B06 | Core CRUD APIs (Item, Tray, Pit, Unit, Supplier) | Not Started | TASK-B04 | Item is the reference implementation — see BACKEND_START.md "Reference Implementation: Item Module"; clone the pattern for the rest |
 | TASK-B07 | User management APIs (User, Type, Permission, Screen) | Not Started | TASK-B06 | |
 | TASK-B08 | Process module APIs (Screening, Egg, Culling, Oven, Dry, Leachate, Material Received, Status Update, Pit Status, FRP*) | Not Started | TASK-B06 | |
 | TASK-B09 | Reports APIs (Logsheet, DC, Measurable, *Report) | Not Started | TASK-B08 | |
-| TASK-B10 | Frontend `client.js` repointed per module (module-by-module cutover) | Not Started | Each module's API task | Old `crud.php` removed only after this is verified |
-| TASK-B11 | pytest-django / DRF test suite | Not Started | Alongside B06–B09 | Per §15.11 |
-| TASK-B12 | Security hardening (password hashing, CORS, CSRF) | Not Started | TASK-B03 | Closes PRD §9 items |
-| TASK-B13 | Dockerfile (backend) + `docker-compose.yml` | Not Started | Enough modules live locally | Phase 4 |
-| TASK-B14 | Vercel deploy (frontend) + containerized backend deploy | Not Started | TASK-B13 | Phase 4 |
+| TASK-B10 | Frontend `client.js` repointed per module (module-by-module cutover) | Not Started | Each module's API task | Legacy `crud.php` calls dropped from the frontend once the Django endpoint is verified for that module |
+| TASK-B11 | pytest-django / DRF test suite | Not Started | Alongside B06–B09 | Per §15.11 — see BACKEND_START.md "Test Example" |
+| TASK-B12 | Security hardening (password hashing, CORS, secrets via env vars) | Not Started | TASK-B03 | Closes PRD §9 items by design, not retrofit |
+| TASK-B13 | Dockerfile (backend) + `docker-compose.yml` (backend + frontend containers; DB is Atlas, not containerized) | Not Started | Enough modules live locally | Phase 4 — see TECH_STACK.md "Deployment Architecture" |
+| TASK-B14 | Vercel deploy (frontend) + containerized backend deploy, both pointed at MongoDB Atlas prod cluster | Not Started | TASK-B13 | Phase 4 |
 
 ### 17.2 Module Cutover Tracker
 
-> A module is only marked "Cut Over" once its Django endpoint is verified end-to-end AND the corresponding `crud.php` is removed. Until then it stays "PHP (legacy)" even if a Django endpoint exists in parallel for testing.
+> A module is only marked "Cut Over" once its Django + MongoDB Atlas endpoint is verified end-to-end AND the frontend's calls to the legacy PHP reference endpoint for that module are removed. Until then it stays "Legacy PHP (reference)" even if a Django endpoint exists in parallel for testing.
 
 | Module | Backend | Notes |
 |--------|---------|-------|
-| Item Creation | PHP (legacy) | Candidate for first Django reference module |
-| Tray Creation | PHP (legacy) | |
-| Pit Creation | PHP (legacy) | |
-| Unit Creation | PHP (legacy) | |
-| Supplier Creation | PHP (legacy) | |
-| User Management | PHP (legacy) | |
-| Process modules (all) | PHP (legacy) | |
-| Reports (all) | PHP (legacy) | |
-| Auth / Menu | PHP (legacy) | |
+| Item Creation | Legacy PHP (reference) | Candidate for first Django reference module — see BACKEND_START.md |
+| Tray Creation | Legacy PHP (reference) | |
+| Pit Creation | Legacy PHP (reference) | |
+| Unit Creation | Legacy PHP (reference) | |
+| Supplier Creation | Legacy PHP (reference) | |
+| User Management | Legacy PHP (reference) | |
+| Process modules (all) | Legacy PHP (reference) | |
+| Reports (all) | Legacy PHP (reference) | |
+| Auth / Menu | Legacy PHP (reference) | |
 
 ---
 

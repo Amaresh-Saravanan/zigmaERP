@@ -1160,11 +1160,12 @@ export const disname = (s) =>
 
 ## 15. Django Backend — Technical Design
 
-> Added 2026-07-01, corresponds to PRD_React_Migration.md §12.3. Testing strategy uses Django's standard tooling (`pytest-django` or `unittest` + DRF `APITestCase`), separate from the Vitest/Cypress stack above, which continues to cover the React side.
+> Updated 2026-07-02, corresponds to PRD_React_Migration.md §12.3 and TECH_STACK.md. This is a **greenfield Django + MongoDB Atlas build**, not a migration from the legacy MySQL/PHP stack — legacy PHP is reference material only. Testing strategy uses Django's standard tooling (`pytest-django` or `unittest` + DRF `APITestCase`), separate from the Vitest/Cypress stack above, which continues to cover the React side. Hands-on setup steps live in `BACKEND_START.md`.
 
 ### 15.1 Project Architecture
 
-- Single Django project (e.g. `zigma_backend/`) with one app per business domain, mirroring the module groupings already in PRD §6.5: `accounts` (user/user_type/permissions), `inventory` (item/tray/pit/unit/supplier), `process` (screening/egg/culling/oven/dry/leachate/material_received/status_update/pit_status/frp_*), `reports` (logsheet/dc/measurable/*_report), `core` (main_screen, menu).
+- Single Django project (`backend/`) with one app per business domain, mirroring the module groupings already in PRD §6.5: `accounts` (user/user_type/permissions), `inventory` (item/tray/pit/unit/supplier), `process` (screening/egg/culling/oven/dry/leachate/material_received/status_update/pit_status/frp_*), `reports` (logsheet/dc/measurable/*_report), `core` (main_screen, menu).
+- **Database engine: MongoDB Atlas**, accessed via **MongoEngine** ODM (not Django's default ORM/`DATABASES` setting — see `TECH_STACK.md` "Database Stack" and `BACKEND_START.md` step 2 for the `mongoengine.connect()` wiring in `settings.py`).
 
 ### 15.2 Folder Structure
 
@@ -1188,25 +1189,28 @@ backend/
 
 ### 15.3 Models
 
-- One Django model per current MySQL table (Glossary, PRD §11). Preserve `unique_id` as an indexed field only if the frontend/other systems still depend on it during the migration window; otherwise prefer Django's default PK and expose `id`. Soft-delete (`is_delete`) becomes a model field + a custom manager (`ActiveManager`) filtering it by default, matching the current `is_delete = 0` convention everywhere.
+- One MongoEngine `Document` per business entity identified from the legacy PHP reference (Glossary, PRD §11) — e.g. `Item`, `Tray`, `Pit`, `User` (see `BACKEND_START.md` for worked `Document` schemas). `unique_id` (`StringField`, indexed, `default=lambda: str(uuid.uuid4())`) is kept as the primary lookup key for compatibility with the business rules observed in legacy PHP; MongoDB's own `_id` remains the underlying document key. Soft-delete (`is_deleted`, `BooleanField(default=False)`) is filtered via a custom `QuerySet`/manager pattern, matching the `is_delete = 0` convention seen in legacy PHP but implemented natively in MongoEngine (not inherited from any PHP code).
+- Relationships use MongoEngine's `ReferenceField` (e.g. `Item.unit = ReferenceField(Unit)`) rather than SQL foreign keys; denormalize fields onto the parent document where a join would otherwise be needed on every list-page read (e.g. store `unit_name` directly on `Item` if it's always displayed alongside the item).
 
 ### 15.4 API Design
 
-- DRF `ModelViewSet` per resource, routed via `DefaultRouter` — e.g. `/api/items/`, `/api/items/{id}/`. Server-side pagination/search/filter replaces the `datatable` action (DRF's `PageNumberPagination` + `django-filter` instead of a bespoke `action=datatable` POST body), but the response shape returned to the frontend should stay row-array-compatible with `DataTable.jsx` until that component is updated, to avoid a forced simultaneous frontend+backend rewrite per module.
-- Business rules from `crud.php` (duplicate `item_name` check, `IT-` prefix auto-code generation) move into `serializer.validate()` / `save()` overrides.
+- DRF `ViewSet` (custom, MongoEngine-backed — `ModelViewSet` assumes Django ORM `QuerySet`s, so `list`/`create`/`destroy` are overridden explicitly per `BACKEND_START.md`'s `ItemViewSet` reference) per resource, routed via `DefaultRouter` — e.g. `/api/items/`, `/api/items/{id}/`. Server-side pagination/search implemented manually against MongoEngine querysets (`queryset[start:start+length]`, `Q()` filters) since `django-filter`/`PageNumberPagination` assume the Django ORM; response shape stays row/JSON-compatible with `DataTable.jsx` (Section 3.3 pattern) so the frontend component doesn't need a parallel rewrite.
+- Business rules identified by reading legacy `crud.php` as reference (duplicate `item_name` check, `IT-` prefix auto-code generation) are reimplemented from scratch in `serializer.create()` / `validate()` — see `BACKEND_START.md` `ItemSerializer.create()` for the worked example.
 
 ### 15.5 Authentication
 
-- DRF `SessionAuthentication` (keeps parity with the current same-origin session model in PRD §2.2) or `TokenAuthentication`/JWT if the Vercel-hosted frontend (Phase 4) ends up cross-origin — decide per Phase 4 deployment topology, not before it's needed.
-- Login endpoint returns the equivalent of today's `get_profile` payload (user, `mainScreens`, `screens`) in the same response, closing KI-002 from the Migration Tracker.
+- DRF `TokenAuthentication` (simplest for a cross-origin Vercel frontend → containerized Django API) or JWT (`djangorestframework-simplejwt`) if refresh-token rotation is needed. Session auth is not used since frontend (Vercel) and backend (Docker/cloud) are different origins in production — see `TECH_STACK.md` "Authentication & Authorization".
+- Login endpoint (`POST /api/auth/login`) returns `{access_token, user: {unique_id, user_name, user_type, screens, main_screens}}` in one response — see `BACKEND_START.md` step 6 for the reference `login()` view. This closes KI-002 from the Migration Tracker by design (no separate `get_profile` call needed).
 
 ### 15.6 Permissions
 
-- Custom DRF permission class checking the requesting user's role against the `screens` set for the requested resource/action, replacing the PHP `$_SESSION['screens']` check — same semantics as `usePermission()` on the frontend (PRD §2.3), just enforced server-side instead of only client-side (closing a real gap: today's PHP has no server-side permission enforcement beyond what's visible in the UI).
+- Custom DRF permission class checking the requesting user's `screens` (returned in the login response / token claims) against the requested resource/action — same semantics as `usePermission()` on the frontend (PRD §2.3), enforced server-side. This is a real capability gap vs. legacy PHP (which had no server-side permission enforcement beyond UI visibility), closed by design in the greenfield build rather than retrofitted.
 
-### 15.7 Database Schema
+### 15.7 Database Schema (MongoDB Atlas)
 
-- Migrated via Django migrations from the existing MySQL schema; a one-time data migration script ports existing rows (including `unique_id` values, to avoid breaking any still-live PHP module during the phased cutover).
+- No traditional "migration" step — MongoEngine `Document` classes ARE the schema (schema-on-write via field validators, not a separate migrations directory). Collections are created lazily on first write, or explicitly via `Document.ensure_indexes()` at deploy time.
+- **No legacy data import.** Since this is a greenfield build (not a data migration from the legacy MySQL DB), initial data is seeded via a Django management command (`python manage.py seed_data`) or Django admin/fixtures, using legacy PHP's table structure purely as a reference for what fields exist — no automated MySQL→MongoDB ETL is planned or needed.
+- Indexing strategy: compound indexes on `unique_id`, frequently-searched fields (`item_name`, `item_code`), and `-created_at` for list-view sort order — declared in each `Document`'s `meta = {'indexes': [...]}` (see `BACKEND_START.md` model examples).
 
 ### 15.8 Service Layer
 
@@ -1224,16 +1228,18 @@ backend/
 
 | Test | Type | Tool |
 |------|------|------|
-| Model validation (soft delete, `unique_id` uniqueness) | Unit | `pytest-django` |
-| Serializer validation (duplicate name, required fields) | Unit | `pytest-django` |
+| Model validation (soft delete, `unique_id` uniqueness, required fields) | Unit | `pytest-django` + `mongoengine` test connection (mongomock or a local Dockerized MongoDB) |
+| Serializer validation (duplicate name, auto-code generation) | Unit | `pytest-django` |
 | ViewSet CRUD + permission enforcement | Integration | DRF `APITestCase` |
-| Auth flow (login, session, logout) | Integration | DRF `APITestCase` |
-| Full module parity vs. legacy `crud.php` response shape | Contract | Compare fixture responses side-by-side per module before cutover |
+| Auth flow (login, token issuance, protected route rejection without token) | Integration | DRF `APITestCase` |
+| Business-rule parity vs. legacy PHP reference behavior (e.g. `IT-001` code format, duplicate-name rejection) | Contract | Compare Django API responses against documented legacy behavior (PRD §3.3) — not a live PHP comparison, since PHP is reference-only and not running against the same data |
+
+See `BACKEND_START.md` "Test Example (pytest-django)" for a working `TestLogin` / `TestItemCRUD` reference.
 
 ### 15.12 Security Considerations
 
-- Directly resolves PRD §9: `password_hash()`/DRF's built-in password hashing replaces plaintext; Django ORM replaces string-concatenated SQL (closes the injection risk); CSRF via DRF's session-auth CSRF enforcement; CORS restricted to the known frontend origin(s) (dev + Vercel prod URL) via `django-cors-headers`, replacing the current `Access-Control-Allow-Origin: *`.
+- Directly resolves PRD §9, built in from the start rather than retrofitted: Django's `make_password()`/`check_password()` (PBKDF2/bcrypt) replaces legacy PHP's plaintext storage; MongoEngine's parameterized queries eliminate the injection risk that existed in legacy PHP's string-concatenated SQL; CORS restricted to known frontend origins (dev `localhost:5173` + Vercel prod URL) via `django-cors-headers`; secrets (`SECRET_KEY`, `MONGODB_URI`) via environment variables only, never committed — see `TECH_STACK.md` "Environment Variables".
 
 ---
 
-*End of TDD Blueprint. All test examples use Vitest (Vite-based project) for the React frontend (Sections 1–14) and pytest-django/DRF APITestCase for the Django backend (Section 15). All backend references align with the actual PHP endpoints in PRD_React_Migration.md, and Section 15 reflects the planned Django replacement for those same endpoints.*
+*End of TDD Blueprint. All test examples use Vitest (Vite-based project) for the React frontend (Sections 1–14) and pytest-django/DRF APITestCase for the Django backend (Section 15). Section 15 describes a greenfield Django + MongoDB Atlas build (see TECH_STACK.md and BACKEND_START.md) that uses the legacy PHP source in `legacy/` as a business-logic reference only — no PHP code or MySQL data is migrated.*

@@ -1,7 +1,26 @@
-# Zigma ERP — React Migration PRD v2
+# Zigma ERP — React + Django + MongoDB Architecture
 
-*Version 2.0 · 2026-06-25 · Prepared for the Frontend Migration Developer*
-*Extended to v2.1 · 2026-07-01 — scope expanded to cover UI/UX enhancement, Django backend migration, and deployment. See [Section 12](#12-scope-expansion-phase-2-4-roadmap) for the current roadmap. Sections 1–11 below describe the original React migration (Phase 1) and remain the source of truth for that phase — they are not being rewritten, only extended.*
+*Version 2.0 · 2026-06-25 · Updated 2026-07-02*
+*Frontend Migration + Django Greenfield Build Guide*
+
+---
+
+## ⚠️ Important: Architecture Clarification
+
+**This is NOT a PHP → Django migration.** The architecture is:
+- **Frontend:** React 19 SPA (Vite) → Vercel
+- **Backend:** Django REST (greenfield build, NOT replacing PHP)
+- **Database:** MongoDB (NOT MySQL)
+- **Legacy PHP:** Reference only — used to understand business logic, not migrated
+- **Deployment:** Docker (backend) + Vercel (frontend)
+
+**Phase 1 (Sections 1–11):** React UI built to understand the system, initially called legacy PHP endpoints (same-origin, for reference).  
+**Phase 3 (Section 12.3, expanded here):** Django built from scratch using legacy as a reference for business rules.  
+**Phase 4 (Section 12.4):** Deployed as containerized Django + Vercel React + MongoDB.
+
+For hands-on Django setup, see **BACKEND_START.md**. For tech stack detail, see **TECH_STACK.md**.
+
+---
 
 ---
 
@@ -61,7 +80,11 @@ Migrate the Zigma ERP frontend from server-rendered PHP/jQuery to a React 19 SPA
                │  POST to folders/*/crud.php
                │  (same-origin, session cookie)
 ┌──────────────▼──────────────┐
-│  Existing PHP Backend       │
+│  legacy/ PHP Backend        │
+│  (REFERENCE ONLY —          │
+│   not deployed; see         │
+│   TECH_STACK.md for the     │
+│   real target architecture) │
 │  index.php + body.php       │
 │  config/dbconfig.php (PDO)  │
 │  config/comfun.php (helpers)│
@@ -70,9 +93,14 @@ Migrate the Zigma ERP frontend from server-rendered PHP/jQuery to a React 19 SPA
                │
 ┌──────────────▼──────────────┐
 │  MySQL (zigfly_erp)         │
-│  192.168.1.200              │
+│  legacy DB — 192.168.1.200  │
+│  NOT the target DB. Target  │
+│  is MongoDB Atlas (see      │
+│  §12.3 and TECH_STACK.md)   │
 └─────────────────────────────┘
 ```
+
+> **This diagram describes Phase 1's reference architecture only** (React talking to legacy PHP/MySQL during initial UI development). The **target production architecture** is React + Django REST + MongoDB Atlas — see [Section 12.3](#123-phase-3--django-backend-build-mongodb) and `TECH_STACK.md`.
 
 **Key insight**: The PHP backend already returns JSON from most CRUD endpoints (via `echo json_encode($json_array)`). The React app will POST to these same `crud.php` files with `action` parameters, identical to how the jQuery `$.ajax()` calls work today. **No new REST API layer is needed initially.**
 
@@ -828,35 +856,39 @@ Week 14-16:[Polish]     Responsive QA, edge cases, testing, deployment config
 | Responsiveness | All redesigned pages usable at mobile/tablet/desktop breakpoints (extends the responsive QA already done in Phase 1) |
 | Interaction | Purposeful transitions/micro-animations (page/section entry, hover, loading states) — motion is additive polish, not a blocking dependency for other phases |
 | Accessibility | WCAG AA contrast maintained in both themes; no regression vs. Phase 1's accessibility audit |
-| Scope boundary | Visual/UX only — no new business logic or endpoints. Pages still talk to the same PHP `crud.php` endpoints until Phase 3 lands, then are repointed to Django (Phase 4) |
+| Scope boundary | Visual/UX only — no new business logic or endpoints. Pages still talk to the legacy PHP `crud.php` endpoints (reference only, not deployed) until Phase 3 lands, then are repointed to Django (Phase 4) |
 
 This phase is tracked in **Migration Tracker Workstream A** (§ below) and can proceed in parallel with Phase 3, since it only touches the frontend.
 
-### 12.3 Phase 3 — Django Backend Migration
+### 12.3 Phase 3 — Django Backend Build (MongoDB Atlas)
 
-**Objective**: Replace the PHP backend (`index.php`, `body.php`, `inc/`, `config/`, `folders/*/crud.php`) with a Django REST backend, while the React frontend (Phases 1–2) is repointed to it without a UI rewrite.
+> **Not a migration** — this is a greenfield Django REST backend, built using the legacy PHP (`legacy/folders/*/crud.php`) purely as a business-logic reference. Nothing from PHP is ported directly; no PHP code runs in production. See `BACKEND_START.md` for the hands-on scaffold and `TECH_STACK.md` for full architecture detail.
+
+**Objective**: Build a Django REST backend on **MongoDB Atlas**, with the React frontend (Phases 1–2) repointed to it without a UI rewrite.
 
 | Area | Requirement |
 |------|-------------|
-| Scope | Full removal of PHP once parity is reached — not a permanent dual-stack. PHP stays live only until each module's Django equivalent is verified. |
-| API style | REST (Django REST Framework), replacing the `action`-switch `crud.php` pattern with resource-oriented endpoints (`/api/items/`, `/api/trays/`, etc.) |
-| Auth | Session or token-based auth via DRF, replacing PHP `$_SESSION`; must preserve the existing permission model (`main_screens`, `screens` per role) described in Section 2.3 |
-| Data | MySQL schema migrated to Django models (`inventory`, `process`, `accounts`/`users`, `reports` apps or similar); soft-delete (`is_delete`) and `unique_id` conventions from Section 11 (Glossary) are preserved unless a stronger Django-native equivalent (e.g. real PKs + a `deleted_at` field) is deliberately adopted and documented |
-| Business logic | All rules currently embedded in `crud.php` (duplicate checks, auto-generated codes like `IT-001`, permission checks) reimplemented as Django serializer/view logic |
-| Frontend integration | Axios `client.js` base URL and endpoint paths updated per module as each Django app goes live; legacy `crud.php` calls are removed once the corresponding Django endpoint is verified end-to-end (never both left live for the same module) |
-| Security | Fixes the gaps flagged in Section 9 (plaintext passwords, string-concatenated SQL, missing CSRF) as part of the rewrite rather than patching PHP |
+| Scope | Greenfield build. Legacy PHP (`legacy/`) is read-only reference material for business rules and payload shapes — it is never deployed and is not touched during this phase. |
+| API style | REST (Django REST Framework) with resource-oriented endpoints (`/api/items/`, `/api/trays/`, etc.), replacing the legacy `action`-switch `crud.php` pattern conceptually (not by code migration) |
+| Database | **MongoDB Atlas** (cloud-hosted, NoSQL document store) via **MongoEngine** ODM. Not MySQL/PostgreSQL — see `TECH_STACK.md` §"Database Stack" for connection setup, schema design, and indexing strategy. |
+| Auth | Token-based auth via DRF (`TokenAuthentication` or JWT); replicates the legacy permission model (`main_screens`, `screens` per role, described in Section 2.3) as claims/lookups rather than PHP `$_SESSION` |
+| Data modeling | One MongoEngine `Document` per entity (Item, Tray, Pit, User, etc. — see `BACKEND_START.md` for reference schemas). Soft-delete (`is_deleted: bool`) and `unique_id` (string, indexed) conventions from Section 11 (Glossary) are preserved for compatibility with the business rules observed in legacy PHP, adapted to MongoDB's document model (denormalization / `ReferenceField` instead of SQL foreign keys) |
+| Business logic | Rules identified by reading legacy `crud.php` (duplicate checks, auto-generated codes like `IT-001`, permission checks) are reimplemented from scratch as Django serializer/view logic — see `BACKEND_START.md` "Reference Implementation: Item Module" for a worked example |
+| Frontend integration | Axios `client.js` base URL and endpoint paths updated per module as each Django app goes live, starting from same-origin legacy calls (Phase 1 reference) to the deployed Django API |
+| Security | Built in from the start (not retrofitted): password hashing (Django's `make_password`/`check_password`), parameterized queries (MongoEngine prevents injection by design), CORS restricted via `django-cors-headers`, CSRF via DRF session auth where applicable — closes every gap flagged in Section 9 |
 
-Tracked in **Migration Tracker Workstream B** (§ below), module-by-module, mirroring the module list in Section 6.5.
+Tracked in **Migration Tracker Workstream B** (§ below), module-by-module, mirroring the module list in Section 6.5. **Start here:** `BACKEND_START.md` → Quick Start (30 min setup + working login + Item CRUD reference).
 
 ### 12.4 Phase 4 — Deployment
 
-**Objective**: Make the (by then) React + Django stack runnable locally via Docker and deployable to production, with the frontend on Vercel.
+**Objective**: Make the React + Django + MongoDB Atlas stack runnable locally via Docker and deployable to production, with the frontend on Vercel.
 
 | Area | Requirement |
 |------|-------------|
-| Containerization | Dockerfile for the Django backend (gunicorn/uvicorn + app), Dockerfile or build step for the React frontend, `docker-compose.yml` wiring backend + MySQL/Postgres for local dev |
-| Frontend hosting | React `frontend/dist` deployed to Vercel; API base URL switched from same-origin (Section 8.3) to the deployed Django API URL via `VITE_API_BASE_URL` |
-| Environment config | `.env` conventions for both apps (secrets, DB credentials, `VITE_API_BASE_URL`) — no secrets committed |
+| Containerization | Dockerfile for the Django backend (gunicorn/uvicorn + app), Dockerfile or build step for the React frontend, `docker-compose.yml` wiring backend + local MongoDB container for dev (see `TECH_STACK.md` for the full compose file) |
+| Database (prod) | **MongoDB Atlas** cluster — connection string via `MONGODB_URI` env var; local dev uses a Dockerized `mongo:latest` container for parity |
+| Frontend hosting | React `frontend/dist` deployed to Vercel; API base URL switched from same-origin (Section 8.3) to the deployed Django API URL via `VITE_API_BASE_URL` (or `VITE_API_URL` per `TECH_STACK.md`) |
+| Environment config | `.env` conventions for both apps (secrets, `MONGODB_URI`, `VITE_API_URL`) — no secrets committed |
 | CI/CD | Build/test pipeline extended (Section 7.3 / TDD Blueprint §12) to run against the Docker Compose stack, not the old PHP dev server |
 | Cutover | Documented rollback path while Django endpoints are verified module-by-module (see 12.3); Vercel + Docker deploy only happens after a module's Django + React pairing is confirmed working |
 

@@ -30,7 +30,7 @@ export default function Login() {
       });
       return;
     }
-    
+
     setLoading(true);
     const demoUser = {
       userId: 'demo001',
@@ -247,7 +247,7 @@ export default function Login() {
                 </div>
               </div>
 
-              <div className="d-flex align-items-center justify-content-between mb-4">
+              <div className="d-flex align-items-center justify-content-between mb-3">
                 <div className="form-check">
                   <input
                     className="form-check-input"
@@ -349,6 +349,7 @@ export default function Login() {
           gap: 0;
           position: relative;
           z-index: 1;
+          margin-top: -69px;
         }
         .lp-brand-logo-full {
           display: block;
@@ -360,21 +361,22 @@ export default function Login() {
         .lp-headline-wrap {
           position: relative;
           z-index: 1;
+          margin-top: -19px;
         }
         .lp-accent-bar {
-          width: 48px;
-          height: 4px;
+          width: 72px;
+          height: 6px;
           background: #25a96b;
-          border-radius: 2px;
-          margin-bottom: 20px;
+          border-radius: 3px;
+          margin-bottom: 30px;
           box-shadow: 0 0 16px rgba(37,169,107,0.4);
         }
         .lp-headline {
           color: #fff;
-          font-size: clamp(1.65rem, 2.5vw, 2.1rem);
+          font-size: clamp(2.475rem, 3.75vw, 3.15rem);
           font-weight: 700;
           line-height: 1.2;
-          margin-bottom: 16px;
+          margin-bottom: 24px;
           font-style: normal;
           text-shadow: 0 4px 16px rgba(0,0,0,0.5);
           letter-spacing: -0.015em;
@@ -386,10 +388,10 @@ export default function Login() {
         }
         .lp-hero-desc {
           color: rgba(255,255,255,0.65);
-          font-size: 0.91rem;
+          font-size: 1.365rem;
           line-height: 1.68;
           margin: 0;
-          max-width: 320px;
+          max-width: 480px;
           text-shadow: 0 1px 6px rgba(0,0,0,0.3);
         }
 
@@ -571,7 +573,7 @@ export default function Login() {
           max-width: 480px;
           background: #ffffff;
           border-radius: 28px;
-          padding: 44px 48px;
+          padding: 32px 48px;
           box-shadow:
             0 2px 4px rgba(15,23,42,0.08),
             0 8px 24px rgba(15,23,42,0.12),
@@ -641,7 +643,7 @@ export default function Login() {
           height: 3px;
           background: #25a96b;
           border-radius: 2px;
-          margin-bottom: 26px;
+          margin-bottom: 20px;
           position: relative;
           z-index: 1;
         }
@@ -793,7 +795,7 @@ export default function Login() {
           display: flex;
           align-items: center;
           gap: 12px;
-          margin: 24px 0 18px;
+          margin: 16px 0 12px;
           color: #cbd5e1;
           font-size: 1rem;
         }
@@ -814,18 +816,58 @@ export default function Login() {
         [data-bs-theme='dark'] .lp-footer-text { color: #8b949e; }
 
         .form-check-input {
+          appearance: none;
+          -webkit-appearance: none;
+          width: 16px !important;
+          height: 16px !important;
+          min-width: 16px !important;
+          min-height: 16px !important;
+          max-width: 16px !important;
+          max-height: 16px !important;
+          padding: 0 !important;
+          border: 1.5px solid #cbd5e1;
+          border-radius: 50% !important;
           cursor: pointer;
+          margin-top: 1px;
+          flex-shrink: 0;
+          display: grid;
+          place-content: center;
           transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+          background-image: none !important;
+          background-color: transparent !important;
+        }
+        [data-bs-theme='dark'] .form-check-input { border-color: #424752; }
+        .form-check-input::before {
+          content: "";
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          transform: scale(0);
+          transition: 120ms transform ease-in-out;
+          background-color: #25a96b;
+        }
+        .form-check-input:checked {
+          border-color: #25a96b !important;
+        }
+        .form-check-input:checked::before {
+          transform: scale(1);
         }
         .form-check-input:focus-visible {
-          box-shadow: 0 0 0 3px rgba(37,169,107,0.2);
-          border-color: #25a96b;
+          box-shadow: 0 0 0 3px rgba(37,169,107,0.2) !important;
+          border-color: #25a96b !important;
+          outline: none;
+        }
+        .form-check {
+          display: flex;
+          align-items: center;
+          gap: 8px;
         }
         .form-check-label {
           font-size: 0.84rem;
           color: #374151;
           cursor: pointer;
           user-select: none;
+          margin-bottom: 0;
         }
         [data-bs-theme='dark'] .form-check-label { color: #8b949e; }
 

@@ -49,12 +49,7 @@ export default function Header() {
 
           {/* ── Left: hamburger + logo ── */}
           <div className="d-flex align-items-center gap-2">
-            {/* Horizontal logo (shown when sidebar collapsed) */}
-            <div className="navbar-brand-box horizontal-logo">
-              <Link to="/" aria-label="Zigfly home">
-                <img src={zigFlyLogo} alt="" height="40" aria-hidden="true" />
-              </Link>
-            </div>
+            
 
             {/* Hamburger — animated 3-bar → X */}
             <button
