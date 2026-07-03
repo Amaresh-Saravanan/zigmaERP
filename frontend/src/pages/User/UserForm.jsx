@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import TextInput from '../../components/TextInput';
 import Select from '../../components/Select';
 import Toggle from '../../components/Toggle';
@@ -21,56 +21,39 @@ export default function UserForm() {
     user_type_unique_id: '',
     is_active: '1',
   });
-  
+
   const [userTypeOptions, setUserTypeOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    fetchFormHtml();
+    fetchUserTypes();
+    if (unique_id) fetchUser();
   }, [unique_id]);
 
-  const fetchFormHtml = async () => {
+  const fetchUserTypes = async () => {
+    try {
+      const res = await djangoClient.get('/user-types', { params: { page_size: 100 } });
+      setUserTypeOptions((res.data.results || []).map((ut) => ({ value: ut.unique_id, label: ut.type_name })));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchUser = async () => {
     setIsLoading(true);
     try {
-      const url = unique_id 
-        ? `folders/user/form.php?unique_id=${unique_id}`
-        : `folders/user/form.php`;
-      const res = await client.get(url, { responseType: 'text' });
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(res.data, 'text/html');
-
-      const inputs = {
-        emp_id: doc.querySelector('#emp_id'),
-        user_name: doc.querySelector('#user_name'),
-        password: doc.querySelector('#password'),
-        first_name: doc.querySelector('#first_name'),
-        last_name: doc.querySelector('#last_name'),
-        email: doc.querySelector('#email'),
-        user_type_unique_id: doc.querySelector('#user_type_unique_id'),
-        is_active: doc.querySelector('#is_active'),
-      };
-
-      if (unique_id) {
-        setFormData({
-          emp_id: inputs.emp_id ? inputs.emp_id.value : '',
-          user_name: inputs.user_name ? inputs.user_name.value : '',
-          password: inputs.password ? inputs.password.value : '',
-          first_name: inputs.first_name ? inputs.first_name.value : '',
-          last_name: inputs.last_name ? inputs.last_name.value : '',
-          email: inputs.email ? inputs.email.value : '',
-          user_type_unique_id: inputs.user_type_unique_id ? inputs.user_type_unique_id.value : '',
-          is_active: inputs.is_active ? inputs.is_active.value : '1',
-        });
-      }
-
-      // Extract User Type Options
-      if (inputs.user_type_unique_id) {
-        const options = Array.from(inputs.user_type_unique_id.options).map(opt => ({
-          value: opt.value,
-          label: opt.text
-        }));
-        setUserTypeOptions(options);
-      }
+      const res = await djangoClient.get(`/users/${unique_id}`);
+      const user = res.data.data;
+      setFormData({
+        emp_id: user.emp_id || '',
+        user_name: user.user_name || '',
+        password: '',
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        email: user.user_email || '',
+        user_type_unique_id: user.user_type?.unique_id || '',
+        is_active: user.is_active ? '1' : '0',
+      });
     } catch (error) {
       console.error(error);
     } finally {
@@ -86,21 +69,24 @@ export default function UserForm() {
     e.preventDefault();
     setIsLoading(true);
 
-    const payload = new URLSearchParams();
-    payload.append('action', 'createupdate');
-    Object.keys(formData).forEach(key => {
-      payload.append(key, formData[key]);
-    });
-    
-    if (unique_id) {
-      payload.append('unique_id', unique_id);
-    }
+    const payload = {
+      emp_id: formData.emp_id,
+      user_name: formData.user_name,
+      first_name: formData.first_name,
+      last_name: formData.last_name,
+      user_email: formData.email,
+      user_type: { unique_id: formData.user_type_unique_id },
+      is_active: formData.is_active === '1',
+    };
+    // Password required on create, optional on update (blank = keep existing hash).
+    if (formData.password) payload.password = formData.password;
 
     try {
-      const res = await client.post('folders/user/crud.php', payload);
-      const json = res.data;
+      const res = unique_id
+        ? await djangoClient.put(`/users/${unique_id}`, payload)
+        : await djangoClient.post('/users', payload);
 
-      if (json.msg === 'create' || json.msg === 'update') {
+      if (res.data?.msg === 'create' || res.data?.msg === 'update') {
         navigate('/user/list');
       }
     } catch (error) {
@@ -160,10 +146,10 @@ export default function UserForm() {
                       label="Password"
                       name="password"
                       maxLength="15"
-                      helperText="Max 15 characters"
+                      helperText={unique_id ? 'Leave blank to keep current password' : 'Max 15 characters'}
                       value={formData.password}
                       onChange={handleChange}
-                      required
+                      required={!unique_id}
                     />
                   </div>
 

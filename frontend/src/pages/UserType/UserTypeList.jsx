@@ -1,16 +1,24 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DataTable from '../../components/DataTable';
 
 export default function UserTypeList() {
   const navigate = useNavigate();
 
   const columns = [
-    { label: 'S.No' },
-    { label: 'User Type' },
-    { label: 'Status' },
-    { label: 'Action', className: 'text-end' },
+    { label: 'S.No', sno: true },
+    { label: 'User Type', key: 'type_name' },
+    {
+      label: 'Status',
+      key: 'is_active',
+      render: (isActive) => (
+        <span className={`badge ${isActive ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}`}>
+          {isActive ? 'Active' : 'Inactive'}
+        </span>
+      ),
+    },
+    { label: 'Action', className: 'text-end', actions: true },
   ];
 
   const handleEdit = (uniqueId) => {
@@ -20,10 +28,7 @@ export default function UserTypeList() {
   const handleDelete = async (uniqueId) => {
     if (!window.confirm('Are you sure you want to delete this user type?')) return;
     try {
-      const params = new URLSearchParams();
-      params.append('action', 'delete');
-      params.append('unique_id', uniqueId);
-      const res = await client.post('folders/user_type/crud.php', params);
+      const res = await djangoClient.delete(`/user-types/${uniqueId}`);
       if (res.data?.msg === 'success_delete') {
         window.location.reload();
       }
@@ -53,8 +58,10 @@ export default function UserTypeList() {
           </div>
           <div className="card-body pt-0">
             <DataTable
-              ajaxUrl="folders/user_type/crud.php"
+              mode="django"
+              ajaxUrl="/user-types"
               columns={columns}
+              showActiveFilter={false}
               onEdit={handleEdit}
               onDelete={handleDelete}
             />
