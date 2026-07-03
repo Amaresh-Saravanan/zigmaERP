@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import TextInput from '../../components/TextInput';
 import Select from '../../components/Select';
 import Toggle from '../../components/Toggle';
 import Button from '../../components/Button';
+
+const TRAY_TYPE_OPTIONS = [
+  { value: '1', label: 'EGG Tray' },
+  { value: '2', label: 'FRP Tray' },
+];
 
 export default function TrayCreationForm() {
   const [searchParams] = useSearchParams();
@@ -16,44 +21,25 @@ export default function TrayCreationForm() {
     bin_name: '',
     active_status: '1',
   });
-  
-  const [trayTypeOptions, setTrayTypeOptions] = useState([]);
+
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    fetchFormHtml();
+    if (unique_id) fetchTray();
   }, [unique_id]);
 
-  const fetchFormHtml = async () => {
+  const fetchTray = async () => {
     setIsLoading(true);
     try {
-      const url = unique_id 
-        ? `folders/tray_creation/form.php?unique_id=${unique_id}`
-        : `folders/tray_creation/form.php`;
-      const res = await client.get(url, { responseType: 'text' });
-      
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(res.data, 'text/html');
-
-      const trayTypeSelect = doc.querySelector('#tray_type');
-      const binNameInput = doc.querySelector('#bin_name');
-      const activeStatusSelect = doc.querySelector('#active_status');
-
-      if (trayTypeSelect) {
-        const options = Array.from(trayTypeSelect.options).map(opt => ({
-          value: opt.value,
-          label: opt.text
-        }));
-        setTrayTypeOptions(options);
-      }
-
+      const res = await djangoClient.get(`/trays/${unique_id}`);
+      const tray = res.data.data;
       setFormData({
-        tray_type: trayTypeSelect ? trayTypeSelect.value : '',
-        bin_name: binNameInput ? binNameInput.value : '',
-        active_status: activeStatusSelect ? activeStatusSelect.value : '1',
+        tray_type: tray.tray_type || '',
+        bin_name: tray.bin_name || '',
+        active_status: tray.is_active ? '1' : '0',
       });
     } catch (error) {
-      console.error('Failed to load form details', error);
+      console.error('Failed to load tray', error);
     } finally {
       setIsLoading(false);
     }
@@ -67,20 +53,17 @@ export default function TrayCreationForm() {
     e.preventDefault();
     setIsLoading(true);
 
-    const payload = new URLSearchParams();
-    payload.append('action', 'createupdate');
-    payload.append('tray_type', formData.tray_type);
-    payload.append('bin_name', formData.bin_name);
-    payload.append('active_status', formData.active_status);
-    
-    if (unique_id) {
-      payload.append('unique_id', unique_id);
-    }
+    const payload = {
+      tray_type: formData.tray_type,
+      bin_name: formData.bin_name,
+      is_active: formData.active_status === '1',
+    };
 
     try {
-      const res = await client.post('folders/tray_creation/crud.php', payload);
-      const json = res.data;
-      if (json.msg === 'create' || json.msg === 'update') {
+      const res = unique_id
+        ? await djangoClient.put(`/trays/${unique_id}`, payload)
+        : await djangoClient.post('/trays', payload);
+      if (res.data?.msg === 'create' || res.data?.msg === 'update') {
         navigate('/tray_creation/list');
       }
     } catch (error) {
@@ -119,7 +102,7 @@ export default function TrayCreationForm() {
                       name="tray_type"
                       value={formData.tray_type}
                       onChange={handleChange}
-                      options={trayTypeOptions}
+                      options={TRAY_TYPE_OPTIONS}
                       required
                     />
                   </div>

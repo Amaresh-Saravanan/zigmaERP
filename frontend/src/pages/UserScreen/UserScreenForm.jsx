@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import TextInput from '../../components/TextInput';
 import Select from '../../components/Select';
-import Textarea from '../../components/Textarea';
 import Button from '../../components/Button';
 
 export default function UserScreenForm() {
@@ -17,74 +16,39 @@ export default function UserScreenForm() {
     folder_name: '',
     order_no: '',
     icon_name: '',
-    description: '',
     active_status: '1',
   });
-  
+
   const [mainScreenOptions, setMainScreenOptions] = useState([]);
-  const [actionOptions, setActionOptions] = useState([]);
-  const [selectedActions, setSelectedActions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    fetchFormHtml();
+    fetchMainScreens();
+    if (unique_id) fetchScreen();
   }, [unique_id]);
 
-  const fetchFormHtml = async () => {
+  const fetchMainScreens = async () => {
+    try {
+      const res = await djangoClient.get('/main-screens', { params: { page_size: 100 } });
+      setMainScreenOptions((res.data.results || []).map((ms) => ({ value: ms.unique_id, label: ms.screen_main_name })));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchScreen = async () => {
     setIsLoading(true);
     try {
-      const url = unique_id 
-        ? `folders/user_screen/form.php?unique_id=${unique_id}`
-        : `folders/user_screen/form.php`;
-      const res = await client.get(url, { responseType: 'text' });
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(res.data, 'text/html');
-
-      const inputs = {
-        screen_main_name: doc.querySelector('#screen_main_name'),
-        screen_name: doc.querySelector('#screen_name'),
-        folder_name: doc.querySelector('#folder_name'),
-        order_no: doc.querySelector('#order_no'),
-        icon_name: doc.querySelector('#icon_name'),
-        description: doc.querySelector('#description'),
-        active_status: doc.querySelector('#active_status'),
-      };
-
-      if (unique_id) {
-        setFormData({
-          screen_main_name: inputs.screen_main_name ? inputs.screen_main_name.value : '',
-          screen_name: inputs.screen_name ? inputs.screen_name.value : '',
-          folder_name: inputs.folder_name ? inputs.folder_name.value : '',
-          order_no: inputs.order_no ? inputs.order_no.value : '',
-          icon_name: inputs.icon_name ? inputs.icon_name.value : '',
-          description: inputs.description ? inputs.description.value : '',
-          active_status: inputs.active_status ? inputs.active_status.value : '1',
-        });
-      }
-
-      // Extract Main Screen Options
-      if (inputs.screen_main_name) {
-        const options = Array.from(inputs.screen_main_name.options).map(opt => ({
-          value: opt.value,
-          label: opt.text
-        }));
-        setMainScreenOptions(options);
-      }
-      
-      // Extract Checkbox Actions
-      const checkboxes = Array.from(doc.querySelectorAll('ul.ks-cboxtags input[type="checkbox"]'));
-      const actions = checkboxes.map(cb => {
-        const labelEl = doc.querySelector(`label[for="${cb.id}"]`);
-        return {
-          id: cb.id,
-          value: cb.value,
-          label: labelEl ? labelEl.textContent : cb.value,
-          checked: cb.checked
-        };
+      const res = await djangoClient.get(`/screens/${unique_id}`);
+      const s = res.data.data;
+      setFormData({
+        screen_main_name: s.main_screen?.unique_id || '',
+        screen_name: s.screen_name || '',
+        folder_name: s.folder_name || '',
+        order_no: String(s.order_no ?? ''),
+        icon_name: s.icon_name || '',
+        active_status: s.is_active ? '1' : '0',
       });
-      setActionOptions(actions);
-      setSelectedActions(actions.filter(a => a.checked).map(a => a.value));
-
     } catch (error) {
       console.error(error);
     } finally {
@@ -95,39 +59,25 @@ export default function UserScreenForm() {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-  
-  const handleActionToggle = (val) => {
-    if (selectedActions.includes(val)) {
-      setSelectedActions(selectedActions.filter(a => a !== val));
-    } else {
-      setSelectedActions([...selectedActions, val]);
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    const payload = new URLSearchParams();
-    payload.append('action', 'createupdate');
-    Object.keys(formData).forEach(key => {
-      payload.append(key, formData[key]);
-    });
-    
-    // Add selected actions
-    selectedActions.forEach(val => {
-      payload.append('user_action[]', val);
-    });
-    
-    if (unique_id) {
-      payload.append('unique_id', unique_id);
-    }
+    const payload = {
+      screen_name: formData.screen_name,
+      folder_name: formData.folder_name,
+      icon_name: formData.icon_name,
+      main_screen: { unique_id: formData.screen_main_name },
+      order_no: parseInt(formData.order_no, 10) || 0,
+      is_active: formData.active_status === '1',
+    };
 
     try {
-      const res = await client.post('folders/user_screen/crud.php', payload);
-      const json = res.data;
-
-      if (json.msg === 'create' || json.msg === 'update') {
+      const res = unique_id
+        ? await djangoClient.put(`/screens/${unique_id}`, payload)
+        : await djangoClient.post('/screens', payload);
+      if (res.data?.msg === 'create' || res.data?.msg === 'update') {
         navigate('/user_screen/list');
       }
     } catch (error) {
@@ -225,37 +175,8 @@ export default function UserScreenForm() {
                       required
                     />
                   </div>
-
-                  <div className="col-12 col-md-4">
-                    <Textarea
-                      label="Description"
-                      name="description"
-                      rows={2}
-                      value={formData.description}
-                      onChange={handleChange}
-                    />
-                  </div>
-
-                  <div className="col-12 col-md-6 mb-3">
-                    <span className="form-label app-form-label d-block">Actions</span>
-                    <div>
-                      <ul className="ks-cboxtags d-flex flex-wrap gap-2 list-unstyled">
-                        {actionOptions.map((opt, i) => (
-                          <li key={i}>
-                            <input 
-                              type="checkbox" 
-                              id={opt.id} 
-                              checked={selectedActions.includes(opt.value)}
-                              onChange={() => handleActionToggle(opt.value)}
-                            />
-                            <label className="ms-2" htmlFor={opt.id}>{opt.label}</label>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
                 </div>
-                
+
                 <div className="row mt-2">
                   <div className="col-12 text-end mt-3">
                     <Button variant="danger" className="me-2" onClick={() => navigate('/user_screen/list')}>

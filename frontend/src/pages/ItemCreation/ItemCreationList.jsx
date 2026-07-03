@@ -1,19 +1,27 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DataTable from '../../components/DataTable';
 
 export default function ItemCreationList() {
   const navigate = useNavigate();
 
   const columns = [
-    { label: 'S.No' },
-    { label: 'Item Code' },
-    { label: 'Item Name' },
-    { label: 'Unit' },
-    { label: 'Status' },
-    { label: 'Action', className: 'text-end' },
+    { label: 'S.No', sno: true },
+    { label: 'Item Code', key: 'item_code' },
+    { label: 'Item Name', key: 'item_name' },
+    { label: 'Unit', key: 'unit.unit_name' },
+    {
+      label: 'Status',
+      key: 'is_active',
+      render: (isActive) => (
+        <span className={`badge ${isActive ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}`}>
+          {isActive ? 'Active' : 'Inactive'}
+        </span>
+      ),
+    },
+    { label: 'Action', className: 'text-end', actions: true },
   ];
 
   const handleEdit = (uniqueId) => {
@@ -23,12 +31,9 @@ export default function ItemCreationList() {
   const handleDelete = async (uniqueId) => {
     if (!window.confirm('Are you sure you want to delete this item?')) return;
     try {
-      const params = new URLSearchParams();
-      params.append('action', 'delete');
-      params.append('unique_id', uniqueId);
-      const res = await client.post('folders/item_creation/crud.php', params);
+      const res = await djangoClient.delete(`/items/${uniqueId}`);
       if (res.data?.msg === 'success_delete') {
-        window.location.reload(); 
+        window.location.reload();
       }
     } catch (err) {
       console.error('Error deleting item', err);
@@ -54,22 +59,13 @@ export default function ItemCreationList() {
                   </button>
                 </div>
               </div>
-              <div className="row mt-2 g-2">
-                <div className="col-12 col-sm-6 col-md-3 col-lg-2">
-                  <label htmlFor="active_status" className="form-label app-form-label">Active Status</label>
-                  <select name="active_status" id="active_status" className="form-select">
-                    <option value="">Select Status Type</option>
-                    <option value="all">All</option>
-                    <option value="1">Active</option>
-                    <option value="0">In Active</option>
-                  </select>
-                </div>
-              </div>
             </div>
             <div className="card-body d-flex flex-column justify-content-end">
               <DataTable
-                ajaxUrl="folders/item_creation/crud.php"
+                mode="django"
+                ajaxUrl="/items"
                 columns={columns}
+                showActiveFilter={false}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
               />

@@ -1,39 +1,42 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import djangoClient from '../../api/djangoClient';
 import DataTable from '../../components/DataTable';
 
 export default function MainScreenList() {
   const navigate = useNavigate();
 
   const columns = [
-    { label: 'S.No' },
-    { label: 'Screen Name' },
-    { label: 'Screen Type' },
-    { label: 'Screen Order' },
-    { 
+    { label: 'S.No', sno: true },
+    { label: 'Screen Name', key: 'screen_main_name' },
+    { label: 'Icon', key: 'icon_name' },
+    {
       label: 'Status',
-      render: (val) => <span dangerouslySetInnerHTML={{ __html: val }} />
+      key: 'is_active',
+      render: (isActive) => (
+        <span className={`badge ${isActive ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}`}>
+          {isActive ? 'Active' : 'Inactive'}
+        </span>
+      ),
     },
-    { 
-      label: 'Action', 
-      className: 'text-center',
-      render: (val, row) => {
-        if (!val) return null;
-        const match = val.match(/get_model_load\(['"]([^'"]+)['"]/);
-        if (match) {
-          return (
-            <button 
-              className="btn btn-sm btn-ghost-primary waves-effect waves-light" 
-              onClick={() => navigate(`/main_screen/form?unique_id=${match[1]}`)}
-            >
-              <i className="ri-pencil-line fs-15"></i>
-            </button>
-          );
-        }
-        return <span dangerouslySetInnerHTML={{ __html: val }} />;
-      }
-    }
+    { label: 'Action', className: 'text-end', actions: true },
   ];
+
+  const handleEdit = (uniqueId) => {
+    navigate(`/main_screen/form?unique_id=${uniqueId}`);
+  };
+
+  const handleDelete = async (uniqueId) => {
+    if (!window.confirm('Are you sure you want to delete this main screen?')) return;
+    try {
+      const res = await djangoClient.delete(`/main-screens/${uniqueId}`);
+      if (res.data?.msg === 'success_delete') {
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error('Error deleting main screen', err);
+    }
+  };
 
   return (
     <div className="row g-3 mb-3">
@@ -54,8 +57,12 @@ export default function MainScreenList() {
 
           <div className="card-body pt-0">
             <DataTable
-              ajaxUrl="folders/main_screen/crud.php"
+              mode="django"
+              ajaxUrl="/main-screens"
               columns={columns}
+              showActiveFilter={false}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
             />
           </div>
         </div>

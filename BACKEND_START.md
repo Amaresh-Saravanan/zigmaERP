@@ -1,3 +1,4 @@
+
 # Django Backend — Getting Started
 
 **Version**: 1.0 | **Date**: 2026-07-02 | **Status**: Ready to scaffold
@@ -60,13 +61,20 @@ CORS_ALLOWED_ORIGINS = os.getenv(
     'http://localhost:3000,http://localhost:5173'
 ).split(',')
 
-DATABASES = {}  # Disable Django's default DB since we're using MongoDB Atlas
+DATABASES = {}  # Disable Django's default DB since we're using MongoDB
 
-# MongoDB Atlas Connection via MongoEngine
-# MONGODB_URI must be set in .env (mongodb+srv://... connection string from Atlas)
-# — see step 3 above. There is no local fallback; Atlas is required in every environment.
+# MongoDB Connection via MongoEngine
 import mongoengine as me
-me.connect(host=os.environ['MONGODB_URI'])
+MONGODB_DATABASES = {
+    'default': {
+        'name': 'zigma_erp',
+        'host': os.getenv('MONGODB_URI', 'mongodb://localhost:27017/zigma_erp'),
+    }
+}
+me.connect(
+    db='zigma_erp',
+    host=os.getenv('MONGODB_URI', 'mongodb://localhost:27017/zigma_erp'),
+)
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -112,7 +120,7 @@ EOF
 
 > No local MongoDB install or Docker container needed — Atlas is used for every environment (dev, staging, prod), each pointing at its own cluster/database.
 
-### 5. Create `accounts/models.py` (MongoEngine)
+### 4. Create `accounts/models.py` (MongoEngine)
 
 ```python
 from mongoengine import Document, StringField, BooleanField, DateTimeField, ReferenceField
@@ -150,7 +158,7 @@ class User(Document):
     }
 ```
 
-### 6. Create `accounts/serializers.py`
+### 5. Create `accounts/serializers.py`
 
 ```python
 from rest_framework import serializers
@@ -190,7 +198,7 @@ class LoginSerializer(serializers.Serializer):
         return data
 ```
 
-### 7. Create `accounts/views.py`
+### 6. Create `accounts/views.py`
 
 ```python
 from rest_framework import viewsets, status
@@ -266,7 +274,7 @@ class UserViewSet(viewsets.ModelViewSet):
         user.save()
 ```
 
-### 8. Create `config/urls.py`
+### 7. Create `config/urls.py`
 
 ```python
 from django.urls import path, include
@@ -282,11 +290,14 @@ urlpatterns = [
 ]
 ```
 
-### 9. Start Django
+### 8. Start MongoDB & Django
 
 ```bash
+# Terminal 1: MongoDB
+docker run -d -p 27017:27017 --name mongodb mongo:latest
+
+# Terminal 2: Django
 python manage.py runserver
-# Connects to your MongoDB Atlas dev cluster via MONGODB_URI in .env
 # Server runs at http://localhost:8000/api/
 ```
 

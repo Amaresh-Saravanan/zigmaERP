@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import client from '../../api/client';
 import DateInput from '../../components/DateInput';
@@ -76,6 +76,14 @@ export default function FrpTrayProcessList() {
   };
 
   const closeSublistModal = () => setSublistModal({ show: false, uniqueId: null, mode: null });
+
+  // Close sublist modal on Escape
+  useEffect(() => {
+    if (!sublistModal.show) return;
+    const onKey = (e) => { if (e.key === 'Escape') closeSublistModal(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [sublistModal.show]);
 
   const handleSublistChange = (index, field, value) => {
     const newData = [...sublistData];
@@ -221,8 +229,8 @@ export default function FrpTrayProcessList() {
       {/* Sublist Modal */}
       {sublistModal.show && (
         <>
-          <div className="modal-backdrop fade show"></div>
-          <div className="modal fade show d-block" tabIndex="-1">
+          <div className="modal-backdrop fade show" onClick={closeSublistModal}></div>
+          <div className="modal fade show d-block" tabIndex="-1" role="dialog" aria-modal="true" aria-label="FRP Tray Sublist">
             <div className="modal-dialog modal-lg modal-dialog-centered">
               <div className="modal-content">
                 <div className="modal-header">

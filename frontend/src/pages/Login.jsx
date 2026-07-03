@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import useTheme from '../hooks/useTheme';
 import client from '../api/client';
+import djangoClient from '../api/djangoClient';
 import Swal from 'sweetalert2';
 import heroBg from '../assets/images/auth-one-bg.jpg';
 import zigflyLogo from '../assets/images/zigfly-logo-clean.png';
@@ -17,6 +18,24 @@ export default function Login() {
   const navigate = useNavigate();
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  // Best-effort: Django modules need a token, but PHP session auth is still the
+  // source of truth for everything not yet cut over (TASK-B10), so a failure here
+  // (Django user doesn't exist yet, backend down, etc.) must not block login.
+  const acquireDjangoToken = async (userName, password) => {
+    try {
+      const res = await djangoClient.post(
+        '/auth/login',
+        { user_name: userName, password },
+        { suppressError: true }
+      );
+      if (res.data?.status === 1) {
+        localStorage.setItem('django_token', res.data.data.access_token);
+      }
+    } catch {
+      localStorage.removeItem('django_token');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e?.preventDefault();
@@ -53,6 +72,7 @@ export default function Login() {
           navigate('/password/update?default=true');
           return;
         }
+        await acquireDjangoToken(form.user, form.password);
         login(res.data.user);
         navigate('/');
         return;
@@ -76,6 +96,7 @@ export default function Login() {
 
     // API failed or no valid response — demo mode fallback
     if (form.user === 'admin' && form.password === 'admin123') {
+      await acquireDjangoToken(form.user, form.password);
       login(demoUser);
       navigate('/');
     } else {

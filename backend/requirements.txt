@@ -1,0 +1,8 @@
+Django==4.2
+djangorestframework==3.14
+mongoengine==0.27
+pymongo>=4.6,<4.7
+django-cors-headers==4.3
+python-dotenv==1.0
+pytest-django==4.8
+mongomock==4.3  # test-only: lets model tests run without a live Atlas cluster

@@ -1,18 +1,27 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DataTable from '../../components/DataTable';
+
+const TRAY_TYPE_LABELS = { '1': 'EGG Tray', '2': 'FRP Tray' };
 
 export default function TrayCreationList() {
   const navigate = useNavigate();
 
   const columns = [
-    { label: 'S.No' },
-    { label: 'Type' },
-    { label: 'Tray Name' },
-    { label: 'Status' },
-    { label: 'QR Code' },
-    { label: 'Action', className: 'text-end' },
+    { label: 'S.No', sno: true },
+    { label: 'Type', key: 'tray_type', render: (val) => TRAY_TYPE_LABELS[val] || val },
+    { label: 'Tray Name', key: 'bin_name' },
+    {
+      label: 'Status',
+      key: 'is_active',
+      render: (isActive) => (
+        <span className={`badge ${isActive ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}`}>
+          {isActive ? 'Active' : 'Inactive'}
+        </span>
+      ),
+    },
+    { label: 'Action', className: 'text-end', actions: true },
   ];
 
   const handleEdit = (uniqueId) => {
@@ -22,12 +31,9 @@ export default function TrayCreationList() {
   const handleDelete = async (uniqueId) => {
     if (!window.confirm('Are you sure you want to delete this tray?')) return;
     try {
-      const params = new URLSearchParams();
-      params.append('action', 'delete');
-      params.append('unique_id', uniqueId);
-      const res = await client.post('folders/tray_creation/crud.php', params);
+      const res = await djangoClient.delete(`/trays/${uniqueId}`);
       if (res.data?.msg === 'success_delete') {
-        window.location.reload(); 
+        window.location.reload();
       }
     } catch (err) {
       console.error('Error deleting tray', err);
@@ -55,8 +61,10 @@ export default function TrayCreationList() {
           </div>
           <div className="card-body pt-0">
             <DataTable
-              ajaxUrl="folders/tray_creation/crud.php"
+              mode="django"
+              ajaxUrl="/trays"
               columns={columns}
+              showActiveFilter={false}
               onEdit={handleEdit}
               onDelete={handleDelete}
             />

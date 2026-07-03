@@ -1,24 +1,21 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import client from '../../api/client';
-import DateInput from '../../components/DateInput';
+import djangoClient from '../../api/djangoClient';
 import DataTable from '../../components/DataTable';
 
 export default function OvenProcessList() {
   const navigate = useNavigate();
 
-  const [filters, setFilters] = useState({ from_date: '', to_date: '' });
-
   const columns = [
-    { label: 'Date' },
-    { label: 'Start / Close Time' },
-    { label: 'Total Run Hours' },
-    { label: 'Diesel Top-Up' },
-    { label: 'Raw Larvae Process' },
-    { label: 'Dried Larvae Production' },
-    { label: 'Dried Larvae Stock' },
-    { label: 'Image' },
-    { label: 'Action', className: 'text-end' },
+    { label: 'Date', key: 'entry_date' },
+    { label: 'Start Time', key: 'starting_time' },
+    { label: 'Close Time', key: 'closing_time' },
+    { label: 'Total Run Hours', key: 'running_hours' },
+    { label: 'Diesel Top-Up', key: 'diesel_topup' },
+    { label: 'Raw Larvae Process', key: 'raw_larvae_process' },
+    { label: 'Dried Larvae Production', key: 'dried_larvae_production' },
+    { label: 'Dried Larvae Stock', key: 'dried_larvae_stock' },
+    { label: 'Action', className: 'text-end', actions: true },
   ];
 
   const handleEdit = (uniqueId) => navigate(`/oven_process/form?unique_id=${uniqueId}`);
@@ -26,22 +23,12 @@ export default function OvenProcessList() {
   const handleDelete = async (uniqueId) => {
     if (!window.confirm('Are you sure you want to delete this record?')) return;
     try {
-      const params = new URLSearchParams();
-      params.append('action', 'delete');
-      params.append('unique_id', uniqueId);
-      const res = await client.post('folders/oven_process/crud.php', params);
+      const res = await djangoClient.delete(`/oven-process/${uniqueId}`);
       if (res.data?.msg === 'success_delete') window.location.reload();
     } catch (err) {
       console.error('Error deleting oven process', err);
     }
   };
-
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
-  };
-
-  const extraParams = Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== ''));
 
   return (
     <div className="row g-3 mb-3">
@@ -58,35 +45,16 @@ export default function OvenProcessList() {
                 </button>
               </div>
             </div>
-
-            {/* Date range filters */}
-            <div className="row mt-2 g-2">
-              <div className="col-md-2">
-                <DateInput
-                  name="from_date"
-                  value={filters.from_date}
-                  onChange={handleFilterChange}
-                  className="form-control form-control-sm"
-                />
-              </div>
-              <div className="col-md-2">
-                <DateInput
-                  name="to_date"
-                  value={filters.to_date}
-                  onChange={handleFilterChange}
-                  className="form-control form-control-sm"
-                />
-              </div>
-            </div>
           </div>
 
           <div className="card-body pt-0">
             <DataTable
-              ajaxUrl="folders/oven_process/crud.php"
+              mode="django"
+              ajaxUrl="/oven-process"
               columns={columns}
+              showActiveFilter={false}
               onEdit={handleEdit}
               onDelete={handleDelete}
-              extraParams={extraParams}
             />
           </div>
         </div>

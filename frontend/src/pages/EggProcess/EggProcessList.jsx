@@ -1,19 +1,19 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DataTable from '../../components/DataTable';
 
 export default function EggProcessList() {
   const navigate = useNavigate();
 
   const columns = [
-    { label: 'S.No' },
-    { label: 'Entry Date' },
-    { label: 'Entry No' },
-    { label: 'Batch Id' },
-    { label: 'Supplier Name' },
-    { label: 'Total Quantity(Grams)' },
-    { label: 'Action', className: 'text-end' },
+    { label: 'S.No', sno: true },
+    { label: 'Entry Date', key: 'entry_date' },
+    { label: 'Entry No', key: 'entry_no' },
+    { label: 'Batch Id', key: 'batch.batch_id' },
+    { label: 'Supplier Name', key: 'supplier.supplier_name' },
+    { label: 'Total Quantity(Grams)', key: 'tot_qty' },
+    { label: 'Action', className: 'text-end', actions: true },
   ];
 
   const handleEdit = (uniqueId) => {
@@ -23,10 +23,7 @@ export default function EggProcessList() {
   const handleDelete = async (uniqueId) => {
     if (!window.confirm('Are you sure you want to delete this process?')) return;
     try {
-      const params = new URLSearchParams();
-      params.append('action', 'delete');
-      params.append('unique_id', uniqueId);
-      const res = await client.post('folders/egg_process/crud.php', params);
+      const res = await djangoClient.delete(`/egg-process/${uniqueId}`);
       if (res.data?.msg === 'success_delete') {
         window.location.reload();
       }
@@ -56,8 +53,10 @@ export default function EggProcessList() {
           </div>
           <div className="card-body pt-0">
             <DataTable
-              ajaxUrl="folders/egg_process/crud.php"
+              mode="django"
+              ajaxUrl="/egg-process"
               columns={columns}
+              showActiveFilter={false}
               onEdit={handleEdit}
               onDelete={handleDelete}
             />

@@ -1,43 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DateInput from '../../components/DateInput';
-import useAuth from '../../hooks/useAuth';
 import TextInput from '../../components/TextInput';
 import Select from '../../components/Select';
-import FileInput from '../../components/FileInput';
 import Button from '../../components/Button';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
 const HATCHING_OPTIONS = [
-  { value: '1', label: 'Progressing' },
-  { value: '2', label: 'Completed' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'progressing', label: 'Progressing' },
+  { value: 'completed', label: 'Completed' },
 ];
 
 export default function StatusUpdateForm() {
   const [searchParams] = useSearchParams();
   const unique_id = searchParams.get('unique_id');
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   const [formData, setFormData] = useState({
-    staff_name: user?.userId || '',
     entry_date: TODAY,
-    batch_id: '',
-    entry_no: '',
+    batch: '',
     starting_day: '',
     day: '',
-    hatching_status: '1',
+    hatching_status: 'pending',
     remarks: '',
   });
 
+  const [staffId, setStaffId] = useState('');
   const [batchOptions, setBatchOptions] = useState([]);
-  const [files, setFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    fetchFormHtml();
+    fetchCurrentUser();
+    fetchBatches();
+    if (unique_id) fetchRecord();
   }, [unique_id]);
 
   useEffect(() => {
@@ -49,36 +47,41 @@ export default function StatusUpdateForm() {
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
         setFormData(prev => ({ ...prev, day: diffDays.toString() }));
       }
-    } else {
-      setFormData(prev => ({ ...prev, day: '' }));
     }
   }, [formData.entry_date, formData.starting_day]);
 
-  const fetchFormHtml = async () => {
+  const fetchCurrentUser = async () => {
+    try {
+      const res = await djangoClient.get('/auth/me');
+      setStaffId(res.data.data.unique_id);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchBatches = async () => {
+    try {
+      const res = await djangoClient.get('/material-received', { params: { page_size: 100 } });
+      setBatchOptions((res.data.results || []).map((b) => ({ value: b.unique_id, label: b.batch_id, date: b.date })));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchRecord = async () => {
     setIsLoading(true);
     try {
-      const url = unique_id 
-        ? `folders/status_update/form.php?unique_id=${unique_id}`
-        : `folders/status_update/form.php`;
-      const res = await client.get(url, { responseType: 'text' });
-      const doc = new DOMParser().parseFromString(res.data, 'text/html');
-      
-      const batchSelect = doc.querySelector('#batch_id');
-      if (batchSelect) setBatchOptions(Array.from(batchSelect.options).map(o => ({ value: o.value, label: o.text })));
-
-      if (unique_id) {
-        const g = (id) => doc.querySelector(`#${id}`)?.value ?? '';
-        setFormData(prev => ({
-          ...prev,
-          entry_date:      g('entry_date') || TODAY,
-          batch_id:        g('batch_id'),
-          entry_no:        g('entry_no'),
-          starting_day:    g('starting_day'),
-          day:             g('day'),
-          hatching_status: g('hatching_status') || '1',
-          remarks:         g('remarks'),
-        }));
-      }
+      const res = await djangoClient.get(`/status-update/${unique_id}`);
+      const su = res.data.data;
+      setFormData({
+        entry_date: su.entry_date || TODAY,
+        batch: su.batch?.unique_id || '',
+        starting_day: '',
+        day: String(su.day ?? ''),
+        hatching_status: su.hatching_status || 'pending',
+        remarks: su.remarks || '',
+      });
+      setStaffId(su.staff?.unique_id || '');
     } catch (err) {
       console.error(err);
     } finally {
@@ -86,42 +89,33 @@ export default function StatusUpdateForm() {
     }
   };
 
-  const handleChange = async (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
 
-    if (name === 'batch_id') {
-      if (!value) {
-        setFormData(prev => ({ ...prev, entry_no: '', starting_day: '' }));
-      } else {
-        try {
-          const payload = new URLSearchParams({ action: 'select_entry_date', batch_id: value });
-          const res = await client.post('folders/status_update/crud.php', payload);
-          // Backend returns comma separated string: entry_date,entry_no
-          if (res.data) {
-            const [sDay, eNo] = res.data.split(',');
-            setFormData(prev => ({ ...prev, starting_day: sDay || '', entry_no: eNo || '' }));
-          }
-        } catch (err) {
-          console.error('Error fetching batch info', err);
-        }
-      }
+    if (name === 'batch') {
+      const selected = batchOptions.find((b) => b.value === value);
+      setFormData(prev => ({ ...prev, starting_day: selected?.date || '' }));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    try {
-      const fd = new FormData();
-      fd.append('action', 'createupdate');
-      Object.entries(formData).forEach(([k, v]) => fd.append(k, v));
-      if (unique_id) fd.append('unique_id', unique_id);
-      files.forEach(f => fd.append('test_file[]', f));
 
-      const res = await client.post('folders/status_update/crud.php', fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+    const payload = {
+      entry_date: formData.entry_date,
+      staff: { unique_id: staffId },
+      batch: { unique_id: formData.batch },
+      day: parseInt(formData.day, 10) || 0,
+      hatching_status: formData.hatching_status,
+      remarks: formData.remarks,
+    };
+
+    try {
+      const res = unique_id
+        ? await djangoClient.put(`/status-update/${unique_id}`, payload)
+        : await djangoClient.post('/status-update', payload);
       if (res.data?.msg === 'create' || res.data?.msg === 'update') {
         navigate('/status_update/list');
       }
@@ -164,27 +158,17 @@ export default function StatusUpdateForm() {
                       value={formData.entry_date}
                       onChange={handleChange}
                       required
-                      disabled={!!formData.batch_id}
                     />
                   </div>
 
                   <div className="col-12 col-md-3">
                     <Select
                       label="Batch Id"
-                      name="batch_id"
-                      value={formData.batch_id}
+                      name="batch"
+                      value={formData.batch}
                       onChange={handleChange}
                       options={batchOptions}
                       required
-                    />
-                  </div>
-
-                  <div className="col-12 col-md-3">
-                    <TextInput
-                      label="Entry No"
-                      name="entry_no"
-                      value={formData.entry_no}
-                      readOnly
                     />
                   </div>
 
@@ -215,16 +199,6 @@ export default function StatusUpdateForm() {
                       onChange={handleChange}
                       options={HATCHING_OPTIONS}
                       required
-                    />
-                  </div>
-
-                  <div className="col-12 col-md-3">
-                    <FileInput
-                      label="Egg process Image Upload"
-                      name="test_file"
-                      multiple
-                      accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"
-                      onFilesChange={(fl) => setFiles(Array.from(fl))}
                     />
                   </div>
 

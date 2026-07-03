@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import TextInput from '../../components/TextInput';
 import Select from '../../components/Select';
 import Toggle from '../../components/Toggle';
@@ -18,44 +18,34 @@ export default function ItemCreationForm() {
     unit: '',
     active_status: '1',
   });
-  
+
   const [unitOptions, setUnitOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    fetchFormHtml();
+    fetchUnits();
+    if (unique_id) fetchItem();
   }, [unique_id]);
 
-  const fetchFormHtml = async () => {
+  const fetchUnits = async () => {
+    try {
+      const res = await djangoClient.get('/units', { params: { page_size: 100 } });
+      setUnitOptions((res.data.results || []).map((u) => ({ value: u.unique_id, label: u.unit_name })));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchItem = async () => {
     setIsLoading(true);
     try {
-      // ponytail: Extract form values and dropdown options by parsing legacy HTML
-      const url = unique_id 
-        ? `folders/item_creation/form.php?unique_id=${unique_id}`
-        : `folders/item_creation/form.php`;
-      const res = await client.get(url, { responseType: 'text' });
-      
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(res.data, 'text/html');
-
-      const itemCodeInput = doc.querySelector('#item_code');
-      const itemNameInput = doc.querySelector('#item_name');
-      const unitSelect = doc.querySelector('#unit');
-      const activeStatusSelect = doc.querySelector('#active_status');
-
-      if (unitSelect) {
-        const options = Array.from(unitSelect.options).map(opt => ({
-          value: opt.value,
-          label: opt.text
-        }));
-        setUnitOptions(options);
-      }
-
+      const res = await djangoClient.get(`/items/${unique_id}`);
+      const item = res.data.data;
       setFormData({
-        item_code: itemCodeInput ? itemCodeInput.value : '',
-        item_name: itemNameInput ? itemNameInput.value : '',
-        unit: unitSelect ? unitSelect.value : '',
-        active_status: activeStatusSelect ? activeStatusSelect.value : '1',
+        item_code: item.item_code || '',
+        item_name: item.item_name || '',
+        unit: item.unit?.unique_id || '',
+        active_status: item.is_active ? '1' : '0',
       });
     } catch (error) {
       console.error(error);
@@ -72,22 +62,17 @@ export default function ItemCreationForm() {
     e.preventDefault();
     setIsLoading(true);
 
-    const payload = new URLSearchParams();
-    payload.append('action', 'createupdate');
-    // Note: item_code is generated on backend, but sent anyway if needed. Backend ignores it on createupdate
-    payload.append('item_name', formData.item_name);
-    payload.append('unit', formData.unit);
-    payload.append('active_status', formData.active_status);
-    
-    if (unique_id) {
-      payload.append('unique_id', unique_id);
-    }
+    const payload = {
+      item_name: formData.item_name,
+      unit: { unique_id: formData.unit },
+      is_active: formData.active_status === '1',
+    };
 
     try {
-      const res = await client.post('folders/item_creation/crud.php', payload);
-      const json = res.data;
-      
-      if (json.msg === 'create' || json.msg === 'update') {
+      const res = unique_id
+        ? await djangoClient.put(`/items/${unique_id}`, payload)
+        : await djangoClient.post('/items', payload);
+      if (res.data?.msg === 'create' || res.data?.msg === 'update') {
         navigate('/item_creation/list');
       }
     } catch (error) {
@@ -125,8 +110,8 @@ export default function ItemCreationForm() {
                       label="Item Code"
                       name="item_code"
                       value={formData.item_code}
+                      placeholder={unique_id ? '' : 'Auto-generated on save'}
                       readOnly
-                      required
                     />
                   </div>
                   <div className="col-12 col-md-6">

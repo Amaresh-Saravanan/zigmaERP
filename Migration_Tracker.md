@@ -1,10 +1,8 @@
 # Zigma ERP — Migration Tracker
 
-> **LIVING DOCUMENT** — Update after every completed task. This is the single source of truth for the project, now spanning two parallel workstreams (see [Workstream Overview](#workstream-overview)): **Workstream A — UI Modernization** and **Workstream B — Django Backend (Greenfield Build)**.
+> **LIVING DOCUMENT** — Update after every completed task. This is the single source of truth for the entire migration, now spanning two parallel workstreams (see [Workstream Overview](#workstream-overview)): **Workstream A — UI Modernization** and **Workstream B — Django Backend Migration**.
 >
-> **Target architecture: React + Django REST + MongoDB Atlas + Docker + Vercel.** Legacy PHP (`legacy/`) is reference material only — used to understand business logic during frontend development (Phase 1/2) and to inform Django's business rules (Phase 3), but never deployed and never ported directly. See `TECH_STACK.md` for the full stack and `BACKEND_START.md` to start Workstream B.
->
-> Sections 1–15 below are the original, unchanged record of Workstream A / Phase 1 (building the React UI against legacy PHP as a reference backend), which is complete. They are preserved as history and are not being rewritten. New work is tracked in the Workstream Overview and Sections 16–17.
+> Sections 1–15 below are the original, unchanged record of Workstream A / Phase 1 (PHP → React parity migration), which is complete. They are preserved as history and are not being rewritten. New work is tracked in the Workstream Overview and Sections 16–17.
 
 ---
 
@@ -15,11 +13,11 @@
 | Field | Value |
 |-------|-------|
 | **Architecture** | **React (Vite) + Django REST + MongoDB Atlas + Docker + Vercel** (NOT PHP → Django migration; greenfield Django build using legacy PHP as reference for business logic only). |
-| **Current Phase** | Phase 1 (React): 100%. Phase 2 (UI Modernization): 100%. Phase 3 (Django Backend): 0% — ready to scaffold. Phase 4 (Deployment): 0%. |
-| **Current Task** | Django backend scaffolding (TASK-B01 in §17). See BACKEND_START.md for hands-on setup. |
-| **Last Completed Task** | TASK-A08: flatpickr DateInput integration complete across all 26+ form/list pages. |
-| **Overall Progress** | Frontend: 100% complete. Backend: To start (TASK-B01). |
-| **Active Blocker** | None — ready to start Django scaffold. |
+| **Current Phase** | Phase 1 (React): 100%. Phase 2 (UI Modernization): 100%. Phase 3 (Django Backend): TASK-B01–B09 done, TASK-B10 next. Phase 4 (Deployment): 0%. |
+| **Current Task** | TASK-B10 — Frontend `client.js` repointed per module (module-by-module cutover from PHP `crud.php` to Django). Core CRUD + User Management + 6 direct-mapping Process modules done; EggProcess/PitStatus/ScreeningProcess (harder — conditional fields, repeatable sub-rows) and Frp* (depend on those) remain (see §17.1 B10 row). |
+| **Last Completed Task** | TASK-B10 (partial): 6 "direct-mapping" Process modules repointed — MaterialReceived, CullingProcess, OvenProcess, DryProcess, Leachate, StatusUpdate. Same `mode="django"` pattern as everything prior, no new plumbing. Per-module notes: MaterialReceived's `unit` auto-fills from the selected item's own unit ref (client-side lookup, mirrors legacy's server-side one); file-upload fields (invoice image, work photos, bill copies) dropped across all 6 — no file field exists on any of these Django models, deferred back in TASK-B08; date-range/dropdown list filters dropped too since `MongoModelViewSet` only supports a single `search` param. StatusUpdate's `staff` auto-sets to the logged-in Django user (`GET /api/auth/me`) rather than a picker, matching legacy's implicit-current-user behavior; `hatching_status` remapped from legacy's numeric `'1'/'2'` to the backend's real string choices (`pending`/`progressing`/`completed`). **Live verification**: created Unit/Item/Supplier as shared dependencies, then created and verified all 6 modules against the real cluster — confirmed MaterialReceived's auto-generated `batch_id`, CullingProcess's server-computed `fuel_consumption`, and OvenProcess's server-computed `running_hours` all correct, then cleaned up test data. Full backend suite still 74/74 (no backend changes this round). |
+| **Overall Progress** | Frontend: 16/26 pages cut over to Django (all of Core CRUD + User Management + 6 Process modules). Backend: TASK-B01–B09 done (9/14), TASK-B10 in progress. |
+| **Active Blocker** | None. **Resolved 2026-07-03**: the Atlas connectivity issue was two stacked problems, not the TLS/cert issue it looked like. (1) Atlas's Network Access list only had a stale IP (152.57.192.145) — the machine's actual current IP had since changed to 157.51.97.14, and Atlas rejects non-allowlisted IPs at the TLS handshake with an `INTERNAL_ERROR` alert, which looks exactly like a cert problem but isn't. Fixed by the user adding `0.0.0.0/0` to Network Access. (2) Once past that, Atlas returned a real `bad auth` error — the DB user's password stored in `backend/.env` had been mistranscribed from an earlier screenshot (case-sensitive field, easy to misread). Fixed by the user resetting the DB user's password in Atlas and providing the fresh value. `MONGODB_URI` in `.env` now has the corrected password; connection verified with a live `ping` and a full CRUD cycle. |
 | **Tech Stack** | See TECH_STACK.md (React, Django 4.2+, MongoEngine, MongoDB, Vercel, Docker). |
 | **Legacy Reference** | `legacy/` folder (PHP source code — read for business logic understanding; do NOT migrate code). |
 
@@ -61,18 +59,16 @@
 - **Responsive design**: mobile-first breakpoints added to all pages
 
 ### Next Recommended Action
-Workstream A: continue the theme rollout past Login/Dashboard to Sidebar, Header, Tables, Forms (§16). Workstream B: **start here → `BACKEND_START.md`** (30-min Django + MongoDB Atlas scaffold with working login + Item CRUD reference), then TDD_Blueprint.md §15 for full technical design (§17, TASK-B01).
+Workstream A: continue the theme rollout past Login/Dashboard to Sidebar, Header, Tables, Forms (§16). Workstream B: scaffold the Django project structure per TDD_Blueprint.md §15 (§17, TASK-B01).
 
 ### Key Constraints (never forget)
-- **Architecture is React + Django + MongoDB Atlas + Docker + Vercel.** Not a PHP→Django code migration — Django is a greenfield build. See `TECH_STACK.md` for the full stack and `BACKEND_START.md` for hands-on setup.
-- **2026-07-01 repo cleanup**: the legacy PHP backend (`index.php`, `body.php`, `logout.php`, `inc/`, `config/`, `folders/`, `vendors/`, `db_setup/`, `assets/`, `uploads/`, `generate_logsheet.py`) was moved into `legacy/` to keep the repo root focused on the React frontend + docs. **The PHP app still runs from there for reference during Phase 1/2 development** — it is never deployed to production and is not the system of record once Django is live. If PHP stops responding at `http://localhost`, repoint the Apache/XAMPP docroot (or vhost/alias) to `legacy/` — that's outside this repo and wasn't changed by this cleanup.
-- Workstream A (UI): still talks to the legacy PHP `crud.php` endpoints during development — this is a visual/UX-only workstream, no new backend calls. It will be repointed to Django once Workstream B has enough module coverage.
-- Workstream B (Django): built from scratch against **MongoDB Atlas** via **MongoEngine**. Legacy PHP `crud.php` files are read as reference for business rules (duplicate checks, auto-code generation, permission logic) — no PHP code is ported or run in production. See `BACKEND_START.md` "Reference Implementation: Item Module" for the pattern to clone across all other modules.
-- Auth: legacy PHP uses sessions (reference only). Django backend uses **token-based auth (DRF TokenAuthentication or JWT)** since the Vercel-hosted frontend and containerized Django backend are different origins in production — see TDD_Blueprint.md §15.5 and TECH_STACK.md "Authentication & Authorization".
-- POST format to legacy PHP reference endpoints = application/x-www-form-urlencoded. **Django endpoints are JSON REST** (see TDD_Blueprint.md §15.4, TECH_STACK.md "API Contract").
-- Database: **MongoDB Atlas only** — no local Dockerized MongoDB, no MySQL/PostgreSQL. Every environment (dev/staging/prod) connects to its own Atlas cluster/database via `MONGODB_URI`. See TECH_STACK.md "Database Stack".
+- **2026-07-01 repo cleanup**: the legacy PHP backend (`index.php`, `body.php`, `logout.php`, `inc/`, `config/`, `folders/`, `vendors/`, `db_setup/`, `assets/`, `uploads/`, `generate_logsheet.py`) was moved into `legacy/` to keep the repo root focused on the React frontend + docs. **The PHP app still runs from there** — this was a move, not a deletion, since Django doesn't exist yet. If PHP stops responding at `http://localhost`, repoint the Apache/XAMPP docroot (or vhost/alias) to `legacy/` — that's outside this repo and wasn't changed by this cleanup.
+- Workstream A (UI): still talks to the existing PHP `crud.php` endpoints — this is a visual/UX-only workstream, no new backend calls.
+- Workstream B (Django): PHP backend is being replaced module-by-module, NOT changed in place. A module's PHP `crud.php` is only removed after its Django equivalent is verified end-to-end (see §17 rules).
+- Auth today = PHP sessions (NOT JWT, NOT localStorage). Django backend may keep session auth or move to token auth — decide at Phase 4 per deployment topology (see PRD §12.3/12.4), not before.
+- POST format to existing PHP endpoints = application/x-www-form-urlencoded with withCredentials: true. Django endpoints will be JSON REST (see TDD_Blueprint.md §15.4).
 - Velzon/Bootstrap CSS already imported in main.jsx — do NOT re-import per component. New dark-theme tokens live in `DESIGN.md` / `darkmode.css` — do NOT hardcode colors in components.
-- No TypeScript — plain .jsx / .js on the frontend. Backend is Python/Django + MongoEngine.
+- No TypeScript — plain .jsx / .js on the frontend. Backend is Python/Django.
 - Ponytail FULL mode: YAGNI, no unnecessary abstractions — applies to both workstreams.
 - Extract unique ID dynamically from backend HTML columns in the DataTable to avoid changing PHP (still applies until a module's DataTable is repointed to its Django endpoint).
 
@@ -101,21 +97,19 @@ Workstream A: continue the theme rollout past Login/Dashboard to Sidebar, Header
 | Reports pages styling | Done | 100% | Filter labels, timeline (LoginHistory), badge colors, table headers — all covered via CSS |
 | Responsive improvements (redesign-specific) | Done | 100% | Mobile breakpoints in `ux.css` §19, `datatable.css`, `forms.css` |
 
-### Workstream B — Django Backend (Greenfield Build)
-
-> **Important:** This is NOT a PHP → Django migration. Workstream B builds Django from scratch (greenfield) using legacy PHP as a reference for business logic only. See BACKEND_START.md for hands-on setup.
+### Workstream B — Django Backend Migration
 
 | Item | Status | Progress | Dependencies |
 |------|--------|----------|---------------|
-| Django + MongoEngine scaffold (TASK-B01) | Not Started | 0% | None — see BACKEND_START.md quick-start |
-| Auth (login endpoint, token gen, login endpoint parity with legacy) | Not Started | 0% | TASK-B01 |
-| Item module (reference impl: Item, Unit CRUD) | Not Started | 0% | Auth working |
-| Core CRUD modules (Tray, Pit, Supplier, clone from Item pattern) | Not Started | 0% | Item reference complete |
-| User management (User, UserType, Permissions, Screens) | Not Started | 0% | Core CRUD done |
-| Process modules (Screening, Egg, Culling, Oven, Dry, Leachate, etc.) | Not Started | 0% | User mgmt done |
-| Reports modules (Logsheet, DC, Measurable, *_Report) | Not Started | 0% | Process modules done |
-| Frontend `client.js` repointed to Django API | Not Started | 0% | Enough modules live (Item minimum) |
-| pytest-django test suite | Not Started | 0% | Alongside each module |
+| Django + MongoEngine scaffold (TASK-B01) | Done | 100% | `backend/` created, verified booting |
+| Auth (login endpoint, token gen, login endpoint parity with legacy) | Done | 100% | TASK-B01 done |
+| Item module (reference impl: Item, Unit CRUD) | Done | 100% | Auth working |
+| Core CRUD modules (Tray, Pit, Supplier, clone from Item pattern) | Done | 100% | Item reference complete |
+| User management (User, UserType, Permissions, Screens) | Done | 100% | Core CRUD done |
+| Process modules (Screening, Egg, Culling, Oven, Dry, Leachate, etc.) | Done | 100% | User mgmt done |
+| Reports modules (Logsheet, DC, Measurable) | Done | 100% | Process modules done. `*_Report` aggregates deferred to TASK-B10 — see B09 notes above |
+| Frontend `client.js` repointed to Django API | Not Started | 0% | Enough modules live (Item minimum) — ready to start |
+| pytest-django test suite | In Progress | ~80% | Alongside each module; 69 tests passing, all via mongomock |
 | Docker (Dockerfile, docker-compose.yml, production config) | Not Started | 0% | Django setup functional locally |
 | Deployment (Vercel frontend + containerized backend to cloud) | Not Started | 0% | Docker working, CORS/secrets set |
 | Production hardening (env vars, MongoDB Atlas, secrets, logging) | Not Started | 0% | Deployment live |
@@ -507,44 +501,60 @@ Estimated:     2 hours
 
 ---
 
-## 17. Workstream B — Django Backend (Greenfield Build) (Detail)
+## 17. Workstream B — Django Backend Migration (Detail)
 
-> Tracks PRD_React_Migration.md §12.3, TDD_Blueprint.md §15, TECH_STACK.md, and BACKEND_START.md. Nothing in this workstream has started. **This is a greenfield Django + MongoDB Atlas build** — legacy PHP (`legacy/`) stays untouched throughout, used only as a business-logic reference, and continues serving Workstream A during frontend development.
+> Tracks PRD_React_Migration.md §12.3 and TDD_Blueprint.md §15. Nothing in this workstream has started; PHP backend is untouched and still serving Workstream A.
 
 ### 17.1 Task Queue
 
 | Task | Title | Status | Depends On | Notes |
 |------|-------|--------|------------|-------|
-| TASK-B01 | Django + MongoEngine scaffold, MongoDB Atlas cluster (`backend/`, apps, settings) | Not Started | None | Per BACKEND_START.md Quick Start (30 min) and TDD_Blueprint.md §15.2 |
-| TASK-B02 | MongoEngine `Document` models (per-entity, `is_deleted`/`unique_id` handling) | Not Started | TASK-B01 | §15.3 — see BACKEND_START.md model examples |
-| TASK-B03 | Auth (token-based) + login endpoint returning full profile in one response | Not Started | TASK-B02 | Closes KI-002 by design — see BACKEND_START.md step 7 `login()` view |
-| TASK-B04 | Permission enforcement (server-side `screens` check) | Not Started | TASK-B03 | Closes a gap legacy PHP never had (§15.6) |
-| TASK-B05 | Menu endpoint (`main_screens`/`screens` tree, returned from login or a dedicated endpoint) | Not Started | TASK-B02 | Closes KI-003 |
-| TASK-B06 | Core CRUD APIs (Item, Tray, Pit, Unit, Supplier) | Not Started | TASK-B04 | Item is the reference implementation — see BACKEND_START.md "Reference Implementation: Item Module"; clone the pattern for the rest |
-| TASK-B07 | User management APIs (User, Type, Permission, Screen) | Not Started | TASK-B06 | |
-| TASK-B08 | Process module APIs (Screening, Egg, Culling, Oven, Dry, Leachate, Material Received, Status Update, Pit Status, FRP*) | Not Started | TASK-B06 | |
-| TASK-B09 | Reports APIs (Logsheet, DC, Measurable, *Report) | Not Started | TASK-B08 | |
-| TASK-B10 | Frontend `client.js` repointed per module (module-by-module cutover) | Not Started | Each module's API task | Legacy `crud.php` calls dropped from the frontend once the Django endpoint is verified for that module |
-| TASK-B11 | pytest-django / DRF test suite | Not Started | Alongside B06–B09 | Per §15.11 — see BACKEND_START.md "Test Example" |
-| TASK-B12 | Security hardening (password hashing, CORS, secrets via env vars) | Not Started | TASK-B03 | Closes PRD §9 items by design, not retrofit |
-| TASK-B13 | Dockerfile (backend) + `docker-compose.yml` (backend + frontend containers; DB is Atlas, not containerized) | Not Started | Enough modules live locally | Phase 4 — see TECH_STACK.md "Deployment Architecture" |
-| TASK-B14 | Vercel deploy (frontend) + containerized backend deploy, both pointed at MongoDB Atlas prod cluster | Not Started | TASK-B13 | Phase 4 |
+| TASK-B01 | Django + MongoEngine scaffold, MongoDB Atlas cluster (`backend/`, apps, settings) | **Done** | None | `backend/` scaffolded: 5 apps (accounts, inventory, process, reports, core), `config/settings.py` wired to MongoEngine via `.env`, `requirements.txt`, `.gitignore`. Verified `manage.py check` and `runserver` boot cleanly, `/api/health` returns 200. Real MongoDB Atlas cluster connected 2026-07-03 (`backend/.env`'s `MONGODB_URI` now points at a live `mongodb+srv://` cluster, not the local placeholder). |
+| TASK-B02 | MongoEngine `Document` models (per-entity, `is_deleted`/`unique_id` handling) | **Done** | TASK-B01 (done) | `accounts/models.py`: `UserType`, `User` (unique_id, is_deleted, is_active). 3 pytest tests vs mongomock passing (`accounts/tests.py`). Other entities' models arrive with their own tasks (Item/Unit in B06, process/report entities in B08/B09). |
+| TASK-B03 | Auth (token-based) + login endpoint returning full profile in one response | **Done** | TASK-B02 (done) | `accounts/models.AuthToken` (MongoEngine, not DRF's relational `authtoken`), `accounts/authentication.MongoTokenAuthentication`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`. Also removed `django.contrib.auth`/`contenttypes` from `INSTALLED_APPS` (dead weight, no relational DB) and set `REST_FRAMEWORK.UNAUTHENTICATED_USER = None` to stop DRF importing Django's `AnonymousUser` (which needs contenttypes). 9 pytest tests passing (mongomock + DRF `APIClient`). |
+| TASK-B04 | Permission enforcement (server-side `screens` check) | **Done** | TASK-B03 (done) | `accounts/permissions.HasScreenPermission` + `User.has_screen()`. Infrastructure only — first real consumer is TASK-B06's Item/Unit ViewSets. |
+| TASK-B05 | Menu endpoint (`main_screens`/`screens` tree, returned from login or a dedicated endpoint) | **Done** | TASK-B02 (done) | `core.models.MainScreen`/`Screen`, `GET /api/menu` (dedicated endpoint, not folded into login). Filters to the user's permitted `main_screens`/`screens` — legacy's equivalent was unfiltered. 5 tests, all passing. |
+| TASK-B06 | Core CRUD APIs (Item, Tray, Pit, Unit, Supplier) | **Done** | TASK-B04 (done) | All 5 in `inventory` app on `core.mongo_viewset.MongoModelViewSet`. Routes: `/api/units`, `/api/items`, `/api/trays`, `/api/pits`, `/api/suppliers`. 15 tests for Tray/Pit/Supplier + 9 for Item/Unit, all passing. |
+| TASK-B07 | User management APIs (User, Type, Permission, Screen) | **Done** | TASK-B06 (done) | "Permission" = per-User `screens`/`main_screens` (decision confirmed with user, deviates from legacy's per-role model — see AI Continuity notes). Routes: `/api/user-types`, `/api/users`, `/api/main-screens`, `/api/screens`. 10 tests, all passing. |
+| TASK-B08 | Process module APIs (Screening, Egg, Culling, Oven, Dry, Leachate, Material Received, Status Update, Pit Status, FRP*) | **Done** | TASK-B06 (done) | All 10 in `process` app on `MongoModelViewSet`. Screening folds into a unified `PitStatus` model (`org_status='6'`) rather than a separate collection — legacy backs both with the same table. Routes: `/api/material-received`, `/api/culling-process`, `/api/oven-process`, `/api/dry-process`, `/api/leachate`, `/api/egg-process`, `/api/status-update`, `/api/pit-status`, `/api/frp-tray-process`, `/api/frp-status-update`. 20 tests, all passing. Deferred: deep cross-module cascades (Pit Status ↔ Frp Tray Process batch_status sync), file upload fields — see AI Continuity notes. |
+| TASK-B09 | Reports APIs (Logsheet, DC, Measurable) | **Done** | TASK-B08 | All 3 in `reports` app on `MongoModelViewSet`, same pattern as B06/B08. `DC` corrected mid-task from a guessed "Daily Concentration" shape to the real Delivery Challan shape (line items, GST, tax rate) after checking `DCForm.jsx`. Routes: `/api/measurable`, `/api/logsheet`, `/api/dc`. 6 tests, all passing. **`*_Report` aggregate endpoints (MeasurableReport, EggProcessReport, PitStatusReport, RejectsReport) deferred** — their frontend pages call legacy PHP directly, not a Django contract, so building them now would be speculative; revisit per-report as each is repointed in TASK-B10. |
+| TASK-B10 | Frontend `client.js` repointed per module (module-by-module cutover) | **In Progress** | Each module's API task | Built the shared plumbing (djangoClient.js, DataTable.jsx `mode="django"`, token auth alongside PHP session auth) and repointed **16 modules**: Core CRUD (5) + User Management (5) + Process (6: MaterialReceived, CullingProcess, OvenProcess, DryProcess, Leachate, StatusUpdate). All verified end-to-end against live Atlas data via curl. Old `crud.php` **not yet removed** for any module — needs real browser click-through first, which needs a connected Chrome extension (not available in this environment). File-upload fields dropped across every Process module (invoice images, work photos, bill copies) — no file field exists on any Django model, deferred in TASK-B08; same for legacy's date-range/dropdown list filters, since `MongoModelViewSet` only supports a single `search` param. Remaining Process modules split by complexity per pacing plan: **EggProcess** (repeatable `addons` row-builder — new UI pattern), **PitStatus**/**ScreeningProcess** (7 conditional field-sets keyed on `org_status`; ScreeningProcess is a separate frontend page hard-coding `org_status='6'` against the same `PitStatus` backend), then **FrpTrayProcess**/**FrpStatusUpdate** last since they depend on the patterns built for the above. `*_Report` pages and `RejectsImageUpload` (file uploads, same deferred-scope reason) stay on PHP. |
+| TASK-B11 | pytest-django / DRF test suite | Not Started | Alongside B06–B09 | Per §15.11 |
+| TASK-B12 | Security hardening (password hashing, CORS, CSRF) | Not Started | TASK-B03 | Closes PRD §9 items |
+| TASK-B13 | Dockerfile (backend) + `docker-compose.yml` | Not Started | Enough modules live locally | Phase 4 |
+| TASK-B14 | Vercel deploy (frontend) + containerized backend deploy | Not Started | TASK-B13 | Phase 4 |
 
 ### 17.2 Module Cutover Tracker
 
-> A module is only marked "Cut Over" once its Django + MongoDB Atlas endpoint is verified end-to-end AND the frontend's calls to the legacy PHP reference endpoint for that module are removed. Until then it stays "Legacy PHP (reference)" even if a Django endpoint exists in parallel for testing.
+> A module is only marked "Cut Over" once its Django endpoint is verified end-to-end AND the corresponding `crud.php` is removed. Until then it stays "PHP (legacy)" even if a Django endpoint exists in parallel for testing.
 
 | Module | Backend | Notes |
 |--------|---------|-------|
-| Item Creation | Legacy PHP (reference) | Candidate for first Django reference module — see BACKEND_START.md |
-| Tray Creation | Legacy PHP (reference) | |
-| Pit Creation | Legacy PHP (reference) | |
-| Unit Creation | Legacy PHP (reference) | |
-| Supplier Creation | Legacy PHP (reference) | |
-| User Management | Legacy PHP (reference) | |
-| Process modules (all) | Legacy PHP (reference) | |
-| Reports (all) | Legacy PHP (reference) | |
-| Auth / Menu | Legacy PHP (reference) | |
+| Item Creation | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
+| Tray Creation | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
+| Pit Creation | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
+| Unit Creation | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
+| Supplier Creation | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
+| User Management — User | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
+| User Management — UserType | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
+| User Management — UserPermission | PHP (legacy) | Django endpoint (`mode="django"`, via `UserType.screens`/`main_screens` + `/api/permission-catalog`) wired in parallel (TASK-B10), verified live via curl including enforcement (a role-granted permission actually gates a real request), not yet cut over (needs browser verification first) |
+| User Management — UserScreen | PHP (legacy) | Django endpoint (`mode="django"`, → `core.Screen`, reduced field set — no `description`, no action-checkboxes) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
+| Main Screen Admin | PHP (legacy) | Django endpoint (`mode="django"`, → `core.MainScreen`, reduced field set — no `screen_type`/`order_no`/`description`) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
+| Material Received | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl (incl. auto-generated `batch_id`), not yet cut over (needs browser verification first) |
+| Culling Process | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl (incl. server-computed `fuel_consumption`), not yet cut over (needs browser verification first) |
+| Oven Process | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl (incl. server-computed `running_hours`), not yet cut over (needs browser verification first) |
+| Dry Process | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
+| Leachate | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
+| Status Update | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
+| Egg Process | PHP (legacy) | Not yet repointed — has a repeatable `addons` sub-form (new UI pattern) |
+| Pit Status | PHP (legacy) | Not yet repointed — 7 conditional field-sets keyed on `org_status` |
+| Screening Process | PHP (legacy) | Not yet repointed — separate frontend page sharing the `PitStatus` backend at `org_status='6'` |
+| FRP Tray Process | PHP (legacy) | Not yet repointed — depends on PitStatus/EggProcess patterns; `batch` is unique (one FRP load per MaterialReceived batch), needs a duplicate-create check |
+| FRP Status Update | PHP (legacy) | Not yet repointed — depends on FrpTrayProcess existing |
+| Rejects Image Upload | PHP (legacy) | **Not planned to cut over** — file uploads deferred in TASK-B08, no Django model/endpoint exists at all, same category as the deferred `*_Report` pages |
+| Process modules (all) | PHP (legacy) | |
+| Reports (all) | PHP (legacy) | |
+| Auth / Menu | PHP (legacy) | |
 
 ---
 

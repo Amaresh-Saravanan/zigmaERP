@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import TextInput from '../../components/TextInput';
 import Toggle from '../../components/Toggle';
 import Button from '../../components/Button';
@@ -14,34 +14,22 @@ export default function UserTypeForm() {
     user_type: '',
     active_status: '1',
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    fetchFormHtml();
+    if (unique_id) fetchUserType();
   }, [unique_id]);
 
-  const fetchFormHtml = async () => {
+  const fetchUserType = async () => {
     setIsLoading(true);
     try {
-      const url = unique_id 
-        ? `folders/user_type/form.php?unique_id=${unique_id}`
-        : `folders/user_type/form.php`;
-      const res = await client.get(url, { responseType: 'text' });
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(res.data, 'text/html');
-
-      const inputs = {
-        user_type: doc.querySelector('#user_type'),
-        active_status: doc.querySelector('#active_status'),
-      };
-
-      if (unique_id) {
-        setFormData({
-          user_type: inputs.user_type ? inputs.user_type.value : '',
-          active_status: inputs.active_status ? inputs.active_status.value : '1',
-        });
-      }
+      const res = await djangoClient.get(`/user-types/${unique_id}`);
+      const userType = res.data.data;
+      setFormData({
+        user_type: userType.type_name || '',
+        active_status: userType.is_active ? '1' : '0',
+      });
     } catch (error) {
       console.error(error);
     } finally {
@@ -57,21 +45,17 @@ export default function UserTypeForm() {
     e.preventDefault();
     setIsLoading(true);
 
-    const payload = new URLSearchParams();
-    payload.append('action', 'createupdate');
-    Object.keys(formData).forEach(key => {
-      payload.append(key, formData[key]);
-    });
-    
-    if (unique_id) {
-      payload.append('unique_id', unique_id);
-    }
+    const payload = {
+      type_name: formData.user_type,
+      is_active: formData.active_status === '1',
+    };
 
     try {
-      const res = await client.post('folders/user_type/crud.php', payload);
-      const json = res.data;
+      const res = unique_id
+        ? await djangoClient.put(`/user-types/${unique_id}`, payload)
+        : await djangoClient.post('/user-types', payload);
 
-      if (json.msg === 'create' || json.msg === 'update') {
+      if (res.data?.msg === 'create' || res.data?.msg === 'update') {
         navigate('/user_type/list');
       }
     } catch (error) {
