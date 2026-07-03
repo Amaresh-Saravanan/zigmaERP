@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DateInput from '../../components/DateInput';
 import TextInput from '../../components/TextInput';
 import Select from '../../components/Select';
@@ -14,28 +14,31 @@ export default function EggProcessForm() {
   const [formData, setFormData] = useState({
     entry_no: '',
     entry_date: new Date().toISOString().split('T')[0],
-    batch_id: '',
-    supplier_name: '',
-    supplier_name1: '',
+    batch: '',
+    supplier_display: '',
     tot_qty: '',
     tray_utilized: '',
-    checkedvalue: '',
-    screen_unique_id: '',
   });
 
+  const [staffId, setStaffId] = useState('');
+  const [supplierId, setSupplierId] = useState('');
   const [batchOptions, setBatchOptions] = useState([]);
   const [trayOptions, setTrayOptions] = useState([]);
   const [itemOptions, setItemOptions] = useState([]);
-  
+
   const [selectedTrays, setSelectedTrays] = useState([]);
-  const [selectedItems, setSelectedItems] = useState({});
-  
+  const [addons, setAddons] = useState([]); // [{ item, qty }]
+
   const [isLoading, setIsLoading] = useState(false);
   const [showTrayModal, setShowTrayModal] = useState(false);
   const [showAddOnModal, setShowAddOnModal] = useState(false);
 
   useEffect(() => {
-    fetchFormHtml();
+    fetchCurrentUser();
+    fetchBatches();
+    fetchTrays();
+    fetchItems();
+    if (unique_id) fetchRecord();
   }, [unique_id]);
 
   // Close whichever modal is open on Escape
@@ -51,62 +54,64 @@ export default function EggProcessForm() {
     return () => document.removeEventListener('keydown', onKey);
   }, [showTrayModal, showAddOnModal]);
 
-  const fetchFormHtml = async () => {
+  const fetchCurrentUser = async () => {
+    try {
+      const res = await djangoClient.get('/auth/me');
+      setStaffId(res.data.data.unique_id);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchBatches = async () => {
+    try {
+      const res = await djangoClient.get('/material-received', { params: { page_size: 100 } });
+      setBatchOptions((res.data.results || []).map((b) => ({
+        value: b.unique_id,
+        label: b.batch_id,
+        supplierId: b.supplier?.unique_id || '',
+        supplierName: b.supplier?.supplier_name || '',
+        qty: b.qty,
+      })));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchTrays = async () => {
+    try {
+      const res = await djangoClient.get('/trays', { params: { page_size: 100 } });
+      setTrayOptions((res.data.results || []).map((t) => ({ id: t.unique_id, name: t.bin_name })));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchItems = async () => {
+    try {
+      const res = await djangoClient.get('/items', { params: { page_size: 100 } });
+      setItemOptions((res.data.results || []).map((i) => ({ value: i.unique_id, label: i.item_name })));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchRecord = async () => {
     setIsLoading(true);
     try {
-      const url = unique_id 
-        ? `folders/egg_process/form.php?unique_id=${unique_id}`
-        : `folders/egg_process/form.php`;
-      const res = await client.get(url, { responseType: 'text' });
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(res.data, 'text/html');
-
-      // Extract batch options
-      const batchSelect = doc.querySelector('#batch_id');
-      if (batchSelect) {
-        setBatchOptions(Array.from(batchSelect.options).map(opt => ({
-          value: opt.value,
-          label: opt.text
-        })));
-      }
-
-      // Extract item options for add-ons
-      const itemSelect = doc.querySelector('#item_name');
-      if (itemSelect) {
-        setItemOptions(Array.from(itemSelect.options).map(opt => ({
-          value: opt.value,
-          label: opt.text,
-          unit: opt.getAttribute('data-unit') || ''
-        })));
-      }
-
-      // Extract tray options from the modal table
-      const trayCheckboxes = Array.from(doc.querySelectorAll('input[name="option[]"]'));
-      setTrayOptions(trayCheckboxes.map(cb => ({
-        id: cb.value,
-        name: cb.getAttribute('data-tray-name') || cb.value,
-        checked: cb.hasAttribute('checked') || selectedTrays.includes(cb.value)
-      })));
-
-      // Initialize form data
+      const res = await djangoClient.get(`/egg-process/${unique_id}`);
+      const ep = res.data.data;
       setFormData({
-        entry_no: doc.querySelector('#entry_no') ? doc.querySelector('#entry_no').value : '',
-        entry_date: doc.querySelector('#entry_date') ? doc.querySelector('#entry_date').value : new Date().toISOString().split('T')[0],
-        batch_id: doc.querySelector('#batch_id') ? doc.querySelector('#batch_id').value : '',
-        supplier_name: doc.querySelector('#supplier_name') ? doc.querySelector('#supplier_name').value : '',
-        supplier_name1: doc.querySelector('#supplier_name1') ? doc.querySelector('#supplier_name1').value : '',
-        tot_qty: doc.querySelector('#tot_qty') ? doc.querySelector('#tot_qty').value : '',
-        tray_utilized: doc.querySelector('#tray_utilized') ? doc.querySelector('#tray_utilized').value : '',
-        checkedvalue: doc.querySelector('#checkedvalue') ? doc.querySelector('#checkedvalue').value : '',
-        screen_unique_id: doc.querySelector('#screen_unique_id') ? doc.querySelector('#screen_unique_id').value : '',
+        entry_no: ep.entry_no || '',
+        entry_date: ep.entry_date || '',
+        batch: ep.batch?.unique_id || '',
+        supplier_display: ep.supplier?.supplier_name || '',
+        tot_qty: String(ep.tot_qty ?? ''),
+        tray_utilized: String(ep.tray_utilized ?? ''),
       });
-
-      // Initialize selected trays from checkedvalue
-      const checkedVal = doc.querySelector('#checkedvalue');
-      if (checkedVal && checkedVal.value) {
-        setSelectedTrays(checkedVal.value.split(',').filter(Boolean));
-      }
-
+      setSupplierId(ep.supplier?.unique_id || '');
+      setSelectedTrays((ep.trays || []).map((t) => t.unique_id));
+      setAddons((ep.addons || []).map((a) => ({ item: a.item.unique_id, itemLabel: a.item.item_name, qty: String(a.qty) })));
     } catch (error) {
       console.error(error);
     } finally {
@@ -116,126 +121,80 @@ export default function EggProcessForm() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
-    if (name === 'batch_id') {
-      fetchBatchDetails(value);
-    }
-  };
-
-  const fetchBatchDetails = async (batchId) => {
-    if (!batchId) return;
-    try {
-      const payload = new URLSearchParams();
-      payload.append('action', 'problem');
-      payload.append('ticket_no', batchId);
-      const res = await client.post('folders/egg_process/crud.php', payload);
-      
-      if (res.data) {
-        setFormData(prev => ({
-          ...prev,
-          tot_qty: res.data.tot_qty || prev.tot_qty,
-          supplier_name: res.data.supplier_name || prev.supplier_name,
-          supplier_name1: res.data.supplier_name1 || prev.supplier_name1,
-        }));
-      }
-    } catch (error) {
-      console.error('Error fetching batch details', error);
+    if (name === 'batch') {
+      const selected = batchOptions.find((b) => b.value === value);
+      setSupplierId(selected?.supplierId || '');
+      setFormData((prev) => ({
+        ...prev,
+        supplier_display: selected?.supplierName || '',
+        tot_qty: selected ? String(selected.qty) : '',
+      }));
     }
   };
 
   const handleTrayToggle = (trayId) => {
-    setSelectedTrays(prev => 
-      prev.includes(trayId) ? prev.filter(id => id !== trayId) : [...prev, trayId]
+    setSelectedTrays((prev) =>
+      prev.includes(trayId) ? prev.filter((id) => id !== trayId) : [...prev, trayId]
     );
   };
 
-  const saveTrays = async () => {
+  const saveTrays = () => {
     if (selectedTrays.length.toString() !== formData.tray_utilized) {
-      alert("Mismatched Tray utilized and Tray count value");
+      alert('Mismatched Tray utilized and Tray count value');
       return;
     }
-    
-    const checkedVal = selectedTrays.join(',');
-    setFormData(prev => ({ ...prev, checkedvalue: checkedVal }));
     setShowTrayModal(false);
-
-    try {
-      const payload = new URLSearchParams();
-      payload.append('action', 'sub_add_update');
-      payload.append('entry_date', formData.entry_date);
-      // staff_name is handled by PHP session but we can send a dummy or nothing if session has it
-      payload.append('tot_qty', formData.tot_qty);
-      payload.append('tray_utilized', formData.tray_utilized);
-      payload.append('batch_id', formData.batch_id);
-      payload.append('checkedvalue', checkedVal);
-      payload.append('screen_unique_id', formData.screen_unique_id);
-      
-      await client.post('folders/egg_process/crud.php', payload);
-    } catch (error) {
-      console.error("Error saving trays", error);
-    }
   };
 
   const handleItemSelectChange = (e) => {
     const options = e.target.options;
-    const newSelected = {};
+    const newAddons = [];
     for (let i = 0; i < options.length; i++) {
       if (options[i].selected) {
-        newSelected[options[i].value] = selectedItems[options[i].value] || '';
+        const existing = addons.find((a) => a.item === options[i].value);
+        newAddons.push({
+          item: options[i].value,
+          itemLabel: options[i].text,
+          qty: existing ? existing.qty : '',
+        });
       }
     }
-    setSelectedItems(newSelected);
+    setAddons(newAddons);
   };
 
-  const handleItemQtyChange = (itemId, qty) => {
-    setSelectedItems(prev => ({ ...prev, [itemId]: qty }));
-  };
-
-  const saveAddOns = async () => {
-    setShowAddOnModal(false);
-    
-    try {
-      const payload = new URLSearchParams();
-      payload.append('action', 'sub_add_on');
-      payload.append('entry_date', formData.entry_date);
-      payload.append('tot_qty', formData.tot_qty);
-      payload.append('batch_id', formData.batch_id);
-      payload.append('screen_unique_id', formData.screen_unique_id);
-      if (unique_id) payload.append('unique_id', unique_id);
-      
-      Object.keys(selectedItems).forEach(itemId => {
-        payload.append('item_names[]', itemId);
-        payload.append('checkedvalues[]', selectedItems[itemId]);
-      });
-
-      await client.post('folders/egg_process/crud.php', payload);
-    } catch (error) {
-      console.error("Error saving add ons", error);
-    }
+  const handleAddonQtyChange = (itemId, qty) => {
+    setAddons((prev) => prev.map((a) => (a.item === itemId ? { ...a, qty } : a)));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
 
-    const payload = new URLSearchParams();
-    payload.append('action', 'createupdate');
-    Object.keys(formData).forEach(key => {
-      payload.append(key, formData[key]);
-    });
-    
-    if (unique_id) {
-      payload.append('unique_id', unique_id);
+    if (selectedTrays.length !== parseInt(formData.tray_utilized, 10)) {
+      alert('Number of selected trays must match tray utilized.');
+      return;
     }
 
-    try {
-      const res = await client.post('folders/egg_process/crud.php', payload);
-      const json = res.data;
+    setIsLoading(true);
 
-      if (json.msg === 'create' || json.msg === 'update') {
-        navigate('/egg_process/list');
-      } else if (json.msg === 'already') {
+    const payload = {
+      entry_date: formData.entry_date,
+      staff: { unique_id: staffId },
+      supplier: { unique_id: supplierId },
+      batch: { unique_id: formData.batch },
+      tot_qty: parseFloat(formData.tot_qty) || 0,
+      tray_utilized: parseInt(formData.tray_utilized, 10) || 0,
+      trays: selectedTrays.map((id) => ({ unique_id: id })),
+      addons: addons.map((a) => ({ item: { unique_id: a.item }, qty: parseFloat(a.qty) || 0 })),
+    };
+
+    try {
+      const res = unique_id
+        ? await djangoClient.put(`/egg-process/${unique_id}`, payload)
+        : await djangoClient.post('/egg-process', payload);
+
+      if (res.data?.msg === 'create' || res.data?.msg === 'update') {
         navigate('/egg_process/list');
       }
     } catch (error) {
@@ -268,36 +227,32 @@ export default function EggProcessForm() {
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
-                  <div className="col-12 col-md-3 mb-3">
-                    <span className="form-label app-form-label d-block">Entry No</span>
-                    <h5 className="mb-0">{formData.entry_no}</h5>
-                  </div>
-
-                  {!unique_id ? (
+                  {unique_id && (
                     <div className="col-12 col-md-3 mb-3">
-                      <DateInput
-                        id="entry_date"
-                        name="entry_date"
-                        label="Entry Date"
-                        value={formData.entry_date}
-                        onChange={handleChange}
-                        required
-                      />
-                    </div>
-                  ) : (
-                    <div className="col-12 col-md-3 mb-3">
-                      <span className="form-label app-form-label d-block">Entry Date</span>
-                      <span>{formData.entry_date}</span>
+                      <span className="form-label app-form-label d-block">Entry No</span>
+                      <h5 className="mb-0">{formData.entry_no}</h5>
                     </div>
                   )}
+
+                  <div className="col-12 col-md-3 mb-3">
+                    <DateInput
+                      id="entry_date"
+                      name="entry_date"
+                      label="Entry Date"
+                      value={formData.entry_date}
+                      onChange={handleChange}
+                      required
+                      disabled={!!unique_id}
+                    />
+                  </div>
 
                   <div className="col-12 col-md-3">
                     <Select
                       label="Batch Id"
-                      name="batch_id"
-                      value={formData.batch_id}
+                      name="batch"
+                      value={formData.batch}
                       onChange={handleChange}
-                      options={[{ value: '', label: 'Select Batch Id' }, ...batchOptions]}
+                      options={batchOptions}
                       required
                       disabled={!!unique_id}
                     />
@@ -306,8 +261,8 @@ export default function EggProcessForm() {
                   <div className="col-12 col-md-3">
                     <TextInput
                       label="Supplier Name"
-                      name="supplier_name"
-                      value={formData.supplier_name}
+                      name="supplier_display"
+                      value={formData.supplier_display}
                       readOnly
                       required
                     />
@@ -331,16 +286,15 @@ export default function EggProcessForm() {
                       value={formData.tray_utilized}
                       onChange={handleChange}
                       required
-                      readOnly={!!unique_id}
                     />
                   </div>
 
                   <div className="col-12 col-md-3 mb-3 d-flex align-items-end gap-2">
-                    <Button onClick={() => setShowTrayModal(true)}>
-                      Add Tray
+                    <Button type="button" onClick={() => setShowTrayModal(true)}>
+                      Select Trays ({selectedTrays.length})
                     </Button>
-                    <Button variant="soft-primary" onClick={() => setShowAddOnModal(true)}>
-                      Add On
+                    <Button type="button" variant="soft-primary" onClick={() => setShowAddOnModal(true)}>
+                      Add On ({addons.length})
                     </Button>
                   </div>
                 </div>
@@ -383,10 +337,10 @@ export default function EggProcessForm() {
                 <div className="d-flex flex-wrap gap-3">
                   {trayOptions.map(tray => (
                     <div key={tray.id} className="form-check">
-                      <input 
-                        className="form-check-input" 
-                        type="checkbox" 
-                        id={`tray_${tray.id}`} 
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        id={`tray_${tray.id}`}
                         checked={selectedTrays.includes(tray.id)}
                         onChange={() => handleTrayToggle(tray.id)}
                       />
@@ -398,7 +352,7 @@ export default function EggProcessForm() {
                 </div>
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn btn-primary" onClick={saveTrays}>Save Trays</button>
+                <button type="button" className="btn btn-primary" onClick={saveTrays}>Done</button>
               </div>
             </div>
           </div>
@@ -429,7 +383,7 @@ export default function EggProcessForm() {
                     multiple
                     className="form-select"
                     onChange={handleItemSelectChange}
-                    value={Object.keys(selectedItems)}
+                    value={addons.map((a) => a.item)}
                     style={{ minHeight: '100px' }}
                   >
                     {itemOptions.map(opt => (
@@ -437,25 +391,22 @@ export default function EggProcessForm() {
                     ))}
                   </select>
                 </div>
-                
-                {Object.keys(selectedItems).map(itemId => {
-                  const item = itemOptions.find(opt => opt.value === itemId);
-                  return (
-                    <div key={itemId} className="mb-3">
-                      <label className="form-label">{item?.label} Quantity</label>
-                      <input 
-                        type="text" 
-                        className="form-control" 
-                        value={selectedItems[itemId]}
-                        onChange={(e) => handleItemQtyChange(itemId, e.target.value)}
-                        required
-                      />
-                    </div>
-                  );
-                })}
+
+                {addons.map((a) => (
+                  <div key={a.item} className="mb-3">
+                    <label className="form-label">{a.itemLabel} Quantity</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={a.qty}
+                      onChange={(e) => handleAddonQtyChange(a.item, e.target.value)}
+                      required
+                    />
+                  </div>
+                ))}
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn btn-primary" onClick={saveAddOns}>Save Add-Ons</button>
+                <button type="button" className="btn btn-primary" onClick={() => setShowAddOnModal(false)}>Done</button>
               </div>
             </div>
           </div>

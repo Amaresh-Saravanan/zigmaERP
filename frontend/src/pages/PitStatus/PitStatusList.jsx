@@ -1,85 +1,42 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DataTable from '../../components/DataTable';
-import DateInput from '../../components/DateInput';
 
-const now = new Date();
-const pad = (n) => n.toString().padStart(2, '0');
-const FIRST_DAY_OF_MONTH = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-01`;
-const TODAY = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+const ORG_STATUS_LABELS = {
+  '1': 'Organic Waste Added',
+  '2': 'Baby Larvae Added',
+  '3': 'Aeration Process',
+  '4': 'Measurement',
+  '5': 'Harvest',
+  '6': 'Vibro Screen',
+  '7': 'Tippi',
+};
 
 export default function PitStatusList() {
   const navigate = useNavigate();
-  const [filters, setFilters] = useState({ from_date: FIRST_DAY_OF_MONTH, to_date: TODAY, pit_name: '', status_type: '' });
+
+  const columns = [
+    { label: 'S.No', sno: true },
+    { label: 'Entry Date', key: 'entry_date' },
+    { label: 'Pit Number', key: 'pit.pit_name' },
+    { label: 'Pit Batch Id', key: 'form_batch_id' },
+    { label: 'Status', key: 'org_status', render: (v) => ORG_STATUS_LABELS[v] || v },
+    { label: 'Notes', key: 'notes' },
+    { label: 'Action', className: 'text-end', actions: true },
+  ];
 
   const handleEdit = (uniqueId) => navigate(`/pit_status/form?unique_id=${uniqueId}`);
 
-  const handleDelete = async (uniqueId, batchId, trayNo, screenUniqueId) => {
+  const handleDelete = async (uniqueId) => {
     if (!window.confirm('Are you sure you want to delete this record?')) return;
     try {
-      const params = new URLSearchParams();
-      params.append('action', 'delete');
-      params.append('unique_id', uniqueId);
-      params.append('batch_id', batchId);
-      params.append('tray_no', trayNo);
-      params.append('screen_unique_id', screenUniqueId);
-      const res = await client.post('folders/pit_status/crud.php', params);
+      const res = await djangoClient.delete(`/pit-status/${uniqueId}`);
       if (res.data?.msg === 'success_delete') window.location.reload();
     } catch (err) {
       console.error('Error deleting Pit Status', err);
     }
   };
-
-  const columns = [
-    { label: 'S.No' },
-    { label: 'Entry Date' },
-    { label: 'Pit Number' },
-    { label: 'Pit Batch Id' },
-    { label: 'Status', render: (val) => <span dangerouslySetInnerHTML={{ __html: val }} /> },
-    { label: 'Egg Batch Id' },
-    { label: 'Organic Qty' },
-    { label: 'Tippi Qty' },
-    { label: 'Live Larvae' },
-    { label: 'Harvesting Status', render: (val) => <span dangerouslySetInnerHTML={{ __html: val }} /> },
-    { label: 'Entry Person' },
-    { 
-      label: 'Action', 
-      className: 'text-end',
-      render: (val, row) => {
-        // Backend returns the action buttons HTML string. We need to parse it to handle edit/delete safely in React.
-        if (!val || val === '') return null;
-        
-        const updateMatch = val.match(/unique_id=([^&'"]+)/);
-        const deleteMatch = val.match(/_delete_pit\(['"]([^'"]+)['"],\s*['"]([^'"]*)['"],\s*['"]([^'"]*)['"],\s*['"]([^'"]*)['"]/);
-        
-        const uniqueId = updateMatch ? updateMatch[1] : (deleteMatch ? deleteMatch[1] : null);
-        if (!uniqueId) return <span dangerouslySetInnerHTML={{ __html: val }} />; // Fallback
-
-        return (
-          <div className="hstack gap-2 flex-wrap justify-content-end">
-            {val.includes('btn_update') || val.includes('mdi-square-edit-outline') ? (
-              <button onClick={() => handleEdit(uniqueId)} className="btn btn-sm btn-ghost-success waves-effect waves-light">
-                <i className="ri-edit-2-line fs-15"></i>
-              </button>
-            ) : null}
-            {deleteMatch ? (
-              <button onClick={() => handleDelete(deleteMatch[1], deleteMatch[2], deleteMatch[3], deleteMatch[4])} className="btn btn-sm btn-ghost-danger waves-effect waves-light">
-                <i className="ri-delete-bin-line fs-15"></i>
-              </button>
-            ) : null}
-          </div>
-        );
-      }
-    },
-  ];
-
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
-  };
-
-  const extraParams = Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== ''));
 
   return (
     <div className="row g-3 mb-3">
@@ -96,56 +53,16 @@ export default function PitStatusList() {
                 </button>
               </div>
             </div>
-
-            {/* Filter bar */}
-            <div className="row mt-2 g-2 align-items-end">
-              <div className="col-6 col-md-2">
-                <label className="form-label mb-1" style={{ fontSize: '0.72rem', color: 'var(--vz-secondary-color)' }}>
-                  From Date
-                </label>
-                <DateInput name="from_date" className="form-control form-control-sm"
-                  value={filters.from_date} onChange={handleFilterChange} />
-              </div>
-              <div className="col-6 col-md-2">
-                <label className="form-label mb-1" style={{ fontSize: '0.72rem', color: 'var(--vz-secondary-color)' }}>
-                  To Date
-                </label>
-                <DateInput name="to_date" className="form-control form-control-sm"
-                  value={filters.to_date} onChange={handleFilterChange} />
-              </div>
-              <div className="col-12 col-md-3">
-                <label className="form-label mb-1" style={{ fontSize: '0.72rem', color: 'var(--vz-secondary-color)' }}>
-                  Process Stage
-                </label>
-                <select name="status_type" className="form-select form-select-sm" value={filters.status_type} onChange={handleFilterChange}>
-                  <option value="">All Stages</option>
-                  <option value="1">🌿 Organic Waste Added</option>
-                  <option value="2">🥚 Baby Larvae Added</option>
-                  <option value="3">💨 Aeration Process</option>
-                  <option value="4">📏 Measurement</option>
-                  <option value="5">✅ Harvesting</option>
-                  <option value="7">🧪 Tippi</option>
-                </select>
-              </div>
-              <div className="col-auto">
-                <button
-                  type="button"
-                  className="btn btn-sm"
-                  style={{ fontSize: '0.78rem', color: 'var(--vz-secondary-color)', background: 'transparent', border: '1px solid var(--vz-border-color)', borderRadius: 6, height: 34, padding: '0 12px' }}
-                  onClick={() => setFilters({ from_date: FIRST_DAY_OF_MONTH, to_date: TODAY, pit_name: '', status_type: '' })}
-                  title="Reset filters"
-                >
-                  <i className="ri-refresh-line me-1"></i> Reset
-                </button>
-              </div>
-            </div>
           </div>
 
           <div className="card-body pt-0">
             <DataTable
-              ajaxUrl="folders/pit_status/crud.php"
+              mode="django"
+              ajaxUrl="/pit-status"
               columns={columns}
-              extraParams={extraParams}
+              showActiveFilter={false}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
             />
           </div>
         </div>
