@@ -1,19 +1,27 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DataTable from '../../components/DataTable';
 
 export default function UserScreenList() {
   const navigate = useNavigate();
 
   const columns = [
-    { label: 'S.No' },
-    { label: 'Main Screen' },
-    { label: 'Screen Name' },
-    { label: 'Folder' },
-    { label: 'Icon' },
-    { label: 'Status' },
-    { label: 'Action', className: 'text-end' },
+    { label: 'S.No', sno: true },
+    { label: 'Main Screen', key: 'main_screen.screen_main_name' },
+    { label: 'Screen Name', key: 'screen_name' },
+    { label: 'Folder', key: 'folder_name' },
+    { label: 'Icon', key: 'icon_name' },
+    {
+      label: 'Status',
+      key: 'is_active',
+      render: (isActive) => (
+        <span className={`badge ${isActive ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}`}>
+          {isActive ? 'Active' : 'Inactive'}
+        </span>
+      ),
+    },
+    { label: 'Action', className: 'text-end', actions: true },
   ];
 
   const handleEdit = (uniqueId) => {
@@ -21,17 +29,14 @@ export default function UserScreenList() {
   };
 
   const handleDelete = async (uniqueId) => {
-    if (!window.confirm('Are you sure you want to delete this user screen?')) return;
+    if (!window.confirm('Are you sure you want to delete this screen?')) return;
     try {
-      const params = new URLSearchParams();
-      params.append('action', 'delete');
-      params.append('unique_id', uniqueId);
-      const res = await client.post('folders/user_screen/crud.php', params);
+      const res = await djangoClient.delete(`/screens/${uniqueId}`);
       if (res.data?.msg === 'success_delete') {
         window.location.reload();
       }
     } catch (err) {
-      console.error('Error deleting user screen', err);
+      console.error('Error deleting screen', err);
     }
   };
 
@@ -49,15 +54,17 @@ export default function UserScreenList() {
                   onClick={() => navigate('/user_screen/form')}
                   className="btn btn-primary btn-sm"
                 >
-                  Create New User Screen
+                  Create New Screen
                 </button>
               </div>
             </div>
           </div>
           <div className="card-body pt-0">
             <DataTable
-              ajaxUrl="folders/user_screen/crud.php"
+              mode="django"
+              ajaxUrl="/screens"
               columns={columns}
+              showActiveFilter={false}
               onEdit={handleEdit}
               onDelete={handleDelete}
             />
