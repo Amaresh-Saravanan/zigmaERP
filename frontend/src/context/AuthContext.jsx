@@ -47,6 +47,7 @@ export function AuthProvider({ children }) {
     } finally {
       setUser(null);
       localStorage.removeItem('auth_user');
+      localStorage.removeItem('django_token');
       window.location.href = '/login';
     }
   };

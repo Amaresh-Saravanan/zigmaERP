@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import TextInput from '../../components/TextInput';
 import Toggle from '../../components/Toggle';
 import Button from '../../components/Button';
@@ -19,26 +19,18 @@ export default function UnitCreationForm() {
 
   useEffect(() => {
     if (unique_id) {
-      fetchFormHtml();
+      fetchUnit();
     }
   }, [unique_id]);
 
-  const fetchFormHtml = async () => {
+  const fetchUnit = async () => {
     setIsLoading(true);
     try {
-      // ponytail: Extract values by parsing the legacy HTML form directly rather than modifying backend API
-      const res = await client.get(`folders/unit_creation/form.php?unique_id=${unique_id}`, {
-        responseType: 'text'
-      });
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(res.data, 'text/html');
-
-      const unitNameInput = doc.querySelector('#unit_name');
-      const activeStatusSelect = doc.querySelector('#active_status');
-
+      const res = await djangoClient.get(`/units/${unique_id}`);
+      const unit = res.data.data;
       setFormData({
-        unit_name: unitNameInput ? unitNameInput.value : '',
-        active_status: activeStatusSelect ? activeStatusSelect.value : '1',
+        unit_name: unit.unit_name || '',
+        active_status: unit.is_active ? '1' : '0',
       });
     } catch (error) {
       console.error(error);
@@ -55,19 +47,16 @@ export default function UnitCreationForm() {
     e.preventDefault();
     setIsLoading(true);
 
-    const payload = new URLSearchParams();
-    payload.append('action', 'createupdate');
-    payload.append('unit_name', formData.unit_name);
-    payload.append('active_status', formData.active_status);
-    if (unique_id) {
-      payload.append('unique_id', unique_id);
-    }
+    const payload = {
+      unit_name: formData.unit_name,
+      is_active: formData.active_status === '1',
+    };
 
     try {
-      const res = await client.post('folders/unit_creation/crud.php', payload);
-      const json = res.data;
-      
-      if (json.msg === 'create' || json.msg === 'update') {
+      const res = unique_id
+        ? await djangoClient.put(`/units/${unique_id}`, payload)
+        : await djangoClient.post('/units', payload);
+      if (res.data?.msg === 'create' || res.data?.msg === 'update') {
         navigate('/unit_creation/list');
       }
     } catch (error) {

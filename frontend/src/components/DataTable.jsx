@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import client from '../api/client';
+import djangoClient from '../api/djangoClient';
 
 // Skeleton row — shown while loading (U-16)
 function SkeletonRows({ cols, rows = 5 }) {
@@ -41,6 +42,7 @@ function EmptyState({ cols, isFiltered }) {
 export default function DataTable({
   columns,
   ajaxUrl,
+  mode = 'php', // 'php' (legacy crud.php, array-of-HTML rows) | 'django' (REST JSON objects)
   extraParams = {},
   onEdit,
   onDelete,
@@ -59,6 +61,17 @@ export default function DataTable({
   const fetchData = async () => {
     setLoading(true);
     try {
+      if (mode === 'django') {
+        const params = { page: Math.floor(start / length) + 1, page_size: length === -1 ? 100 : length };
+        if (searchQuery) params.search = searchQuery;
+        Object.assign(params, extraParams);
+
+        const response = await djangoClient.get(ajaxUrl, { params });
+        setData(response.data.results || []);
+        setTotalRecords(response.data.count || 0);
+        return;
+      }
+
       const params = new URLSearchParams();
       params.append('action', 'datatable');
       params.append('draw', draw.toString());
@@ -96,30 +109,45 @@ export default function DataTable({
     return null;
   };
 
+  const renderActionButtons = (uniqueId) => (
+    <div className="hstack gap-1 justify-content-end">
+      {onView && (
+        <button onClick={() => onView(uniqueId)} className="dt-action-btn dt-action-view" title="View" aria-label="View">
+          <i className="ri-eye-line"></i>
+        </button>
+      )}
+      {onEdit && (
+        <button onClick={() => onEdit(uniqueId)} className="dt-action-btn dt-action-edit" title="Edit" aria-label="Edit">
+          <i className="ri-edit-2-line"></i>
+        </button>
+      )}
+      {onDelete && (
+        <button onClick={() => onDelete(uniqueId)} className="dt-action-btn dt-action-delete" title="Delete" aria-label="Delete">
+          <i className="ri-delete-bin-line"></i>
+        </button>
+      )}
+    </div>
+  );
+
+  // Django-mode columns describe a value instead of a positional cell:
+  // { key: 'unit.unit_name' } for a dot-path lookup, { sno: true } for a
+  // client-computed row number, { actions: true } for the edit/delete buttons,
+  // and an optional render(value, row) on any of them for custom display.
+  const getByPath = (row, path) => path.split('.').reduce((acc, k) => acc?.[k], row);
+
+  const renderDjangoCell = (col, row, rIdx) => {
+    if (col.sno) return start + rIdx + 1;
+    if (col.actions) return renderActionButtons(row.unique_id);
+    const value = col.key ? getByPath(row, col.key) : undefined;
+    return col.render ? col.render(value, row) : value;
+  };
+
   const renderCell = (cell, colIndex, row) => {
     const isActionsCol = colIndex === row.length - 1;
     const uniqueId = extractUniqueId(row);
 
     if (isActionsCol && uniqueId) {
-      return (
-        <div className="hstack gap-1 justify-content-end">
-          {onView && (
-            <button onClick={() => onView(uniqueId)} className="dt-action-btn dt-action-view" title="View" aria-label="View">
-              <i className="ri-eye-line"></i>
-            </button>
-          )}
-          {onEdit && (
-            <button onClick={() => onEdit(uniqueId)} className="dt-action-btn dt-action-edit" title="Edit" aria-label="Edit">
-              <i className="ri-edit-2-line"></i>
-            </button>
-          )}
-          {onDelete && (
-            <button onClick={() => onDelete(uniqueId)} className="dt-action-btn dt-action-delete" title="Delete" aria-label="Delete">
-              <i className="ri-delete-bin-line"></i>
-            </button>
-          )}
-        </div>
-      );
+      return renderActionButtons(uniqueId);
     }
 
     if (typeof cell === 'string' && /<[a-z][\s\S]*>/i.test(cell)) {
@@ -224,9 +252,11 @@ export default function DataTable({
                       <tr key={rIdx} className="dt-row" style={{ '--index': rIdx }}>
                         {columns.map((col, cIdx) => (
                           <td key={cIdx} className={`dt-td ${col.className || ''}`}>
-                            {col.render
-                              ? col.render(row[cIdx], row, extractUniqueId(row))
-                              : renderCell(row[cIdx], cIdx, row)}
+                            {mode === 'django'
+                              ? renderDjangoCell(col, row, rIdx)
+                              : col.render
+                                ? col.render(row[cIdx], row, extractUniqueId(row))
+                                : renderCell(row[cIdx], cIdx, row)}
                           </td>
                         ))}
                       </tr>

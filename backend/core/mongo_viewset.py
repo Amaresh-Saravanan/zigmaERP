@@ -8,6 +8,13 @@ from rest_framework.viewsets import ViewSetMixin
 from accounts.permissions import HasScreenPermission
 
 
+class DataTablePagination(PageNumberPagination):
+    """Lets the frontend's 'Show N entries' selector pick page size, capped at 100."""
+
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
 class MongoModelViewSet(ViewSetMixin, APIView):
     """
     Hand-rolled CRUD viewset for MongoEngine Documents.
@@ -26,7 +33,7 @@ class MongoModelViewSet(ViewSetMixin, APIView):
     document_class = None
     serializer_class = None
     lookup_field = 'unique_id'
-    pagination_class = PageNumberPagination
+    pagination_class = DataTablePagination
     required_screens = {}
 
     def get_queryset(self):
