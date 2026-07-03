@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DateInput from '../../components/DateInput';
 import TextInput from '../../components/TextInput';
-import FileInput from '../../components/FileInput';
 import Button from '../../components/Button';
 
 const TODAY = new Date().toISOString().split('T')[0];
@@ -33,11 +32,10 @@ export default function OvenProcessForm() {
     dried_larvae_production: '',
     dried_larvae_stock: '',
   });
-  const [files, setFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (unique_id) fetchFormData();
+    if (unique_id) fetchRecord();
   }, [unique_id]);
 
   // Auto-calculate running_hours from time fields
@@ -48,21 +46,20 @@ export default function OvenProcessForm() {
     }));
   }, [formData.starting_time, formData.closing_time]);
 
-  const fetchFormData = async () => {
+  const fetchRecord = async () => {
     setIsLoading(true);
     try {
-      const res = await client.get(`folders/oven_process/form.php?unique_id=${unique_id}`, { responseType: 'text' });
-      const doc = new DOMParser().parseFromString(res.data, 'text/html');
-      const g = (id) => doc.querySelector(`#${id}`)?.value ?? '';
+      const res = await djangoClient.get(`/oven-process/${unique_id}`);
+      const op = res.data.data;
       setFormData({
-        entry_date:              g('entry_date') || TODAY,
-        starting_time:           g('starting_time'),
-        closing_time:            g('closing_time'),
-        running_hours:           g('running_hours'),
-        diesel_topup:            g('diesel_topup'),
-        raw_larvae_process:      g('raw_larvae_process'),
-        dried_larvae_production: g('dried_larvae_production'),
-        dried_larvae_stock:      g('dried_larvae_stock'),
+        entry_date: op.entry_date || TODAY,
+        starting_time: op.starting_time || '',
+        closing_time: op.closing_time || '',
+        running_hours: String(op.running_hours ?? ''),
+        diesel_topup: String(op.diesel_topup ?? ''),
+        raw_larvae_process: String(op.raw_larvae_process ?? ''),
+        dried_larvae_production: String(op.dried_larvae_production ?? ''),
+        dried_larvae_stock: String(op.dried_larvae_stock ?? ''),
       });
     } catch (err) {
       console.error(err);
@@ -79,16 +76,22 @@ export default function OvenProcessForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    try {
-      const fd = new FormData();
-      fd.append('action', 'createupdate');
-      Object.entries(formData).forEach(([k, v]) => fd.append(k, v));
-      if (unique_id) fd.append('unique_id', unique_id);
-      files.forEach(f => fd.append('test_file[]', f));
 
-      const res = await client.post('folders/oven_process/crud.php', fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+    const payload = {
+      entry_date: formData.entry_date,
+      starting_time: formData.starting_time,
+      closing_time: formData.closing_time,
+      running_hours: parseFloat(formData.running_hours) || 0,
+      diesel_topup: parseFloat(formData.diesel_topup) || 0,
+      raw_larvae_process: parseFloat(formData.raw_larvae_process) || 0,
+      dried_larvae_production: parseFloat(formData.dried_larvae_production) || 0,
+      dried_larvae_stock: parseFloat(formData.dried_larvae_stock) || 0,
+    };
+
+    try {
+      const res = unique_id
+        ? await djangoClient.put(`/oven-process/${unique_id}`, payload)
+        : await djangoClient.post('/oven-process', payload);
       if (res.data?.msg === 'create' || res.data?.msg === 'update') {
         navigate('/oven_process/list');
       }
@@ -216,16 +219,6 @@ export default function OvenProcessForm() {
                       value={formData.dried_larvae_stock}
                       onChange={handleChange}
                       required
-                    />
-                  </div>
-
-                  <div className="col-12 col-md-3">
-                    <FileInput
-                      label="Image Upload"
-                      name="test_file"
-                      multiple
-                      accept="image/*"
-                      onFilesChange={(fl) => setFiles(Array.from(fl))}
                     />
                   </div>
                 </div>

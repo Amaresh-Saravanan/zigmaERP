@@ -1,71 +1,45 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import client from '../../api/client';
-import DateInput from '../../components/DateInput';
+import djangoClient from '../../api/djangoClient';
 import DataTable from '../../components/DataTable';
-import useAuth from '../../hooks/useAuth';
-
-const now = new Date();
-const pad = (n) => n.toString().padStart(2, '0');
-const FIRST_DAY_OF_MONTH = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-01`;
-const TODAY = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 
 export default function MaterialReceivedList() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const isAdmin = user?.userType === '66604f07ae42a24843';
-
-  const [filters, setFilters] = useState({ from_date: FIRST_DAY_OF_MONTH, to_date: TODAY, item_name: '', supplier_name: '' });
-  const [supplierOptions, setSupplierOptions] = useState([]);
-  const [itemOptions, setItemOptions] = useState([]);
-
-  useEffect(() => {
-    // Fetch form HTML to extract dropdown options for filters
-    client.get('folders/material_received/form.php', { responseType: 'text' }).then(res => {
-      const doc = new DOMParser().parseFromString(res.data, 'text/html');
-      const suppSelect = doc.querySelector('#supplier_name');
-      if (suppSelect) setSupplierOptions(Array.from(suppSelect.options).map(o => ({ value: o.value, label: o.text })));
-      
-      const itemSelect = doc.querySelector('#item_name');
-      if (itemSelect) setItemOptions(Array.from(itemSelect.options).map(o => ({ value: o.value, label: o.text })));
-    }).catch(console.error);
-  }, []);
 
   const columns = [
-    { label: 'Batch Id + Date' },
-    { label: 'Supplier Name' },
-    { label: 'Item Name' },
-    { label: 'Qty' },
-    { label: 'Unit' },
-    { label: 'Invoice Date' },
-    { label: 'Invoice Number' },
-    { label: 'Invoice Document' },
-    { label: 'Action', className: 'text-end' },
+    { label: 'Batch Id', key: 'batch_id' },
+    { label: 'Date', key: 'date' },
+    { label: 'Supplier Name', key: 'supplier.supplier_name' },
+    { label: 'Item Name', key: 'item.item_name' },
+    { label: 'Qty', key: 'qty' },
+    { label: 'Unit', key: 'unit.unit_name' },
+    { label: 'Invoice Date', key: 'invoice_date' },
+    { label: 'Invoice Number', key: 'invoice_no' },
+    {
+      label: 'Batch Status',
+      key: 'batch_status',
+      render: (val) => (
+        <span className={`badge ${val === 'used' ? 'bg-secondary-subtle text-secondary' : 'bg-success-subtle text-success'}`}>
+          {val === 'used' ? 'Used' : 'Pending'}
+        </span>
+      ),
+    },
+    { label: 'Action', className: 'text-end', actions: true },
   ];
 
-  const handleEdit = (uniqueId, rowData) => {
+  const handleEdit = (uniqueId) => {
     navigate(`/material_received/form?unique_id=${uniqueId}`);
   };
 
   const handleDelete = async (uniqueId) => {
     if (!window.confirm('Are you sure you want to delete this record?')) return;
     try {
-      const params = new URLSearchParams();
-      params.append('action', 'delete');
-      params.append('unique_id', uniqueId);
-      const res = await client.post('folders/material_received/crud.php', params);
+      const res = await djangoClient.delete(`/material-received/${uniqueId}`);
       if (res.data?.msg === 'success_delete') window.location.reload();
     } catch (err) {
       console.error('Error deleting material received', err);
     }
   };
-
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
-  };
-
-  const extraParams = Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== ''));
 
   return (
     <div className="row g-3 mb-3">
@@ -82,49 +56,16 @@ export default function MaterialReceivedList() {
                 </button>
               </div>
             </div>
-
-            {/* Filters */}
-            <div className="row mt-2 g-2">
-              <div className="col-md-2">
-                <DateInput
-                  name="from_date"
-                  value={filters.from_date}
-                  onChange={handleFilterChange}
-                  className="form-control form-control-sm"
-                  placeholder="From Date"
-                />
-              </div>
-              <div className="col-md-2">
-                <DateInput
-                  name="to_date"
-                  value={filters.to_date}
-                  onChange={handleFilterChange}
-                  className="form-control form-control-sm"
-                  placeholder="To Date"
-                />
-              </div>
-              <div className="col-md-3">
-                <select name="supplier_name" className="form-select form-select-sm" value={filters.supplier_name} onChange={handleFilterChange}>
-                  <option value="">All Suppliers</option>
-                  {supplierOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-              </div>
-              <div className="col-md-3">
-                <select name="item_name" className="form-select form-select-sm" value={filters.item_name} onChange={handleFilterChange}>
-                  <option value="">All Items</option>
-                  {itemOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-              </div>
-            </div>
           </div>
 
           <div className="card-body pt-0">
             <DataTable
-              ajaxUrl="folders/material_received/crud.php"
+              mode="django"
+              ajaxUrl="/material-received"
               columns={columns}
+              showActiveFilter={false}
               onEdit={handleEdit}
               onDelete={handleDelete}
-              extraParams={extraParams}
             />
           </div>
         </div>

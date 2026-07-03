@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
+import DateInput from '../../components/DateInput';
 import TextInput from '../../components/TextInput';
 import Select from '../../components/Select';
-import FileInput from '../../components/FileInput';
 import Button from '../../components/Button';
 
 const TYPE_OPTIONS = [{ value: '1', label: 'Input' }, { value: '2', label: 'Output' }];
 const METHOD_OPTIONS = [{ value: '1', label: 'Solar' }, { value: '2', label: 'Electric' }];
 
-const now = new Date();
-const pad = (n) => n.toString().padStart(2, '0');
-const CURRENT_DATETIME = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+const TODAY = new Date().toISOString().split('T')[0];
 
 export default function DryProcessForm() {
   const [searchParams] = useSearchParams();
@@ -19,31 +17,29 @@ export default function DryProcessForm() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    entry_date: CURRENT_DATETIME,
+    date: TODAY,
     type: '1',
     drying_method: '1',
     quantity: '',
     qty_manure: '',
   });
-  const [files, setFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (unique_id) fetchFormData();
+    if (unique_id) fetchRecord();
   }, [unique_id]);
 
-  const fetchFormData = async () => {
+  const fetchRecord = async () => {
     setIsLoading(true);
     try {
-      const res = await client.get(`folders/dry_process/form.php?unique_id=${unique_id}`, { responseType: 'text' });
-      const doc = new DOMParser().parseFromString(res.data, 'text/html');
-      const g = (id) => doc.querySelector(`#${id}`)?.value ?? '';
+      const res = await djangoClient.get(`/dry-process/${unique_id}`);
+      const dp = res.data.data;
       setFormData({
-        entry_date:    g('entry_date') || CURRENT_DATETIME,
-        type:          g('type') || '1',
-        drying_method: g('drying_method') || '1',
-        quantity:      g('quantity'),
-        qty_manure:    g('qty_manure'),
+        date: dp.date || TODAY,
+        type: dp.type || '1',
+        drying_method: dp.drying_method || '1',
+        quantity: String(dp.quantity ?? ''),
+        qty_manure: String(dp.qty_manure ?? ''),
       });
     } catch (err) {
       console.error(err);
@@ -66,20 +62,19 @@ export default function DryProcessForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    try {
-      const fd = new FormData();
-      fd.append('action', 'createupdate');
-      Object.entries(formData).forEach(([k, v]) => {
-        // If it's Input, do not send qty_manure or send empty
-        if (k === 'qty_manure' && formData.type !== '2') return;
-        fd.append(k, v);
-      });
-      if (unique_id) fd.append('unique_id', unique_id);
-      files.forEach(f => fd.append('test_file[]', f));
 
-      const res = await client.post('folders/dry_process/crud.php', fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+    const payload = {
+      date: formData.date,
+      type: formData.type,
+      drying_method: formData.drying_method,
+      quantity: parseFloat(formData.quantity) || 0,
+      qty_manure: formData.type === '2' ? (parseFloat(formData.qty_manure) || 0) : 0,
+    };
+
+    try {
+      const res = unique_id
+        ? await djangoClient.put(`/dry-process/${unique_id}`, payload)
+        : await djangoClient.post('/dry-process', payload);
       if (res.data?.msg === 'create' || res.data?.msg === 'update') {
         navigate('/dry_process/list');
       }
@@ -117,11 +112,11 @@ export default function DryProcessForm() {
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
                 <div className="row">
                   <div className="col-12 col-md-3">
-                    <TextInput
-                      type="datetime-local"
+                    <DateInput
+                      id="date"
+                      name="date"
                       label="Date"
-                      name="entry_date"
-                      value={formData.entry_date}
+                      value={formData.date}
                       onChange={handleChange}
                       required
                     />
@@ -174,16 +169,6 @@ export default function DryProcessForm() {
                       />
                     </div>
                   )}
-
-                  <div className="col-12 col-md-3">
-                    <FileInput
-                      label="Image Upload"
-                      name="test_file"
-                      multiple
-                      accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"
-                      onFilesChange={(fl) => setFiles(Array.from(fl))}
-                    />
-                  </div>
                 </div>
 
                 <div className="row mt-2">

@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DateInput from '../../components/DateInput';
 import TextInput from '../../components/TextInput';
 import Select from '../../components/Select';
-import FileInput from '../../components/FileInput';
 import Button from '../../components/Button';
 
 const SHIFT_OPTIONS = [{ value: '1', label: 'Day' }, { value: '2', label: 'Night' }, { value: '3', label: 'General' }];
@@ -31,11 +30,10 @@ export default function CullingProcessForm() {
     work_done: '1',
     others_remarks: '',
   });
-  const [files, setFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (unique_id) fetchFormData();
+    if (unique_id) fetchRecord();
   }, [unique_id]);
 
   // Auto-calculate fuel_consumption = starting_weight - ending_weight
@@ -49,24 +47,23 @@ export default function CullingProcessForm() {
     }
   }, [formData.starting_weight, formData.ending_weight]);
 
-  const fetchFormData = async () => {
+  const fetchRecord = async () => {
     setIsLoading(true);
     try {
-      const res = await client.get(`folders/culling_process/form.php?unique_id=${unique_id}`, { responseType: 'text' });
-      const doc = new DOMParser().parseFromString(res.data, 'text/html');
-      const g = (id) => doc.querySelector(`#${id}`)?.value ?? '';
+      const res = await djangoClient.get(`/culling-process/${unique_id}`);
+      const cp = res.data.data;
       setFormData({
-        entry_date:           g('entry_date') || TODAY,
-        shift_type:           g('shift_type') || '1',
-        cylinder_type:        g('cylinder_type') || '1',
-        cylinder_no:          g('cylinder_no'),
-        starting_weight:      g('starting_weight'),
-        ending_weight:        g('ending_weight'),
-        fuel_consumption:     g('fuel_consumption'),
-        raw_material_weight:  g('raw_material_weight'),
-        final_larvae_weight:  g('final_larvae_weight'),
-        work_done:            g('work_done') || '1',
-        others_remarks:       g('others_remarks'),
+        entry_date: cp.entry_date || TODAY,
+        shift_type: cp.shift_type || '1',
+        cylinder_type: cp.cylinder_type || '1',
+        cylinder_no: cp.cylinder_no || '',
+        starting_weight: String(cp.starting_weight ?? ''),
+        ending_weight: String(cp.ending_weight ?? ''),
+        fuel_consumption: String(cp.fuel_consumption ?? ''),
+        raw_material_weight: String(cp.raw_material_weight ?? ''),
+        final_larvae_weight: String(cp.final_larvae_weight ?? ''),
+        work_done: cp.work_done || '1',
+        others_remarks: cp.others_remarks || '',
       });
     } catch (err) {
       console.error(err);
@@ -83,17 +80,25 @@ export default function CullingProcessForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    try {
-      // Use FormData to support file uploads
-      const fd = new FormData();
-      fd.append('action', 'createupdate');
-      Object.entries(formData).forEach(([k, v]) => fd.append(k, v));
-      if (unique_id) fd.append('unique_id', unique_id);
-      files.forEach(f => fd.append('test_file[]', f));
 
-      const res = await client.post('folders/culling_process/crud.php', fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+    const payload = {
+      entry_date: formData.entry_date,
+      shift_type: formData.shift_type,
+      cylinder_type: formData.cylinder_type,
+      cylinder_no: formData.cylinder_no,
+      starting_weight: parseFloat(formData.starting_weight) || 0,
+      ending_weight: parseFloat(formData.ending_weight) || 0,
+      fuel_consumption: parseFloat(formData.fuel_consumption) || 0,
+      raw_material_weight: parseFloat(formData.raw_material_weight) || 0,
+      final_larvae_weight: parseFloat(formData.final_larvae_weight) || 0,
+      work_done: formData.work_done,
+      others_remarks: formData.others_remarks,
+    };
+
+    try {
+      const res = unique_id
+        ? await djangoClient.put(`/culling-process/${unique_id}`, payload)
+        : await djangoClient.post('/culling-process', payload);
       if (res.data?.msg === 'create' || res.data?.msg === 'update') {
         navigate('/culling_process/list');
       }
@@ -247,7 +252,7 @@ export default function CullingProcessForm() {
                     />
                   </div>
 
-                  {/* Conditional: shown only when Work Done = Others (3) */}
+                  {/* Conditional: shown only when Work Done = Others (3), required server-side too */}
                   {showOthersRemarks && (
                     <div className="col-12 col-md-3">
                       <TextInput
@@ -259,16 +264,6 @@ export default function CullingProcessForm() {
                       />
                     </div>
                   )}
-
-                  <div className="col-12 col-md-3">
-                    <FileInput
-                      label="Image Upload"
-                      name="test_file"
-                      multiple
-                      accept="image/*"
-                      onFilesChange={(fl) => setFiles(Array.from(fl))}
-                    />
-                  </div>
                 </div>
 
                 <div className="row mt-2">

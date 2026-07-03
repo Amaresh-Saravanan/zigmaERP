@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DateInput from '../../components/DateInput';
 import TextInput from '../../components/TextInput';
-import FileInput from '../../components/FileInput';
 import Button from '../../components/Button';
 
 const now = new Date();
@@ -20,23 +19,21 @@ export default function LeachateForm() {
     qty_leachate: '',
     remarks: '',
   });
-  const [files, setFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (unique_id) fetchFormData();
+    if (unique_id) fetchRecord();
   }, [unique_id]);
 
-  const fetchFormData = async () => {
+  const fetchRecord = async () => {
     setIsLoading(true);
     try {
-      const res = await client.get(`folders/leachate/form.php?unique_id=${unique_id}`, { responseType: 'text' });
-      const doc = new DOMParser().parseFromString(res.data, 'text/html');
-      const g = (id) => doc.querySelector(`#${id}`)?.value ?? '';
+      const res = await djangoClient.get(`/leachate/${unique_id}`);
+      const l = res.data.data;
       setFormData({
-        entry_date:    g('entry_date') || TODAY,
-        qty_leachate:  g('qty_leachate'),
-        remarks:       g('remarks'),
+        entry_date: l.entry_date || TODAY,
+        qty_leachate: String(l.qty_leachate ?? ''),
+        remarks: l.remarks || '',
       });
     } catch (err) {
       console.error(err);
@@ -53,16 +50,17 @@ export default function LeachateForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    try {
-      const fd = new FormData();
-      fd.append('action', 'createupdate');
-      Object.entries(formData).forEach(([k, v]) => fd.append(k, v));
-      if (unique_id) fd.append('unique_id', unique_id);
-      files.forEach(f => fd.append('test_file[]', f));
 
-      const res = await client.post('folders/leachate/crud.php', fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+    const payload = {
+      entry_date: formData.entry_date,
+      qty_leachate: parseFloat(formData.qty_leachate) || 0,
+      remarks: formData.remarks,
+    };
+
+    try {
+      const res = unique_id
+        ? await djangoClient.put(`/leachate/${unique_id}`, payload)
+        : await djangoClient.post('/leachate', payload);
       if (res.data?.msg === 'create' || res.data?.msg === 'update') {
         navigate('/leachate/list');
       }
@@ -117,17 +115,6 @@ export default function LeachateForm() {
                       value={formData.qty_leachate}
                       onChange={handleChange}
                       required
-                    />
-                  </div>
-
-                  <div className="col-12 col-md-3">
-                    <FileInput
-                      label="Bill Copy"
-                      name="test_file"
-                      multiple
-                      accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"
-                      onFilesChange={(fl) => setFiles(Array.from(fl))}
-                      required={!unique_id}
                     />
                   </div>
 

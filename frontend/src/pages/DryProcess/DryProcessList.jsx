@@ -1,25 +1,21 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DataTable from '../../components/DataTable';
-import DateInput from '../../components/DateInput';
 
-const TYPE_OPTIONS = [{ value: '1', label: 'Input' }, { value: '2', label: 'Output' }];
-const METHOD_OPTIONS = [{ value: '1', label: 'Solar' }, { value: '2', label: 'Electric' }];
+const TYPE_LABELS = { '1': 'Input', '2': 'Output' };
+const METHOD_LABELS = { '1': 'Solar', '2': 'Electric' };
 
 export default function DryProcessList() {
   const navigate = useNavigate();
 
-  const [filters, setFilters] = useState({ from_date: '', to_date: '', type: '', drying_method: '' });
-
   const columns = [
-    { label: 'Date' },
-    { label: 'Type' },
-    { label: 'Drying Method' },
-    { label: 'Quantity' },
-    { label: 'Image' },
-    { label: 'Entry Person' },
-    { label: 'Action', className: 'text-end' },
+    { label: 'Date', key: 'date' },
+    { label: 'Type', key: 'type', render: (v) => TYPE_LABELS[v] || v },
+    { label: 'Drying Method', key: 'drying_method', render: (v) => METHOD_LABELS[v] || v },
+    { label: 'Quantity', key: 'quantity' },
+    { label: 'Qty Manure', key: 'qty_manure' },
+    { label: 'Action', className: 'text-end', actions: true },
   ];
 
   const handleEdit = (uniqueId) => navigate(`/dry_process/form?unique_id=${uniqueId}`);
@@ -27,22 +23,12 @@ export default function DryProcessList() {
   const handleDelete = async (uniqueId) => {
     if (!window.confirm('Are you sure you want to delete this record?')) return;
     try {
-      const params = new URLSearchParams();
-      params.append('action', 'delete');
-      params.append('unique_id', uniqueId);
-      const res = await client.post('folders/dry_process/crud.php', params);
+      const res = await djangoClient.delete(`/dry-process/${uniqueId}`);
       if (res.data?.msg === 'success_delete') window.location.reload();
     } catch (err) {
       console.error('Error deleting dry process', err);
     }
   };
-
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
-  };
-
-  const extraParams = Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== ''));
 
   return (
     <div className="row g-3 mb-3">
@@ -59,49 +45,16 @@ export default function DryProcessList() {
                 </button>
               </div>
             </div>
-
-            {/* Filters */}
-            <div className="row mt-2 g-2">
-              <div className="col-md-2">
-                <DateInput
-                  name="from_date"
-                  value={filters.from_date}
-                  onChange={handleFilterChange}
-                  className="form-control form-control-sm"
-                  placeholder="From Date"
-                />
-              </div>
-              <div className="col-md-2">
-                <DateInput
-                  name="to_date"
-                  value={filters.to_date}
-                  onChange={handleFilterChange}
-                  className="form-control form-control-sm"
-                  placeholder="To Date"
-                />
-              </div>
-              <div className="col-md-2">
-                <select name="type" className="form-select form-select-sm" value={filters.type} onChange={handleFilterChange}>
-                  <option value="">All Types</option>
-                  {TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-              </div>
-              <div className="col-md-2">
-                <select name="drying_method" className="form-select form-select-sm" value={filters.drying_method} onChange={handleFilterChange}>
-                  <option value="">All Drying Methods</option>
-                  {METHOD_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-              </div>
-            </div>
           </div>
 
           <div className="card-body pt-0">
             <DataTable
-              ajaxUrl="folders/dry_process/crud.php"
+              mode="django"
+              ajaxUrl="/dry-process"
               columns={columns}
+              showActiveFilter={false}
               onEdit={handleEdit}
               onDelete={handleDelete}
-              extraParams={extraParams}
             />
           </div>
         </div>

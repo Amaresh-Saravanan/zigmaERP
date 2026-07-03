@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DateInput from '../../components/DateInput';
 import useAuth from '../../hooks/useAuth';
 import TextInput from '../../components/TextInput';
 import Select from '../../components/Select';
-import FileInput from '../../components/FileInput';
 import Button from '../../components/Button';
 
 const TODAY = new Date().toISOString().split('T')[0];
@@ -19,54 +18,58 @@ export default function MaterialReceivedForm() {
 
   const [formData, setFormData] = useState({
     date: TODAY,
-    supplier_name: '',
-    item_name: '',
+    supplier: '',
+    item: '',
     qty: '',
-    unit1: '', // backend needs unit1 for the ID
+    unit_id: '',
     unit_display: '',
     invoice_date: '',
     invoice_no: '',
-    label: '',
   });
-  
+
   const [supplierOptions, setSupplierOptions] = useState([]);
   const [itemOptions, setItemOptions] = useState([]);
-  const [files, setFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    fetchFormHtml();
+    fetchSuppliers();
+    fetchItems();
+    if (unique_id) fetchRecord();
   }, [unique_id]);
 
-  const fetchFormHtml = async () => {
+  const fetchSuppliers = async () => {
+    try {
+      const res = await djangoClient.get('/suppliers', { params: { page_size: 100 } });
+      setSupplierOptions((res.data.results || []).map((s) => ({ value: s.unique_id, label: s.supplier_name })));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchItems = async () => {
+    try {
+      const res = await djangoClient.get('/items', { params: { page_size: 100 } });
+      setItemOptions((res.data.results || []).map((i) => ({ value: i.unique_id, label: i.item_name, unit: i.unit })));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchRecord = async () => {
     setIsLoading(true);
     try {
-      const url = unique_id 
-        ? `folders/material_received/form.php?unique_id=${unique_id}`
-        : `folders/material_received/form.php`;
-      const res = await client.get(url, { responseType: 'text' });
-      const doc = new DOMParser().parseFromString(res.data, 'text/html');
-      
-      const suppSelect = doc.querySelector('#supplier_name');
-      if (suppSelect) setSupplierOptions(Array.from(suppSelect.options).map(o => ({ value: o.value, label: o.text })));
-      
-      const itemSelect = doc.querySelector('#item_name');
-      if (itemSelect) setItemOptions(Array.from(itemSelect.options).map(o => ({ value: o.value, label: o.text })));
-
-      if (unique_id) {
-        const g = (id) => doc.querySelector(`#${id}`)?.value ?? '';
-        setFormData({
-          date:          g('date') || TODAY,
-          supplier_name: g('supplier_name'),
-          item_name:     g('item_name'),
-          qty:           g('qty'),
-          unit1:         g('unit1'), 
-          unit_display:  doc.querySelector('#unit')?.value ?? '',
-          invoice_date:  g('invoice_date'),
-          invoice_no:    g('invoice_no'),
-          label:         g('label'),
-        });
-      }
+      const res = await djangoClient.get(`/material-received/${unique_id}`);
+      const mr = res.data.data;
+      setFormData({
+        date: mr.date || TODAY,
+        supplier: mr.supplier?.unique_id || '',
+        item: mr.item?.unique_id || '',
+        qty: String(mr.qty ?? ''),
+        unit_id: mr.unit?.unique_id || '',
+        unit_display: mr.unit?.unit_name || '',
+        invoice_date: mr.invoice_date || '',
+        invoice_no: mr.invoice_no || '',
+      });
     } catch (err) {
       console.error(err);
     } finally {
@@ -74,63 +77,39 @@ export default function MaterialReceivedForm() {
     }
   };
 
-  const handleChange = async (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
-    if (name === 'supplier_name') {
-      if (!value) {
-        setFormData(prev => ({ ...prev, label: '' }));
-      } else {
-        try {
-          const payload = new URLSearchParams({ action: 'get_label_name', supplier_name: value });
-          const res = await client.post('folders/material_received/crud.php', payload);
-          if (res.data?.label) setFormData(prev => ({ ...prev, label: res.data.label.trim() }));
-        } catch (err) {
-          console.error('Error fetching label', err);
-        }
-      }
-    }
-
-    if (name === 'item_name') {
-      if (!value) {
-        setFormData(prev => ({ ...prev, unit1: '', unit_display: '' }));
-      } else {
-        try {
-          const payload = new URLSearchParams({ action: 'unit', item_name: value });
-          const res = await client.post('folders/material_received/crud.php', payload);
-          if (res.data) {
-            setFormData(prev => ({ ...prev, unit1: res.data.unit1, unit_display: res.data.unit }));
-          }
-        } catch (err) {
-          console.error('Error fetching unit', err);
-        }
-      }
+    if (name === 'item') {
+      const selected = itemOptions.find((i) => i.value === value);
+      setFormData((prev) => ({
+        ...prev,
+        unit_id: selected?.unit?.unique_id || '',
+        unit_display: selected?.unit?.unit_name || '',
+      }));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    try {
-      const fd = new FormData();
-      fd.append('action', 'createupdate');
-      Object.entries(formData).forEach(([k, v]) => {
-        if (k !== 'unit_display') fd.append(k, v);
-      });
-      if (unique_id) fd.append('unique_id', unique_id);
-      files.forEach(f => fd.append('test_file[]', f));
 
-      const res = await client.post('folders/material_received/crud.php', fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      
-      // Handle the "already" exists case
-      if (res.data?.msg === 'already') {
-        alert('This supplier and item combination already exists!');
-        return;
-      }
-      
+    const payload = {
+      date: formData.date,
+      supplier: { unique_id: formData.supplier },
+      item: { unique_id: formData.item },
+      qty: parseFloat(formData.qty) || 0,
+      unit: { unique_id: formData.unit_id },
+      invoice_no: formData.invoice_no,
+      invoice_date: formData.invoice_date || null,
+    };
+
+    try {
+      const res = unique_id
+        ? await djangoClient.put(`/material-received/${unique_id}`, payload)
+        : await djangoClient.post('/material-received', payload);
+
       if (res.data?.msg === 'create' || res.data?.msg === 'update') {
         navigate('/material_received/list');
       }
@@ -180,8 +159,8 @@ export default function MaterialReceivedForm() {
                   <div className="col-12 col-md-3">
                     <Select
                       label="Supplier Name"
-                      name="supplier_name"
-                      value={formData.supplier_name}
+                      name="supplier"
+                      value={formData.supplier}
                       onChange={handleChange}
                       options={supplierOptions}
                       required
@@ -191,8 +170,8 @@ export default function MaterialReceivedForm() {
                   <div className="col-12 col-md-3">
                     <Select
                       label="Item Name"
-                      name="item_name"
-                      value={formData.item_name}
+                      name="item"
+                      value={formData.item}
                       onChange={handleChange}
                       options={itemOptions}
                       required
@@ -238,16 +217,6 @@ export default function MaterialReceivedForm() {
                       name="invoice_no"
                       value={formData.invoice_no}
                       onChange={handleChange}
-                    />
-                  </div>
-
-                  <div className="col-12 col-md-3">
-                    <FileInput
-                      label="Invoice Image Upload"
-                      name="test_file"
-                      multiple
-                      accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"
-                      onFilesChange={(fl) => setFiles(Array.from(fl))}
                     />
                   </div>
                 </div>

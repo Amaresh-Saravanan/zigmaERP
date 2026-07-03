@@ -1,33 +1,28 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DataTable from '../../components/DataTable';
-import DateInput from '../../components/DateInput';
 
-const SHIFT_OPTIONS = [{ value: '1', label: 'Day' }, { value: '2', label: 'Night' }, { value: '3', label: 'General' }];
-const CYLINDER_OPTIONS = [{ value: '1', label: 'O2' }, { value: '2', label: 'LPG' }, { value: '3', label: 'Other' }];
-const WORK_DONE_OPTIONS = [{ value: '1', label: 'Cutting' }, { value: '2', label: 'Heating' }, { value: '3', label: 'Others' }];
+const SHIFT_LABELS = { '1': 'Day', '2': 'Night', '3': 'General' };
+const CYLINDER_LABELS = { '1': 'O2', '2': 'LPG', '3': 'Other' };
+const WORK_DONE_LABELS = { '1': 'Cutting', '2': 'Heating', '3': 'Others' };
 
 export default function CullingProcessList() {
   const navigate = useNavigate();
 
-  const [filters, setFilters] = useState({ from_date: '', to_date: '', shift_type: '', cylinder_type: '', work_done: '' });
-
   const columns = [
-    { label: 'Work Date' },
-    { label: 'Shift Type' },
-    { label: 'Cylinder Type' },
-    { label: 'Cylinder No' },
-    { label: 'Starting Weight' },
-    { label: 'Final Weight' },
-    { label: 'Fuel Consumption' },
-    { label: 'Raw Material' },
-    { label: 'Final Larvae' },
-    { label: 'Work Done' },
-    { label: 'Others Remarks' },
-    { label: 'Image' },
-    { label: 'Entry Person' },
-    { label: 'Action', className: 'text-end' },
+    { label: 'Work Date', key: 'entry_date' },
+    { label: 'Shift Type', key: 'shift_type', render: (v) => SHIFT_LABELS[v] || v },
+    { label: 'Cylinder Type', key: 'cylinder_type', render: (v) => CYLINDER_LABELS[v] || v },
+    { label: 'Cylinder No', key: 'cylinder_no' },
+    { label: 'Starting Weight', key: 'starting_weight' },
+    { label: 'Final Weight', key: 'ending_weight' },
+    { label: 'Fuel Consumption', key: 'fuel_consumption' },
+    { label: 'Raw Material', key: 'raw_material_weight' },
+    { label: 'Final Larvae', key: 'final_larvae_weight' },
+    { label: 'Work Done', key: 'work_done', render: (v) => WORK_DONE_LABELS[v] || v },
+    { label: 'Others Remarks', key: 'others_remarks' },
+    { label: 'Action', className: 'text-end', actions: true },
   ];
 
   const handleEdit = (uniqueId) => navigate(`/culling_process/form?unique_id=${uniqueId}`);
@@ -35,23 +30,12 @@ export default function CullingProcessList() {
   const handleDelete = async (uniqueId) => {
     if (!window.confirm('Are you sure you want to delete this record?')) return;
     try {
-      const params = new URLSearchParams();
-      params.append('action', 'delete');
-      params.append('unique_id', uniqueId);
-      const res = await client.post('folders/culling_process/crud.php', params);
+      const res = await djangoClient.delete(`/culling-process/${uniqueId}`);
       if (res.data?.msg === 'success_delete') window.location.reload();
     } catch (err) {
       console.error('Error deleting culling process', err);
     }
   };
-
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
-  };
-
-  // ponytail: only pass non-empty filter values as extraParams
-  const extraParams = Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== ''));
 
   return (
     <div className="row g-3 mb-3">
@@ -68,55 +52,16 @@ export default function CullingProcessList() {
                 </button>
               </div>
             </div>
-
-            {/* Filters */}
-            <div className="row mt-2 g-2">
-              <div className="col-md-2">
-                <DateInput
-                  name="from_date"
-                  value={filters.from_date}
-                  onChange={handleFilterChange}
-                  className="form-control form-control-sm"
-                  placeholder="From Date"
-                />
-              </div>
-              <div className="col-md-2">
-                <DateInput
-                  name="to_date"
-                  value={filters.to_date}
-                  onChange={handleFilterChange}
-                  className="form-control form-control-sm"
-                  placeholder="To Date"
-                />
-              </div>
-              <div className="col-md-2">
-                <select name="shift_type" className="form-select form-select-sm" value={filters.shift_type} onChange={handleFilterChange}>
-                  <option value="">All Shifts</option>
-                  {SHIFT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-              </div>
-              <div className="col-md-2">
-                <select name="cylinder_type" className="form-select form-select-sm" value={filters.cylinder_type} onChange={handleFilterChange}>
-                  <option value="">All Cylinders</option>
-                  {CYLINDER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-              </div>
-              <div className="col-md-2">
-                <select name="work_done" className="form-select form-select-sm" value={filters.work_done} onChange={handleFilterChange}>
-                  <option value="">All Work Done</option>
-                  {WORK_DONE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-              </div>
-            </div>
           </div>
 
           <div className="card-body pt-0">
             <DataTable
-              ajaxUrl="folders/culling_process/crud.php"
+              mode="django"
+              ajaxUrl="/culling-process"
               columns={columns}
+              showActiveFilter={false}
               onEdit={handleEdit}
               onDelete={handleDelete}
-              extraParams={extraParams}
             />
           </div>
         </div>
