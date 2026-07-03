@@ -171,3 +171,21 @@ def test_screen_create_and_update():
     assert update_res.status_code == 200
     assert update_res.data['data']['screen_name'] == 'Sales Report V2'
     assert update_res.data['data']['order_no'] == 2
+
+
+# ── Permission catalog (drives the User Permission admin UI) ──
+
+def test_permission_catalog_requires_auth(client):
+    res = client.get('/api/permission-catalog')
+    assert res.status_code == 401
+
+
+def test_permission_catalog_lists_every_registered_module():
+    client = authed_client(manager_user(''), 'pw')
+    res = client.get('/api/permission-catalog')
+    assert res.status_code == 200
+    catalog = res.data['data']
+    # Spot-check a couple of modules rather than the full ~20-entry list -
+    # this just proves the router-derived catalog actually reflects real ViewSets.
+    assert catalog['items'] == ['item_create', 'item_delete', 'item_edit', 'item_view']
+    assert catalog['user-types'] == ['user_type_create', 'user_type_delete', 'user_type_edit', 'user_type_view']

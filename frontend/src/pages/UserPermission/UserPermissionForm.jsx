@@ -1,60 +1,79 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import Select from '../../components/Select';
 import Button from '../../components/Button';
 
+const ACTION_LABELS = { view: 'View', create: 'Create', edit: 'Edit', delete: 'Delete' };
+
+function actionLabel(screenId) {
+  const suffix = screenId.split('_').pop();
+  return ACTION_LABELS[suffix] || suffix;
+}
+
+function moduleLabel(prefix) {
+  return prefix.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export default function UserPermissionForm() {
   const [searchParams] = useSearchParams();
-  const unique_id = searchParams.get('unique_id');
+  const initialUserType = searchParams.get('unique_id') || '';
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    user_type: unique_id || '',
-    main_screen: '',
-  });
-
+  const [userTypeId, setUserTypeId] = useState(initialUserType);
   const [userTypeOptions, setUserTypeOptions] = useState([]);
-  const [mainScreenOptions, setMainScreenOptions] = useState([]);
-  const [permUiHtml, setPermUiHtml] = useState('');
+  const [typeMeta, setTypeMeta] = useState(null); // { type_name, is_active } - required to resend on save
+  const [catalog, setCatalog] = useState({});
+  const [mainScreens, setMainScreens] = useState([]);
+  const [checkedScreens, setCheckedScreens] = useState(new Set());
+  const [checkedMainScreens, setCheckedMainScreens] = useState(new Set());
   const [isLoading, setIsLoading] = useState(false);
-  const permUiRef = useRef(null);
 
   useEffect(() => {
-    fetchFormHtml();
-  }, [unique_id]);
+    fetchUserTypes();
+    fetchCatalog();
+    fetchMainScreens();
+  }, []);
 
-  const fetchFormHtml = async () => {
+  useEffect(() => {
+    if (userTypeId) fetchUserTypePermissions();
+  }, [userTypeId]);
+
+  const fetchUserTypes = async () => {
+    try {
+      const res = await djangoClient.get('/user-types', { params: { page_size: 100 } });
+      setUserTypeOptions((res.data.results || []).map((ut) => ({ value: ut.unique_id, label: ut.type_name })));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchCatalog = async () => {
+    try {
+      const res = await djangoClient.get('/permission-catalog');
+      setCatalog(res.data.data || {});
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchMainScreens = async () => {
+    try {
+      const res = await djangoClient.get('/main-screens', { params: { page_size: 100 } });
+      setMainScreens(res.data.results || []);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchUserTypePermissions = async () => {
     setIsLoading(true);
     try {
-      const url = unique_id 
-        ? `folders/user_permission/form.php?unique_id=${unique_id}`
-        : `folders/user_permission/form.php`;
-      const res = await client.get(url, { responseType: 'text' });
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(res.data, 'text/html');
-
-      const inputs = {
-        user_type: doc.querySelector('#user_type'),
-        main_screen: doc.querySelector('#main_screen'),
-      };
-
-      if (inputs.user_type) {
-        setUserTypeOptions(Array.from(inputs.user_type.options).map(opt => ({
-          value: opt.value,
-          label: opt.text
-        })));
-      }
-
-      if (inputs.main_screen) {
-        setMainScreenOptions(Array.from(inputs.main_screen.options).map(opt => ({
-          value: opt.value,
-          label: opt.text
-        })));
-      }
-
-      // If updating, fetch UI right away if user_type and main_screen are set?
-      // Wait, unique_id sets user_type. We might still need to select main_screen to see UI.
+      const res = await djangoClient.get(`/user-types/${userTypeId}`);
+      const ut = res.data.data;
+      setTypeMeta({ type_name: ut.type_name, is_active: ut.is_active });
+      setCheckedScreens(new Set((ut.screens || '').split(',').filter(Boolean)));
+      setCheckedMainScreens(new Set((ut.main_screens || '').split(',').filter(Boolean)));
     } catch (error) {
       console.error(error);
     } finally {
@@ -62,107 +81,45 @@ export default function UserPermissionForm() {
     }
   };
 
-  useEffect(() => {
-    if (formData.user_type && formData.main_screen) {
-      fetchPermUi();
-    } else {
-      setPermUiHtml('');
-    }
-  }, [formData.user_type, formData.main_screen]);
-
-  const fetchPermUi = async () => {
-    try {
-      const payload = new URLSearchParams();
-      payload.append('action', 'permission_ui');
-      payload.append('user_type', formData.user_type);
-      payload.append('main_screen', formData.main_screen);
-
-      const res = await client.post('folders/user_permission/crud.php', payload);
-      setPermUiHtml(res.data);
-    } catch (error) {
-      console.error('Error fetching permission UI', error);
-    }
+  const toggleScreen = (screenId) => {
+    setCheckedScreens((prev) => {
+      const next = new Set(prev);
+      next.has(screenId) ? next.delete(screenId) : next.add(screenId);
+      return next;
+    });
   };
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const toggleAllInModule = (screenIds, checkAll) => {
+    setCheckedScreens((prev) => {
+      const next = new Set(prev);
+      screenIds.forEach((id) => (checkAll ? next.add(id) : next.delete(id)));
+      return next;
+    });
   };
 
-  // Add a global click listener for the dynamically loaded 'All' buttons since they use inline onclick handlers
-  useEffect(() => {
-    const handleDynamicClick = (e) => {
-      // The old UI uses check_all() and check_me() globally defined functions.
-      // We'll mimic their behavior for elements inside permUiRef
-      const target = e.target;
-      
-      // If an "All" button for an action column is clicked
-      if (target.tagName === 'BUTTON' && target.hasAttribute('data-id')) {
-        const idClass = target.getAttribute('data-id');
-        const isChecked = target.getAttribute('data-check') === 'checked';
-        const newCheckState = !isChecked;
-        
-        target.setAttribute('data-check', newCheckState ? 'checked' : 'unchecked');
-        
-        const checkboxes = permUiRef.current?.querySelectorAll(`.${idClass}`);
-        if (checkboxes) {
-          checkboxes.forEach(cb => {
-            cb.checked = newCheckState;
-          });
-        }
-      }
-      
-      // If a row "All" checkbox is clicked
-      if (target.type === 'checkbox' && target.id.startsWith('all')) {
-        const screenId = target.id.replace('all', ''); // Note: Might be 'all'+screenId
-        // Find checkboxes for this screen and check them
-        const checkboxes = permUiRef.current?.querySelectorAll(`.screen${screenId}`);
-        if (checkboxes) {
-          checkboxes.forEach(cb => {
-            cb.checked = target.checked;
-          });
-        }
-      }
-    };
-
-    const container = permUiRef.current;
-    if (container) {
-      container.addEventListener('click', handleDynamicClick);
-    }
-
-    return () => {
-      if (container) {
-        container.removeEventListener('click', handleDynamicClick);
-      }
-    };
-  }, [permUiHtml]);
+  const toggleMainScreen = (mainScreenId) => {
+    setCheckedMainScreens((prev) => {
+      const next = new Set(prev);
+      next.has(mainScreenId) ? next.delete(mainScreenId) : next.add(mainScreenId);
+      return next;
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!userTypeId || !typeMeta) return;
     setIsLoading(true);
 
-    // Extract JSON data
-    const checkedInputs = permUiRef.current?.querySelectorAll('.all-checkbox:checked') || [];
-    const jsonDataArray = Array.from(checkedInputs).map(input => ({
-      section: input.getAttribute('data-section'),
-      screen: input.getAttribute('data-screen'),
-      action: input.getAttribute('data-action')
-    }));
-
-    const payload = new URLSearchParams();
-    payload.append('action', 'createupdate');
-    payload.append('user_type', formData.user_type);
-    payload.append('main_screen', formData.main_screen);
-    if (unique_id) {
-      payload.append('unique_id', unique_id);
-    }
-    payload.append('json_data', JSON.stringify(jsonDataArray));
+    const payload = {
+      type_name: typeMeta.type_name,
+      is_active: typeMeta.is_active,
+      screens: Array.from(checkedScreens).join(','),
+      main_screens: Array.from(checkedMainScreens).join(','),
+    };
 
     try {
-      const res = await client.post('folders/user_permission/crud.php', payload);
-      const json = res.data;
-
-      if (json.msg === 'create' || json.msg === 'update' || json.msg === 'already') {
-        // If 'already' we could alert or just go back
+      const res = await djangoClient.put(`/user-types/${userTypeId}`, payload);
+      if (res.data?.msg === 'update') {
         navigate('/user_permission/list');
       }
     } catch (error) {
@@ -179,9 +136,7 @@ export default function UserPermissionForm() {
           <div className="card-header pt-3 pb-2">
             <div className="row flex-between-end">
               <div className="col-auto align-self-center">
-                <h5 className="d-flex align-items-center">
-                  User Permission {unique_id ? 'Update' : 'Create'}
-                </h5>
+                <h5 className="d-flex align-items-center">User Permission</h5>
               </div>
             </div>
           </div>
@@ -192,40 +147,85 @@ export default function UserPermissionForm() {
                   <Select
                     label="User Type"
                     name="user_type"
-                    value={formData.user_type}
-                    onChange={handleChange}
+                    value={userTypeId}
+                    onChange={(e) => setUserTypeId(e.target.value)}
                     options={userTypeOptions}
-                    disabled={!!unique_id}
-                    required
-                  />
-                </div>
-
-                <div className="col-12 col-md-4">
-                  <Select
-                    label="Main Screen"
-                    name="main_screen"
-                    value={formData.main_screen}
-                    onChange={handleChange}
-                    options={mainScreenOptions}
                     required
                   />
                 </div>
               </div>
 
-              <div 
-                id="perm_ui" 
-                className="col-12 mt-4" 
-                ref={permUiRef}
-                dangerouslySetInnerHTML={{ __html: permUiHtml }}
-              />
-              
+              {userTypeId && !isLoading && (
+                <>
+                  <div className="mb-4">
+                    <h6 className="mb-2">Main Screens (sidebar sections)</h6>
+                    <div className="d-flex flex-wrap gap-3">
+                      {mainScreens.map((ms) => (
+                        <div className="form-check" key={ms.unique_id}>
+                          <input
+                            type="checkbox"
+                            className="form-check-input"
+                            id={`main-${ms.unique_id}`}
+                            checked={checkedMainScreens.has(ms.unique_id)}
+                            onChange={() => toggleMainScreen(ms.unique_id)}
+                          />
+                          <label className="form-check-label" htmlFor={`main-${ms.unique_id}`}>
+                            {ms.screen_main_name}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <h6 className="mb-2">Module Access</h6>
+                  <div className="table-responsive">
+                    <table className="table table-sm align-middle">
+                      <tbody>
+                        {Object.entries(catalog).map(([prefix, screenIds]) => (
+                          <tr key={prefix}>
+                            <td className="fw-medium" style={{ width: '20%' }}>{moduleLabel(prefix)}</td>
+                            <td>
+                              <div className="d-flex flex-wrap gap-3">
+                                {screenIds.map((screenId) => (
+                                  <div className="form-check" key={screenId}>
+                                    <input
+                                      type="checkbox"
+                                      className="form-check-input"
+                                      id={screenId}
+                                      checked={checkedScreens.has(screenId)}
+                                      onChange={() => toggleScreen(screenId)}
+                                    />
+                                    <label className="form-check-label" htmlFor={screenId}>
+                                      {actionLabel(screenId)}
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="text-end" style={{ width: '1%' }}>
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-ghost-primary"
+                                onClick={() => toggleAllInModule(screenIds, !screenIds.every((id) => checkedScreens.has(id)))}
+                              >
+                                {screenIds.every((id) => checkedScreens.has(id)) ? 'Clear' : 'All'}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+
               <div className="row mt-4">
                 <div className="col-12 text-end mt-3">
                   <Button variant="danger" className="me-2" onClick={() => navigate('/user_permission/list')}>
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={isLoading || !permUiHtml}>
-                    {isLoading ? 'Saving...' : unique_id ? 'Update' : 'Save'}
+                  <Button type="submit" disabled={isLoading || !userTypeId}>
+                    {isLoading ? 'Saving...' : 'Save'}
                   </Button>
                 </div>
               </div>

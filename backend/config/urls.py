@@ -1,5 +1,8 @@
 from django.http import JsonResponse
 from django.urls import include, path
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.routers import DefaultRouter
 
 from accounts.views import UserTypeViewSet, UserViewSet, login, logout, me
@@ -52,11 +55,28 @@ router.register(r'measurable', MeasurableViewSet, basename='measurable')
 router.register(r'logsheet', LogsheetViewSet, basename='logsheet')
 router.register(r'dc', DCViewSet, basename='dc')
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def permission_catalog(request):
+    """
+    Every screen-permission id (e.g. 'item_view') any registered ViewSet actually
+    enforces, grouped by URL prefix - derived from the router itself rather than a
+    hand-maintained list, so it can't drift out of sync as modules are added.
+    """
+    catalog = {}
+    for prefix, viewset, _basename in router.registry:
+        required = getattr(viewset, 'required_screens', None)
+        if required:
+            catalog[prefix] = sorted(set(required.values()))
+    return Response({'status': 1, 'msg': '', 'data': catalog, 'error': ''})
+
+
 urlpatterns = [
     path('api/health', health, name='health'),
     path('api/auth/login', login, name='login'),
     path('api/auth/logout', logout, name='logout'),
     path('api/auth/me', me, name='me'),
     path('api/menu', menu, name='menu'),
+    path('api/permission-catalog', permission_catalog, name='permission-catalog'),
     path('api/', include(router.urls)),
 ]

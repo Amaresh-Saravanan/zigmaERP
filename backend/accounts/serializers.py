@@ -52,6 +52,8 @@ class UserTypeManageSerializer(serializers.Serializer):
     unique_id = serializers.CharField(read_only=True)
     type_name = serializers.CharField()
     description = serializers.CharField(required=False, allow_blank=True)
+    main_screens = serializers.CharField(required=False, allow_blank=True)
+    screens = serializers.CharField(required=False, allow_blank=True)
     is_active = serializers.BooleanField(default=True)
 
     def create(self, validated_data):
@@ -60,6 +62,8 @@ class UserTypeManageSerializer(serializers.Serializer):
     def update(self, instance, validated_data):
         instance.type_name = validated_data['type_name']
         instance.description = validated_data.get('description', instance.description)
+        instance.main_screens = validated_data.get('main_screens', instance.main_screens)
+        instance.screens = validated_data.get('screens', instance.screens)
         instance.is_active = validated_data.get('is_active', instance.is_active)
         instance.save()
         return instance
@@ -96,6 +100,10 @@ class UserManageSerializer(serializers.Serializer):
         return data
 
     def create(self, validated_data):
+        # A new user with no explicit screens/main_screens inherits their role's
+        # (UserType's) default permission set, so assigning a role is enough to
+        # grant access - no separate per-user permission step required.
+        user_type = validated_data['user_type']
         return User(
             emp_id=validated_data.get('emp_id', ''),
             user_name=validated_data['user_name'],
@@ -103,10 +111,10 @@ class UserManageSerializer(serializers.Serializer):
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
             user_email=validated_data.get('user_email', ''),
-            user_type=validated_data['user_type'],
+            user_type=user_type,
             is_active=validated_data.get('is_active', True),
-            screens=validated_data.get('screens', ''),
-            main_screens=validated_data.get('main_screens', ''),
+            screens=validated_data.get('screens') or user_type.screens,
+            main_screens=validated_data.get('main_screens') or user_type.main_screens,
         ).save()
 
     def update(self, instance, validated_data):

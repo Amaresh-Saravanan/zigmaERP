@@ -9,6 +9,8 @@ class UserType(Document):
     unique_id = StringField(unique=True, required=True, default=lambda: str(uuid.uuid4()))
     type_name = StringField(unique=True, required=True)
     description = StringField(default='')
+    main_screens = StringField(default='')  # comma-separated ids; role's default permission set
+    screens = StringField(default='')
     is_active = BooleanField(default=True)
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)

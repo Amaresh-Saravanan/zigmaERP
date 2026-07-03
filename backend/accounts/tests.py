@@ -270,3 +270,62 @@ def authed_client_for_password(user, password):
     res = client.post('/api/auth/login', {'user_name': user.user_name, 'password': password}, format='json')
     client.credentials(HTTP_AUTHORIZATION=f"Token {res.data['data']['access_token']}")
     return client
+
+
+def test_user_type_permission_fields_round_trip():
+    manager = manager_user('user_type_create,user_type_edit,user_type_view')
+    client = authed_client(manager)
+
+    created = client.post('/api/user-types', {
+        'type_name': 'Operator',
+        'main_screens': 'main1,main2',
+        'screens': 'item_view,item_create',
+    }, format='json')
+    assert created.status_code == 201
+    assert created.data['data']['screens'] == 'item_view,item_create'
+
+    ut_id = created.data['data']['unique_id']
+    updated = client.put(f'/api/user-types/{ut_id}', {
+        'type_name': 'Operator',
+        'main_screens': 'main1',
+        'screens': 'item_view',
+    }, format='json')
+    assert updated.status_code == 200
+    assert updated.data['data']['screens'] == 'item_view'
+    assert UserType.objects.get(unique_id=ut_id).main_screens == 'main1'
+
+
+def test_user_inherits_screens_from_user_type_when_not_specified():
+    manager = manager_user('user_create,user_type_create')
+    client = authed_client(manager)
+
+    role = UserType(type_name='Operator', screens='item_view,item_create', main_screens='main1').save()
+
+    created = client.post('/api/users', {
+        'user_name': 'roleuser',
+        'password': 'pw12345',
+        'user_type': {'unique_id': role.unique_id},
+    }, format='json')
+
+    assert created.status_code == 201
+    new_user = User.objects.get(unique_id=created.data['data']['unique_id'])
+    assert new_user.screens == 'item_view,item_create'
+    assert new_user.main_screens == 'main1'
+
+
+def test_user_explicit_screens_override_user_type_defaults():
+    manager = manager_user('user_create,user_type_create')
+    client = authed_client(manager)
+
+    role = UserType(type_name='Operator', screens='item_view,item_create', main_screens='main1').save()
+
+    created = client.post('/api/users', {
+        'user_name': 'roleuser2',
+        'password': 'pw12345',
+        'user_type': {'unique_id': role.unique_id},
+        'screens': 'unit_view',
+    }, format='json')
+
+    assert created.status_code == 201
+    new_user = User.objects.get(unique_id=created.data['data']['unique_id'])
+    assert new_user.screens == 'unit_view'
