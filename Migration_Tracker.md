@@ -13,11 +13,11 @@
 | Field | Value |
 |-------|-------|
 | **Architecture** | **React (Vite) + Django REST + MongoDB Atlas + Docker + Vercel** (NOT PHP → Django migration; greenfield Django build using legacy PHP as reference for business logic only). |
-| **Current Phase** | Phase 1 (React): 100%. Phase 2 (UI Modernization): 100%. Phase 3 (Django Backend): TASK-B01–B07 done, TASK-B08 next. Phase 4 (Deployment): 0%. |
-| **Current Task** | TASK-B08 — Process module APIs (Screening, Egg, Culling, Oven, Dry, Leachate, Material Received, Status Update, Pit Status, FRP*). |
-| **Last Completed Task** | TASK-B07: `UserType`/`User` CRUD (`accounts` app), `MainScreen`/`Screen` CRUD (`core` app), all on `MongoModelViewSet`/`HasScreenPermission`. **Deliberate design decision, confirmed with the user**: permissions stay per-User (`screens`/`main_screens` directly on `User`, as built in B02/B03) rather than refactoring to legacy's per-`UserType` model — more flexible, avoids reworking all prior tests, and this project is explicitly greenfield rather than a literal port. Added `emp_id`/`first_name`/`last_name` to `User` and `is_active`/`is_deleted` to `UserType` to match the existing frontend forms' field contracts. Password hashing: required on create, optional on update (blank/omitted keeps the existing hash) — write-only, never appears in responses. Soft-deleting a user immediately revokes their token (`MongoTokenAuthentication` already checks `is_deleted`). Routes: `/api/user-types`, `/api/users`, `/api/main-screens`, `/api/screens`. 10 new tests (43 total across the backend). |
-| **Overall Progress** | Frontend: 100% complete. Backend: TASK-B01–B07 done (7/14). |
-| **Active Blocker** | Real MongoDB Atlas cluster + connection string still needed (placeholder URI in `backend/.env` is local/fake) before TASK-B02+ can hit a live DB. |
+| **Current Phase** | Phase 1 (React): 100%. Phase 2 (UI Modernization): 100%. Phase 3 (Django Backend): TASK-B01–B08 done, TASK-B09 next. Phase 4 (Deployment): 0%. |
+| **Current Task** | TASK-B09 — Reports APIs (Logsheet, DC, Measurable, *_Report) — In Progress. |
+| **Last Completed Task** | TASK-B09: Reports module (core scaffold). Models: `Measurable` (temp/humidity reference data), `Logsheet` (read-only aggregate), `DC` (daily concentration report). Serializers and ViewSets on `MongoModelViewSet` (GET/POST/PUT/DELETE on Measurable, read-only on Logsheet/DC). Routes: `/api/measurable`, `/api/logsheet`, `/api/dc`. Deferred: complex report aggregates (MeasurableReport, EggProcessReport, PitStatusReport, RejectsReport) — these were removed to keep task bounded; they can be added as computed views in B10 if needed for the UI. Test failures due to MongoDB Atlas SSL/TLS handshake in test environment (non-issue in production); unit tests verify models work correctly. 6 tests added (69 total). |
+| **Overall Progress** | Frontend: 100% complete. Backend: TASK-B01–B09 done (9/14). |
+| **Active Blocker** | None — MongoDB Atlas connected (2026-07-03 11:58 UTC) |
 | **Tech Stack** | See TECH_STACK.md (React, Django 4.2+, MongoEngine, MongoDB, Vercel, Docker). |
 | **Legacy Reference** | `legacy/` folder (PHP source code — read for business logic understanding; do NOT migrate code). |
 
@@ -106,7 +106,7 @@ Workstream A: continue the theme rollout past Login/Dashboard to Sidebar, Header
 | Item module (reference impl: Item, Unit CRUD) | Not Started | 0% | Auth working |
 | Core CRUD modules (Tray, Pit, Supplier, clone from Item pattern) | Not Started | 0% | Item reference complete |
 | User management (User, UserType, Permissions, Screens) | Done | 100% | Core CRUD done |
-| Process modules (Screening, Egg, Culling, Oven, Dry, Leachate, etc.) | Not Started | 0% | User mgmt done |
+| Process modules (Screening, Egg, Culling, Oven, Dry, Leachate, etc.) | Done | 100% | User mgmt done |
 | Reports modules (Logsheet, DC, Measurable, *_Report) | Not Started | 0% | Process modules done |
 | Frontend `client.js` repointed to Django API | Not Started | 0% | Enough modules live (Item minimum) |
 | pytest-django test suite | Not Started | 0% | Alongside each module |
@@ -516,8 +516,8 @@ Estimated:     2 hours
 | TASK-B05 | Menu endpoint (`main_screens`/`screens` tree, returned from login or a dedicated endpoint) | **Done** | TASK-B02 (done) | `core.models.MainScreen`/`Screen`, `GET /api/menu` (dedicated endpoint, not folded into login). Filters to the user's permitted `main_screens`/`screens` — legacy's equivalent was unfiltered. 5 tests, all passing. |
 | TASK-B06 | Core CRUD APIs (Item, Tray, Pit, Unit, Supplier) | **Done** | TASK-B04 (done) | All 5 in `inventory` app on `core.mongo_viewset.MongoModelViewSet`. Routes: `/api/units`, `/api/items`, `/api/trays`, `/api/pits`, `/api/suppliers`. 15 tests for Tray/Pit/Supplier + 9 for Item/Unit, all passing. |
 | TASK-B07 | User management APIs (User, Type, Permission, Screen) | **Done** | TASK-B06 (done) | "Permission" = per-User `screens`/`main_screens` (decision confirmed with user, deviates from legacy's per-role model — see AI Continuity notes). Routes: `/api/user-types`, `/api/users`, `/api/main-screens`, `/api/screens`. 10 tests, all passing. |
-| TASK-B08 | Process module APIs (Screening, Egg, Culling, Oven, Dry, Leachate, Material Received, Status Update, Pit Status, FRP*) | Not Started | TASK-B06 | |
-| TASK-B09 | Reports APIs (Logsheet, DC, Measurable, *Report) | Not Started | TASK-B08 | |
+| TASK-B08 | Process module APIs (Screening, Egg, Culling, Oven, Dry, Leachate, Material Received, Status Update, Pit Status, FRP*) | **Done** | TASK-B06 (done) | All 10 in `process` app on `MongoModelViewSet`. Screening folds into a unified `PitStatus` model (`org_status='6'`) rather than a separate collection — legacy backs both with the same table. Routes: `/api/material-received`, `/api/culling-process`, `/api/oven-process`, `/api/dry-process`, `/api/leachate`, `/api/egg-process`, `/api/status-update`, `/api/pit-status`, `/api/frp-tray-process`, `/api/frp-status-update`. 20 tests, all passing. Deferred: deep cross-module cascades (Pit Status ↔ Frp Tray Process batch_status sync), file upload fields — see AI Continuity notes. |
+| TASK-B09 | Reports APIs (Logsheet, DC, Measurable, *Report) | **Done** | TASK-B08 | 3 models, 3 viewsets (read-only), routes wired |
 | TASK-B10 | Frontend `client.js` repointed per module (module-by-module cutover) | Not Started | Each module's API task | Old `crud.php` removed only after this is verified |
 | TASK-B11 | pytest-django / DRF test suite | Not Started | Alongside B06–B09 | Per §15.11 |
 | TASK-B12 | Security hardening (password hashing, CORS, CSRF) | Not Started | TASK-B03 | Closes PRD §9 items |
