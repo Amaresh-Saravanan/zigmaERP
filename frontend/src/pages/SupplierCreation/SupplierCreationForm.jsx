@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import TextInput from '../../components/TextInput';
 import Textarea from '../../components/Textarea';
 import Toggle from '../../components/Toggle';
@@ -23,38 +23,22 @@ export default function SupplierCreationForm() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (unique_id) {
-      fetchFormHtml();
-    }
+    if (unique_id) fetchSupplier();
   }, [unique_id]);
 
-  const fetchFormHtml = async () => {
+  const fetchSupplier = async () => {
     setIsLoading(true);
     try {
-      const res = await client.get(`folders/supplier_creation/form.php?unique_id=${unique_id}`, {
-        responseType: 'text'
-      });
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(res.data, 'text/html');
-
-      const inputs = {
-        supplier_name: doc.querySelector('#supplier_name'),
-        label: doc.querySelector('#label'),
-        address: doc.querySelector('#address'),
-        contact_no: doc.querySelector('#contact_no'),
-        email: doc.querySelector('#email'),
-        gst_no: doc.querySelector('#gst_no'),
-        active_status: doc.querySelector('#active_status'),
-      };
-
+      const res = await djangoClient.get(`/suppliers/${unique_id}`);
+      const supplier = res.data.data;
       setFormData({
-        supplier_name: inputs.supplier_name ? inputs.supplier_name.value : '',
-        label: inputs.label ? inputs.label.value : '',
-        address: inputs.address ? inputs.address.value : '',
-        contact_no: inputs.contact_no ? inputs.contact_no.value : '',
-        email: inputs.email ? inputs.email.value : '',
-        gst_no: inputs.gst_no ? inputs.gst_no.value : '',
-        active_status: inputs.active_status ? inputs.active_status.value : '1',
+        supplier_name: supplier.supplier_name || '',
+        label: supplier.label || '',
+        address: supplier.address || '',
+        contact_no: supplier.contact_no || '',
+        email: supplier.email || '',
+        gst_no: supplier.gst_no || '',
+        active_status: supplier.is_active ? '1' : '0',
       });
     } catch (error) {
       console.error(error);
@@ -85,24 +69,22 @@ export default function SupplierCreationForm() {
     e.preventDefault();
     setIsLoading(true);
 
-    const payload = new URLSearchParams();
-    payload.append('action', 'createupdate');
-    payload.append('supplier_name', formData.supplier_name);
-    payload.append('label', formData.label);
-    payload.append('address', formData.address);
-    payload.append('contact_no', formData.contact_no);
-    payload.append('email', formData.email);
-    payload.append('gst_no', formData.gst_no);
-    payload.append('active_status', formData.active_status);
-    if (unique_id) {
-      payload.append('unique_id', unique_id);
-    }
+    const payload = {
+      supplier_name: formData.supplier_name,
+      label: formData.label,
+      address: formData.address,
+      contact_no: formData.contact_no,
+      email: formData.email,
+      gst_no: formData.gst_no,
+      is_active: formData.active_status === '1',
+    };
 
     try {
-      const res = await client.post('folders/supplier_creation/crud.php', payload);
-      const json = res.data;
+      const res = unique_id
+        ? await djangoClient.put(`/suppliers/${unique_id}`, payload)
+        : await djangoClient.post('/suppliers', payload);
 
-      if (json.msg === 'create' || json.msg === 'update') {
+      if (res.data?.msg === 'create' || res.data?.msg === 'update') {
         navigate('/supplier_creation/list');
       }
     } catch (error) {

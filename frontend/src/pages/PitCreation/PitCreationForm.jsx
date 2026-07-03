@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import TextInput from '../../components/TextInput';
 import Textarea from '../../components/Textarea';
 import Toggle from '../../components/Toggle';
@@ -21,16 +21,14 @@ export default function PitCreationForm() {
     description: '',
     active_status: '1',
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (unique_id) {
-      fetchFormHtml();
-    }
+    if (unique_id) fetchPit();
   }, [unique_id]);
 
-  // ponytail: Auto-calculate volume when dimensions change
+  // ponytail: Auto-calculate volume when dimensions change (server also computes this on save)
   useEffect(() => {
     const l = parseFloat(formData.length) || 0;
     const w = parseFloat(formData.width) || 0;
@@ -43,38 +41,23 @@ export default function PitCreationForm() {
     }
   }, [formData.length, formData.width, formData.height]);
 
-  const fetchFormHtml = async () => {
+  const fetchPit = async () => {
     setIsLoading(true);
     try {
-      const url = `folders/pit_creation/form.php?unique_id=${unique_id}`;
-      const res = await client.get(url, { responseType: 'text' });
-      
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(res.data, 'text/html');
-
-      const inputs = {
-        pit_name: doc.querySelector('#pit_name'),
-        location: doc.querySelector('#location'),
-        length: doc.querySelector('#length'),
-        width: doc.querySelector('#width'),
-        height: doc.querySelector('#height'),
-        volume: doc.querySelector('#volume'),
-        description: doc.querySelector('#description'),
-        active_status: doc.querySelector('#active_status')
-      };
-
+      const res = await djangoClient.get(`/pits/${unique_id}`);
+      const pit = res.data.data;
       setFormData({
-        pit_name: inputs.pit_name ? inputs.pit_name.value : '',
-        location: inputs.location ? inputs.location.value : '',
-        length: inputs.length ? inputs.length.value : '',
-        width: inputs.width ? inputs.width.value : '',
-        height: inputs.height ? inputs.height.value : '',
-        volume: inputs.volume ? inputs.volume.value : '',
-        description: inputs.description ? inputs.description.value : '',
-        active_status: inputs.active_status ? inputs.active_status.value : '1',
+        pit_name: pit.pit_name || '',
+        location: pit.location || '',
+        length: pit.length ?? '',
+        width: pit.width ?? '',
+        height: pit.height ?? '',
+        volume: pit.volume ?? '',
+        description: pit.description || '',
+        active_status: pit.is_active ? '1' : '0',
       });
     } catch (error) {
-      console.error('Failed to load form details', error);
+      console.error('Failed to load pit', error);
     } finally {
       setIsLoading(false);
     }
@@ -88,20 +71,21 @@ export default function PitCreationForm() {
     e.preventDefault();
     setIsLoading(true);
 
-    const payload = new URLSearchParams();
-    payload.append('action', 'createupdate');
-    Object.entries(formData).forEach(([key, val]) => {
-      payload.append(key, val);
-    });
-    
-    if (unique_id) {
-      payload.append('unique_id', unique_id);
-    }
+    const payload = {
+      pit_name: formData.pit_name,
+      location: formData.location,
+      length: parseFloat(formData.length) || 0,
+      width: parseFloat(formData.width) || 0,
+      height: parseFloat(formData.height) || 0,
+      description: formData.description,
+      is_active: formData.active_status === '1',
+    };
 
     try {
-      const res = await client.post('folders/pit_creation/crud.php', payload);
-      const json = res.data;
-      if (json.msg === 'create' || json.msg === 'update') {
+      const res = unique_id
+        ? await djangoClient.put(`/pits/${unique_id}`, payload)
+        : await djangoClient.post('/pits', payload);
+      if (res.data?.msg === 'create' || res.data?.msg === 'update') {
         navigate('/pit_creation/list');
       }
     } catch (error) {
