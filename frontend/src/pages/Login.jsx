@@ -185,26 +185,25 @@ export default function Login() {
         {/* ── RIGHT: Form 55% ── */}
         <div className="lp-form-side">
 
-          {/* Theme toggle — top-right */}
-          <div className="lp-theme-toggle" role="group" aria-label="Theme">
-            <button
-              type="button"
-              className={`lp-theme-btn${!isDark ? ' active' : ''}`}
-              onClick={() => setTheme('light')}
-              aria-label="Light mode"
-              title="Light mode"
-            >
-              <i className="ri-sun-line" aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              className={`lp-theme-btn lp-theme-btn--moon${isDark ? ' active' : ''}`}
-              onClick={() => setTheme('dark')}
-              aria-label="Dark mode"
-              title="Dark mode"
-            >
-              <i className="ri-moon-line" aria-hidden="true" />
-            </button>
+          {/* Theme toggle — sliding pill, top-right */}
+          <div
+            className="lp-theme-toggle"
+            onClick={() => setTheme(isDark ? 'light' : 'dark')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setTheme(isDark ? 'light' : 'dark'); } }}
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            <div className="lp-theme-pill">
+              <div className={`lp-theme-thumb${isDark ? '' : ' light'}`}>
+                {isDark ? (
+                  <i className="ri-moon-line" aria-hidden="true" />
+                ) : (
+                  <i className="ri-sun-line" aria-hidden="true" />
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Login card */}
@@ -542,46 +541,49 @@ export default function Login() {
           background: #0d1117;
         }
 
-        /* Theme toggle */
+        /* Theme toggle — sliding pill */
         .lp-theme-toggle {
           position: absolute;
           top: 24px;
           right: 28px;
           z-index: 10;
-          display: flex;
-          gap: 3px;
+          cursor: pointer;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .lp-theme-pill {
+          width: 64px;
+          height: 32px;
           padding: 4px;
           border-radius: 999px;
-          background: #fff;
-          box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+          background: #0f172a;
+          border: 1px solid #1e293b;
+          transition: background 0.3s, border-color 0.3s;
+          display: flex;
+          align-items: center;
         }
-        [data-bs-theme='dark'] .lp-theme-toggle {
-          background: #161b22;
-          box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+        [data-bs-theme='light'] .lp-theme-pill {
+          background: #f1f5f9;
+          border-color: #e2e8f0;
         }
-        .lp-theme-btn {
-          width: 34px;
-          height: 34px;
-          border: none;
+        .lp-theme-thumb {
+          width: 24px;
+          height: 24px;
           border-radius: 50%;
-          display: inline-flex;
+          display: flex;
           align-items: center;
           justify-content: center;
-          background: transparent;
-          color: #94a3b8;
-          font-size: 1rem;
-          cursor: pointer;
-          transition: background 0.18s, color 0.18s;
+          background: #1e293b;
+          color: #e2e8f0;
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s, color 0.3s;
+          transform: translateX(0);
+          font-size: 0.85rem;
         }
-        .lp-theme-btn.active {
-          background: #f1f5f9;
-          color: #1e293b;
+        .lp-theme-thumb.light {
+          transform: translateX(32px);
+          background: #e2e8f0;
+          color: #f59e0b;
         }
-        .lp-theme-btn--moon.active {
-          background: #25a96b;
-          color: #fff;
-        }
-        .lp-theme-btn:focus-visible {
+        .lp-theme-toggle:focus-visible .lp-theme-pill {
           outline: 2px solid #25a96b;
           outline-offset: 2px;
         }

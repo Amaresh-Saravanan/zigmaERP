@@ -1,81 +1,34 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import client from '../../api/client';
-import DateInput from '../../components/DateInput';
+import djangoClient from '../../api/djangoClient';
 import DataTable from '../../components/DataTable';
 
-const now = new Date();
-const pad = (n) => n.toString().padStart(2, '0');
-const FIRST_DAY_OF_MONTH = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-01`;
-const TODAY = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+const HATCHING_LABELS = { pending: 'Pending', progressing: 'Progressing', completed: 'Completed' };
 
 export default function FrpStatusUpdateList() {
   const navigate = useNavigate();
-  const [filters, setFilters] = useState({ from_date: FIRST_DAY_OF_MONTH, to_date: TODAY });
+
+  const columns = [
+    { label: 'S.No', sno: true },
+    { label: 'Entry Date', key: 'entry_date' },
+    { label: 'Batch Id', key: 'batch.batch.batch_id' },
+    { label: 'Day', key: 'day' },
+    { label: 'Hatching Status', key: 'hatching_status', render: (v) => HATCHING_LABELS[v] || v },
+    { label: 'Entry Person', key: 'staff.user_name' },
+    { label: 'Action', className: 'text-end', actions: true },
+  ];
 
   const handleEdit = (uniqueId) => navigate(`/frp_status_update/form?unique_id=${uniqueId}`);
 
-  const handleDelete = async (uniqueId, batchId) => {
+  const handleDelete = async (uniqueId) => {
     if (!window.confirm('Are you sure you want to delete this record?')) return;
     try {
-      const params = new URLSearchParams();
-      params.append('action', 'delete');
-      params.append('unique_id', uniqueId);
-      params.append('batch_id1', batchId);
-      const res = await client.post('folders/frp_status_update/crud.php', params);
+      const res = await djangoClient.delete(`/frp-status-update/${uniqueId}`);
       if (res.data?.msg === 'success_delete') window.location.reload();
     } catch (err) {
       console.error('Error deleting FRP Status Update', err);
     }
   };
-
-  const columns = [
-    { label: 'S.No' },
-    { label: 'Entry Date' },
-    { label: 'Batch Id' },
-    { label: 'Day' },
-    { label: 'Processing started Day' },
-    { label: 'Hatching Status', render: (val) => <span dangerouslySetInnerHTML={{ __html: val }} /> },
-    { label: 'Upload', render: (val) => <span dangerouslySetInnerHTML={{ __html: val }} /> },
-    { label: 'Entry Person' },
-    { 
-      label: 'Action', 
-      className: 'text-end',
-      render: (val, row) => {
-        if (!val || val === '') return null;
-        
-        const updateMatch = val.match(/unique_id=([^&'"]+)/);
-        const deleteMatch = val.match(/_delete_status1\(['"]([^'"]+)['"],\s*['"]([^'"]+)['"],\s*['"]([^'"]+)['"]/);
-        
-        const uniqueId = updateMatch ? updateMatch[1] : (deleteMatch ? deleteMatch[2] : null);
-        const batchId1 = deleteMatch ? deleteMatch[3] : null;
-
-        if (!uniqueId) return <span dangerouslySetInnerHTML={{ __html: val }} />;
-
-        return (
-          <div className="hstack gap-2 flex-wrap justify-content-end">
-            {val.includes('btn_update') || val.includes('mdi-square-edit-outline') ? (
-              <button onClick={() => handleEdit(uniqueId)} className="btn btn-sm btn-ghost-success waves-effect waves-light">
-                <i className="ri-edit-2-line fs-15"></i>
-              </button>
-            ) : null}
-            {deleteMatch ? (
-              <button onClick={() => handleDelete(uniqueId, batchId1)} className="btn btn-sm btn-ghost-danger waves-effect waves-light">
-                <i className="ri-delete-bin-line fs-15"></i>
-              </button>
-            ) : null}
-          </div>
-        );
-      }
-    },
-  ];
-
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
-  };
-
-  const extraParams = Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== ''));
 
   return (
     <div className="row g-3 mb-3">
@@ -92,35 +45,16 @@ export default function FrpStatusUpdateList() {
                 </button>
               </div>
             </div>
-
-            {/* Filters */}
-            <div className="row mt-2 g-2">
-              <div className="col-md-2">
-                <DateInput
-                  name="from_date"
-                  value={filters.from_date}
-                  onChange={handleFilterChange}
-                  className="form-control form-control-sm"
-                  placeholder="From Date"
-                />
-              </div>
-              <div className="col-md-2">
-                <DateInput
-                  name="to_date"
-                  value={filters.to_date}
-                  onChange={handleFilterChange}
-                  className="form-control form-control-sm"
-                  placeholder="To Date"
-                />
-              </div>
-            </div>
           </div>
 
           <div className="card-body pt-0">
             <DataTable
-              ajaxUrl="folders/frp_status_update/crud.php"
+              ajaxUrl="/frp-status-update"
+              mode="django"
               columns={columns}
-              extraParams={extraParams}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              showActiveFilter={false}
             />
           </div>
         </div>

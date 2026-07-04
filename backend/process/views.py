@@ -145,6 +145,13 @@ class PitStatusViewSet(MongoModelViewSet):
     def filter_search(self, queryset, term):
         return queryset.filter(form_batch_id__icontains=term)
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        org_status = self.request.query_params.get('org_status')
+        if org_status:
+            qs = qs.filter(org_status=org_status)
+        return qs
+
 
 class FrpTrayProcessViewSet(MongoModelViewSet):
     document_class = FrpTrayProcess

@@ -240,45 +240,43 @@ python manage.py runserver  # http://localhost:8000
 
 ### Staging / Production (Docker + Vercel)
 
-**Docker Compose** (backend + frontend containers; database is Atlas, not containerized):
+> As-built (TASK-B13/B14) — supersedes the illustrative example this section used to have. `DJANGO_SETTINGS_MODULE=config.settings.prod` and `VITE_API_URL` never existed in code: there's a single `config/settings.py` (env-var driven, see `.env.example`), and the frontend calls the backend via a relative `/api` path (`djangoClient.js`'s `baseURL: '/api'`), reverse-proxied rather than pointed at an absolute cross-origin URL — same pattern in both the local Vite dev proxy (`vite.config.js`) and the Docker/Vercel setups below.
+
+**Docker Compose** (backend + frontend containers; database is Atlas, not containerized) — see `docker-compose.yml` at the repo root:
 ```yaml
-version: '3.8'
 services:
   backend:
     build: ./backend
     ports: ['8000:8000']
     environment:
-      DJANGO_SETTINGS_MODULE: config.settings.prod
-      MONGODB_URI: ${MONGODB_URI}  # mongodb+srv://... Atlas connection string, injected via env/secret
+      DEBUG: ${DEBUG:-False}
       SECRET_KEY: ${SECRET_KEY}
-      CORS_ALLOWED_ORIGINS: http://localhost:3000,https://zigma-erp.vercel.app
+      MONGODB_URI: ${MONGODB_URI}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
 
   frontend:
     build: ./frontend
-    ports: ['3000:3000']
-    environment:
-      VITE_API_URL: http://localhost:8000/api
+    ports: ['3000:80']
     depends_on:
       - backend
 ```
+`frontend/Dockerfile` is a multi-stage build (`node:20-alpine` → `nginx:alpine`); `frontend/nginx.conf` proxies `/api/` to the `backend` container and falls back to `index.html` for client-side routes. Copy `.env.example` (repo root) to `.env` with real values — `docker compose` reads it automatically.
 
-**Vercel Deployment** (frontend):
-```bash
-# Vercel automatically deploys on git push
-# Environment variables:
-# VITE_API_URL = https://api.zigma-erp.com  (or Django backend URL)
-npm run build  # outputs frontend/dist/
-```
+**Vercel Deployment** (frontend only): connect the repo, set the project **root directory to `frontend/`** (Vercel auto-detects the Vite preset — build command `npm run build`, output `dist/`). `frontend/vercel.json` provides the same two things the Docker nginx config does: an `/api/*` rewrite (proxying to the deployed backend — **replace the `<your-deployed-backend-host>` placeholder with the real backend URL before deploying**, since Vercel rewrite destinations can't be templated from an environment variable) and the SPA fallback rewrite for client-side routing. No frontend env vars needed — there's no `VITE_API_URL` to set.
 
-**Backend Deployment** (Docker on server / cloud):
+**Backend Deployment** (platform-agnostic — any Docker host: a VPS, Railway, Fly.io, Render, ECS, Cloud Run, etc.):
 ```bash
 docker build -t zigma-backend ./backend
 docker run -d -p 8000:8000 \
   -e MONGODB_URI="mongodb+srv://user:pass@cluster.mongodb.net/zigma_erp" \
-  -e SECRET_KEY="..." \
+  -e SECRET_KEY="<long-random-production-secret>" \
   -e DEBUG=False \
+  -e ALLOWED_HOSTS=<your-backend-domain> \
+  -e CORS_ALLOWED_ORIGINS=https://<your-vercel-frontend-domain> \
   zigma-backend
 ```
+Whichever host runs this container becomes the `<your-deployed-backend-host>` value in `frontend/vercel.json`'s rewrite above.
 
 ---
 
@@ -406,20 +404,19 @@ docker run -d -p 8000:8000 zigma-backend
 
 ## Environment Variables
 
-**Frontend** (`.env` or Vercel):
-```
-VITE_API_URL=http://localhost:8000/api  # dev
-VITE_API_URL=https://api.zigma-erp.com  # prod
-```
+**Frontend**: no env vars — it calls the backend via a relative `/api` path (see the note under "Staging / Production" above), so there's nothing to set on Vercel or in a frontend `.env`. The one thing that needs setting per-deployment is `frontend/vercel.json`'s `/api/*` rewrite destination (not an env var — a file edit before deploying).
 
-**Backend** (`.env` or Docker):
+**Backend** (`.env` or Docker — see `backend/.env.example` and root `.env.example`):
 ```
-DEBUG=False                                                        # prod only
+DEBUG=False                                                        # prod only; required to be real when False (fails loudly otherwise)
 SECRET_KEY=<django-secret>
 MONGODB_URI=mongodb+srv://<user>:<pass>@<dev-cluster>.mongodb.net/zigma_erp_dev    # dev Atlas cluster
 MONGODB_URI=mongodb+srv://<user>:<pass>@<prod-cluster>.mongodb.net/zigma_erp_prod  # prod Atlas cluster
 CORS_ALLOWED_ORIGINS=http://localhost:3000,https://zigma-erp.vercel.app
 ALLOWED_HOSTS=localhost,127.0.0.1,api.zigma-erp.com
+# Prod only, optional, off by default — only matter once actually served over HTTPS:
+SECURE_SSL_REDIRECT=True
+SECURE_HSTS_SECONDS=31536000
 ```
 
 > Use separate Atlas databases (or clusters) per environment — `zigma_erp_dev`, `zigma_erp_staging`, `zigma_erp_prod` — never share one database across environments.

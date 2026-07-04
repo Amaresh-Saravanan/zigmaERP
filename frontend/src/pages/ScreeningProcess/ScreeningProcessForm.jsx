@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DateInput from '../../components/DateInput';
 import TextInput from '../../components/TextInput';
 import Select from '../../components/Select';
 import Button from '../../components/Button';
+
+const HARVEST_COMP_OPTIONS = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'completed', label: 'Completed' },
+];
 
 // Mini pipeline position banner — shows where screening sits in the overall process
 function PipelinePosition() {
@@ -64,51 +69,54 @@ export default function ScreeningProcessForm() {
 
   const [formData, setFormData] = useState({
     entry_date: new Date().toISOString().split('T')[0],
-    pit_id: '',
-    batch_id: '',
+    pit: '',
+    form_batch_id: '',
+    larvae_qty: '',
     qty_manure_1: '',
     qty_manure_2: '',
     qty_rejets: '',
     notes: '',
-    harvest_comp: '2',
+    harvest_comp: 'completed',
   });
 
   const [pitOptions, setPitOptions] = useState([]);
-  const [harvestOptions, setHarvestOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [batchLoading, setBatchLoading] = useState(false);
 
   // Derive current step from form state
-  const currentStep = !formData.pit_id ? 1
-    : (!formData.qty_manure_1 && !formData.qty_manure_2 && !formData.qty_rejets) ? 2
+  const currentStep = !formData.pit ? 1
+    : (!formData.qty_manure_1 && !formData.qty_manure_2 && !formData.qty_rejets && !formData.larvae_qty) ? 2
     : 3;
 
-  useEffect(() => { fetchFormHtml(); }, [unique_id]);
+  useEffect(() => {
+    fetchPits();
+    if (unique_id) fetchRecord();
+  }, [unique_id]);
 
-  const fetchFormHtml = async () => {
+  const fetchPits = async () => {
+    try {
+      const res = await djangoClient.get('/pits', { params: { page_size: 100 } });
+      setPitOptions((res.data.results || []).map((p) => ({ value: p.unique_id, label: p.pit_name })));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchRecord = async () => {
     setIsLoading(true);
     try {
-      const url = unique_id
-        ? `folders/screening_process/form.php?unique_id=${unique_id}`
-        : `folders/screening_process/form.php`;
-      const res = await client.get(url, { responseType: 'text' });
-      const doc = new DOMParser().parseFromString(res.data, 'text/html');
-
-      const g = (id) => doc.querySelector(`#${id}`);
-
+      const res = await djangoClient.get(`/pit-status/${unique_id}`);
+      const ps = res.data.data;
       setFormData({
-        entry_date:   g('entry_date')?.value   || new Date().toISOString().split('T')[0],
-        pit_id:       g('pit_id')?.value       || '',
-        batch_id:     g('batch_id')?.value     || '',
-        qty_manure_1: g('qty_manure_1')?.value || '',
-        qty_manure_2: g('qty_manure_2')?.value || '',
-        qty_rejets:   g('qty_rejets')?.value   || '',
-        notes:        g('notes')?.value        || '',
-        harvest_comp: g('harvest_comp')?.value || '2',
+        entry_date: ps.entry_date || new Date().toISOString().split('T')[0],
+        pit: ps.pit?.unique_id || '',
+        form_batch_id: ps.form_batch_id || '',
+        larvae_qty: String(ps.larvae_qty ?? ''),
+        qty_manure_1: String(ps.qty_manure_1 ?? ''),
+        qty_manure_2: String(ps.qty_manure_2 ?? ''),
+        qty_rejets: String(ps.qty_rejets ?? ''),
+        notes: ps.notes || '',
+        harvest_comp: ps.harvest_comp || 'completed',
       });
-
-      if (g('pit_id'))      setPitOptions(Array.from(g('pit_id').options).map(o => ({ value: o.value, label: o.text })));
-      if (g('harvest_comp')) setHarvestOptions(Array.from(g('harvest_comp').options).map(o => ({ value: o.value, label: o.text })));
     } catch (err) {
       console.error(err);
     } finally {
@@ -116,33 +124,31 @@ export default function ScreeningProcessForm() {
     }
   };
 
-  const handleChange = async (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-
-    if (name === 'pit_id') {
-      setFormData(prev => ({ ...prev, batch_id: '', pit_id: value }));
-      if (!value) return;
-      setBatchLoading(true);
-      try {
-        const res = await client.post('folders/screening_process/crud.php',
-          new URLSearchParams({ action: 'get_form_batch_id_vibro', pit_id: value }));
-        setFormData(prev => ({ ...prev, batch_id: String(res.data).trim() }));
-      } catch (err) {
-        console.error('Error fetching batch ID', err);
-      } finally {
-        setBatchLoading(false);
-      }
-    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+
+    const payload = {
+      entry_date: formData.entry_date,
+      pit: { unique_id: formData.pit },
+      org_status: '6',
+      notes: formData.notes,
+      larvae_qty: parseFloat(formData.larvae_qty) || 0,
+      qty_manure_1: parseFloat(formData.qty_manure_1) || 0,
+      qty_manure_2: parseFloat(formData.qty_manure_2) || 0,
+      qty_rejets: parseFloat(formData.qty_rejets) || 0,
+      harvest_comp: formData.harvest_comp,
+    };
+
     try {
-      const payload = new URLSearchParams({ action: 'createupdate', ...formData });
-      if (unique_id) payload.append('unique_id', unique_id);
-      const res = await client.post('folders/screening_process/crud.php', payload);
+      const res = unique_id
+        ? await djangoClient.put(`/pit-status/${unique_id}`, payload)
+        : await djangoClient.post('/pit-status', payload);
       if (res.data?.msg === 'create' || res.data?.msg === 'update') {
         navigate('/screening_process/list');
       }
@@ -202,28 +208,19 @@ export default function ScreeningProcessForm() {
                   <div className="col-12 col-md-3">
                     <Select
                       label="Pit Number"
-                      name="pit_id"
-                      value={formData.pit_id}
+                      name="pit"
+                      value={formData.pit}
                       onChange={handleChange}
                       options={pitOptions}
                       required
                     />
                   </div>
-                  <div className="col-12 col-md-3 mb-3">
-                    <label htmlFor="batch_id" className="form-label app-form-label label-computed">Pit Batch Id</label>
-                    <div className="position-relative">
-                      <input id="batch_id" name="batch_id" className="form-control app-form-control"
-                        readOnly value={formData.batch_id}
-                        placeholder={batchLoading ? 'Fetching…' : 'Auto-filled from pit'} />
-                      {batchLoading && (
-                        <div style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)' }}>
-                          <div className="spinner-border spinner-border-sm" role="status" style={{ color: '#25a96b', width: 14, height: 14, borderWidth: 2 }}>
-                            <span className="visually-hidden">Loading batch…</span>
-                          </div>
-                        </div>
-                      )}
+                  {unique_id && (
+                    <div className="col-12 col-md-3 mb-3">
+                      <span className="form-label app-form-label d-block">Pit Batch Id</span>
+                      <h5 className="mb-0">{formData.form_batch_id}</h5>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* ── Step 2: Measurements ── */}
@@ -236,11 +233,25 @@ export default function ScreeningProcessForm() {
                       type="number"
                       step="0.01"
                       min="0"
+                      label="Qty of Live Larvae (kg)"
+                      name="larvae_qty"
+                      value={formData.larvae_qty}
+                      onChange={handleChange}
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      type="number"
+                      step="0.01"
+                      min="0"
                       label="Manure −4mm (kg)"
                       name="qty_manure_1"
                       value={formData.qty_manure_1}
                       onChange={handleChange}
                       placeholder="0.00"
+                      required
                     />
                   </div>
                   <div className="col-12 col-md-3">
@@ -253,6 +264,7 @@ export default function ScreeningProcessForm() {
                       value={formData.qty_manure_2}
                       onChange={handleChange}
                       placeholder="0.00"
+                      required
                     />
                   </div>
                   <div className="col-12 col-md-3">
@@ -265,6 +277,7 @@ export default function ScreeningProcessForm() {
                       value={formData.qty_rejets}
                       onChange={handleChange}
                       placeholder="0.00"
+                      required
                     />
                   </div>
                 </div>
@@ -280,7 +293,7 @@ export default function ScreeningProcessForm() {
                       name="harvest_comp"
                       value={formData.harvest_comp}
                       onChange={handleChange}
-                      options={harvestOptions}
+                      options={HARVEST_COMP_OPTIONS}
                       required
                     />
                   </div>
@@ -301,7 +314,7 @@ export default function ScreeningProcessForm() {
                     <Button variant="danger" className="me-2" onClick={() => navigate('/screening_process/list')}>
                       Cancel
                     </Button>
-                    <Button type="submit" disabled={isLoading || batchLoading}>
+                    <Button type="submit" disabled={isLoading}>
                       {isLoading ? (
                         <><span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Saving…</>
                       ) : unique_id ? 'Update' : 'Save'}

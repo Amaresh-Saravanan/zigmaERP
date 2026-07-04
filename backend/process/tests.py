@@ -321,6 +321,43 @@ def test_pit_status_org_status_2_requires_batch_and_trays(pit, batch, tray):
     assert res.status_code == 201
 
 
+@pytest.mark.parametrize('org_status,fields,required_field', [
+    ('3', {'method': 'Machine'}, 'method'),
+    ('4', {'measure_time': 'morning', 'temp_start': 25, 'temp_mid': 26, 'temp_end': 27,
+           'humi_start': 50, 'humi_mid': 52, 'humi_end': 54}, 'measure_time'),
+    ('5', {'larvae_qty': 5, 'qty_manure_1': 1, 'qty_manure_2': 1, 'qty_manure_3': 1,
+           'qty_rejets': 0.5, 'harvest_comp': 'completed'}, 'harvest_comp'),
+    ('6', {'larvae_qty': 4, 'qty_manure_1': 0.8, 'qty_manure_2': 0.6, 'qty_rejets': 0.2}, 'qty_rejets'),
+    ('7', {'tippi_qty': 3.3}, 'tippi_qty'),
+])
+def test_pit_status_required_fields_per_org_status(pit, org_status, fields, required_field):
+    client = authed_client(make_user(screens=ALL_SCREENS))
+    base = {'entry_date': '2026-07-01', 'pit': {'unique_id': pit.unique_id}, 'org_status': org_status}
+
+    res = client.post('/api/pit-status', {**base, **fields}, format='json')
+    assert res.status_code == 201
+
+    incomplete = {k: v for k, v in fields.items() if k != required_field}
+    res = client.post('/api/pit-status', {**base, **incomplete}, format='json')
+    assert res.status_code == 400
+
+
+def test_pit_status_list_filters_by_org_status(pit):
+    client = authed_client(make_user(screens=ALL_SCREENS))
+    client.post('/api/pit-status', {
+        'entry_date': '2026-07-01', 'pit': {'unique_id': pit.unique_id}, 'org_status': '1',
+        'feed_qty': 2.5, 'feed_count': 1,
+    }, format='json')
+    client.post('/api/pit-status', {
+        'entry_date': '2026-07-01', 'pit': {'unique_id': pit.unique_id}, 'org_status': '6',
+        'larvae_qty': 3, 'qty_manure_1': 1, 'qty_manure_2': 1, 'qty_rejets': 0.5,
+    }, format='json')
+
+    res = client.get('/api/pit-status', {'org_status': '6'})
+    assert res.data['count'] == 1
+    assert res.data['results'][0]['org_status'] == '6'
+
+
 # ── FRP Tray Process ──
 
 def test_frp_tray_process_create_and_duplicate_batch_rejected(batch, tray):

@@ -102,6 +102,20 @@ def test_me_requires_valid_token(client, active_user):
     assert res.data['data']['user_name'] == 'admin1'
 
 
+def test_me_rejects_malformed_authorization_header(client, active_user):
+    client.credentials(HTTP_AUTHORIZATION='Token')  # missing the key half
+    res = client.get('/api/auth/me')
+    assert res.status_code == 401
+
+    client.credentials(HTTP_AUTHORIZATION='Token abc extra-part')  # too many parts
+    res = client.get('/api/auth/me')
+    assert res.status_code == 401
+
+    client.credentials(HTTP_AUTHORIZATION='Token not-a-real-key')
+    res = client.get('/api/auth/me')
+    assert res.status_code == 401
+
+
 def test_logout_revokes_token(client, active_user):
     login_res = client.post('/api/auth/login', {'user_name': 'admin1', 'password': 'correcthorse'}, format='json')
     token = login_res.data['data']['access_token']

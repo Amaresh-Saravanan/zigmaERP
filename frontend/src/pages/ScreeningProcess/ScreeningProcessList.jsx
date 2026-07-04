@@ -1,17 +1,17 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DataTable from '../../components/DataTable';
 
 export default function ScreeningProcessList() {
   const navigate = useNavigate();
 
   const columns = [
-    { label: 'S.No' },
-    { label: 'Entry Date' },
-    { label: 'Pit Number' },
-    { label: 'Pit Batch Id' },
-    { label: 'Action', className: 'text-end' },
+    { label: 'S.No', sno: true },
+    { label: 'Entry Date', key: 'entry_date' },
+    { label: 'Pit Number', key: 'pit.pit_name' },
+    { label: 'Pit Batch Id', key: 'form_batch_id' },
+    { label: 'Action', className: 'text-end', actions: true },
   ];
 
   const handleEdit = (uniqueId) => {
@@ -21,10 +21,7 @@ export default function ScreeningProcessList() {
   const handleDelete = async (uniqueId) => {
     if (!window.confirm('Are you sure you want to delete this process?')) return;
     try {
-      const params = new URLSearchParams();
-      params.append('action', 'delete');
-      params.append('unique_id', uniqueId);
-      const res = await client.post('folders/screening_process/crud.php', params);
+      const res = await djangoClient.delete(`/pit-status/${uniqueId}`);
       if (res.data?.msg === 'success_delete') {
         window.location.reload();
       }
@@ -54,10 +51,13 @@ export default function ScreeningProcessList() {
           </div>
           <div className="card-body pt-0">
             <DataTable
-              ajaxUrl="folders/screening_process/crud.php"
+              ajaxUrl="/pit-status"
+              mode="django"
+              extraParams={{ org_status: '6' }}
               columns={columns}
               onEdit={handleEdit}
               onDelete={handleDelete}
+              showActiveFilter={false}
             />
           </div>
         </div>
