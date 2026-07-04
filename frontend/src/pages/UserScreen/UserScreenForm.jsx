@@ -4,6 +4,7 @@ import djangoClient from '../../api/djangoClient';
 import TextInput from '../../components/TextInput';
 import Select from '../../components/Select';
 import Button from '../../components/Button';
+import FormHeader from '../../components/FormHeader';
 
 export default function UserScreenForm() {
   const [searchParams] = useSearchParams();
@@ -91,15 +92,10 @@ export default function UserScreenForm() {
     <div className="row g-3 mb-3">
       <div className="col-12">
         <div className="card h-md-100 ecommerce-card-min-width">
-          <div className="card-header pt-3 pb-2">
-            <div className="row flex-between-end">
-              <div className="col-auto align-self-center">
-                <h5 className="d-flex align-items-center">
-                  User Screen {unique_id ? 'Update' : 'Create'}
-                </h5>
-              </div>
-            </div>
-          </div>
+          <FormHeader
+            title={`${unique_id ? 'Update' : 'New'} User Screen`}
+            backTo="/user_screen/list"
+          />
           <div className="card-body d-flex flex-column justify-content-end">
             {isLoading && !formData.screen_name && unique_id ? (
               <div className="text-center py-4">
@@ -109,6 +105,9 @@ export default function UserScreenForm() {
               </div>
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
+                <p className="form-section-title">
+                  <i className="ri-file-list-3-line me-1"></i> Screen Identity
+                </p>
                 <div className="row">
                   <div className="col-12 col-md-4">
                     <Select
@@ -140,7 +139,12 @@ export default function UserScreenForm() {
                       required
                     />
                   </div>
+                </div>
 
+                <p className="form-section-title mt-2">
+                  <i className="ri-settings-3-line me-1"></i> Display Settings
+                </p>
+                <div className="row">
                   <div className="col-12 col-md-4">
                     <TextInput
                       type="number"
