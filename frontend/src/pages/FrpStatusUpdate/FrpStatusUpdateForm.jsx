@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DateInput from '../../components/DateInput';
 import TextInput from '../../components/TextInput';
 import Select from '../../components/Select';
-import FileInput from '../../components/FileInput';
 import Button from '../../components/Button';
+import FormHeader from '../../components/FormHeader';
 
 const TODAY = new Date().toISOString().split('T')[0];
+
+const HATCHING_OPTIONS = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'progressing', label: 'Progressing' },
+  { value: 'completed', label: 'Completed' },
+];
 
 export default function FrpStatusUpdateForm() {
   const [searchParams] = useSearchParams();
@@ -16,55 +22,70 @@ export default function FrpStatusUpdateForm() {
 
   const [formData, setFormData] = useState({
     entry_date: TODAY,
-    batch_id: '',
-    entry_no: '',
+    batch: '',
     starting_day: '',
     day: '',
-    hatching_status: '',
+    hatching_status: 'pending',
     remarks: '',
   });
 
+  const [staffId, setStaffId] = useState('');
   const [batchOptions, setBatchOptions] = useState([]);
-  const [files, setFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    fetchFormHtml();
+    fetchCurrentUser();
+    fetchBatches();
+    if (unique_id) fetchRecord();
   }, [unique_id]);
 
   useEffect(() => {
     if (formData.entry_date && formData.starting_day) {
-      const entryTime = new Date(formData.entry_date).getTime();
-      const startTime = new Date(formData.starting_day).getTime();
-      const diffDays = Math.round((entryTime - startTime) / (1000 * 3600 * 24)) + 1;
-      setFormData(prev => ({ ...prev, day: diffDays.toString() }));
+      const eDate = new Date(formData.entry_date);
+      const sDate = new Date(formData.starting_day);
+      if (!isNaN(eDate) && !isNaN(sDate)) {
+        const diffDays = Math.ceil(Math.abs(eDate - sDate) / (1000 * 60 * 60 * 24)) + 1;
+        setFormData((prev) => ({ ...prev, day: diffDays.toString() }));
+      }
     }
   }, [formData.entry_date, formData.starting_day]);
 
-  const fetchFormHtml = async () => {
+  const fetchCurrentUser = async () => {
+    try {
+      const res = await djangoClient.get('/auth/me');
+      setStaffId(res.data.data.unique_id);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchBatches = async () => {
+    try {
+      const res = await djangoClient.get('/frp-tray-process', { params: { page_size: 100 } });
+      setBatchOptions((res.data.results || []).map((f) => ({
+        value: f.unique_id,
+        label: f.batch?.batch_id || f.unique_id,
+        date: f.entry_date,
+      })));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchRecord = async () => {
     setIsLoading(true);
     try {
-      const url = unique_id 
-        ? `folders/frp_status_update/form.php?unique_id=${unique_id}`
-        : `folders/frp_status_update/form.php`;
-      const res = await client.get(url, { responseType: 'text' });
-      const doc = new DOMParser().parseFromString(res.data, 'text/html');
-      
-      const batchSelect = doc.querySelector('#batch_id');
-      if (batchSelect) setBatchOptions(Array.from(batchSelect.options).map(o => ({ value: o.value, label: o.text })));
-
-      if (unique_id) {
-        const g = (id) => doc.querySelector(`#${id}`)?.value ?? '';
-        setFormData({
-          entry_date: g('entry_date') || TODAY,
-          batch_id: g('batch_id'),
-          entry_no: g('entry_no'),
-          starting_day: g('starting_day'),
-          day: g('day'),
-          hatching_status: g('hatching_status'),
-          remarks: g('remarks'),
-        });
-      }
+      const res = await djangoClient.get(`/frp-status-update/${unique_id}`);
+      const fs = res.data.data;
+      setFormData({
+        entry_date: fs.entry_date || TODAY,
+        batch: fs.batch?.unique_id || '',
+        starting_day: '',
+        day: String(fs.day ?? ''),
+        hatching_status: fs.hatching_status || 'pending',
+        remarks: fs.remarks || '',
+      });
+      setStaffId(fs.staff?.unique_id || '');
     } catch (err) {
       console.error(err);
     } finally {
@@ -72,56 +93,33 @@ export default function FrpStatusUpdateForm() {
     }
   };
 
-  const handleBatchChange = async (e) => {
-    const newBatchId = e.target.value;
-    setFormData(prev => ({ ...prev, batch_id: newBatchId }));
-    
-    if (!newBatchId) {
-      setFormData(prev => ({ ...prev, entry_no: '', starting_day: '', day: '' }));
-      return;
-    }
-
-    try {
-      const params = new URLSearchParams();
-      params.append('action', 'select_entry_date');
-      params.append('batch_id', newBatchId);
-      const res = await client.post('folders/frp_status_update/crud.php', params, { responseType: 'text' });
-      
-      // select_entry_date returns "entry_date,entry_no"
-      if (res.data && res.data.includes(',')) {
-        const [startingDay, entryNo] = res.data.split(',');
-        setFormData(prev => ({ ...prev, starting_day: startingDay, entry_no: entryNo }));
-      }
-    } catch (err) {
-      console.error('Error fetching entry date', err);
-    }
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (name === 'batch') {
+      const selected = batchOptions.find((b) => b.value === value);
+      setFormData((prev) => ({ ...prev, starting_day: selected?.date || '' }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+
+    const payload = {
+      entry_date: formData.entry_date,
+      staff: { unique_id: staffId },
+      batch: { unique_id: formData.batch },
+      day: parseInt(formData.day, 10) || 0,
+      hatching_status: formData.hatching_status,
+      remarks: formData.remarks,
+    };
+
     try {
-      const payload = new FormData();
-      payload.append('action', 'createupdate');
-      payload.append('staff_name', ''); // Auto-filled from session in PHP, just sending empty
-      Object.entries(formData).forEach(([key, val]) => payload.append(key, val));
-      
-      files.forEach((file) => {
-        payload.append('test_file[]', file);
-      });
-
-      if (unique_id) payload.append('unique_id', unique_id);
-
-      const res = await client.post('folders/frp_status_update/crud.php', payload);
-      if (res.data?.msg === 'already') {
-        alert('This batch already exists.');
-        return;
-      }
+      const res = unique_id
+        ? await djangoClient.put(`/frp-status-update/${unique_id}`, payload)
+        : await djangoClient.post('/frp-status-update', payload);
       if (res.data?.msg === 'create' || res.data?.msg === 'update') {
         navigate('/frp_status_update/list');
       }
@@ -136,18 +134,13 @@ export default function FrpStatusUpdateForm() {
     <div className="row g-3 mb-3">
       <div className="col-12">
         <div className="card h-md-100 ecommerce-card-min-width">
-          <div className="card-header pt-3 pb-2">
-            <div className="row flex-between-end">
-              <div className="col-auto align-self-center">
-                <h5 className="d-flex align-items-center">
-                  FRP Status Update {unique_id ? 'Update' : 'Create'}
-                </h5>
-              </div>
-            </div>
-          </div>
+          <FormHeader
+            title={`${unique_id ? 'Update' : 'New'} FRP Status Update`}
+            backTo="/frp_status_update/list"
+          />
 
           <div className="card-body">
-            {isLoading && !batchOptions.length ? (
+            {isLoading && !batchOptions.length && unique_id ? (
               <div className="text-center py-4">
                 <div className="spinner-border text-primary" role="status">
                   <span className="visually-hidden">Loading...</span>
@@ -155,6 +148,9 @@ export default function FrpStatusUpdateForm() {
               </div>
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
+                <p className="form-section-title">
+                  <i className="ri-file-list-3-line me-1"></i> Batch Tracking
+                </p>
                 <div className="row">
                   <div className="col-12 col-md-4">
                     <DateInput
@@ -164,27 +160,17 @@ export default function FrpStatusUpdateForm() {
                       value={formData.entry_date}
                       onChange={handleChange}
                       required
-                      disabled={!!formData.batch_id}
                     />
                   </div>
 
                   <div className="col-12 col-md-4">
                     <Select
                       label="Batch Id"
-                      name="batch_id"
-                      value={formData.batch_id}
-                      onChange={handleBatchChange}
+                      name="batch"
+                      value={formData.batch}
+                      onChange={handleChange}
                       options={batchOptions}
                       required
-                    />
-                  </div>
-
-                  <div className="col-12 col-md-4">
-                    <TextInput
-                      label="Entry No"
-                      name="entry_no"
-                      value={formData.entry_no}
-                      readOnly
                     />
                   </div>
 
@@ -206,25 +192,20 @@ export default function FrpStatusUpdateForm() {
                       readOnly
                     />
                   </div>
+                </div>
 
+                <p className="form-section-title mt-2">
+                  <i className="ri-checkbox-circle-line me-1"></i> Hatching Status
+                </p>
+                <div className="row">
                   <div className="col-12 col-md-4">
                     <Select
                       label="FRP Hatching Status"
                       name="hatching_status"
                       value={formData.hatching_status}
                       onChange={handleChange}
-                      options={[{ value: '1', label: 'Progressing' }, { value: '2', label: 'Completed' }]}
-                      placeholder="Select The Status"
+                      options={HATCHING_OPTIONS}
                       required
-                    />
-                  </div>
-
-                  <div className="col-12 col-md-4">
-                    <FileInput
-                      label="FRP egg process Image"
-                      name="test_file"
-                      multiple
-                      onFilesChange={(fl) => setFiles(Array.from(fl))}
                     />
                   </div>
 
