@@ -4,6 +4,7 @@ import djangoClient from '../../api/djangoClient';
 import TextInput from '../../components/TextInput';
 import Toggle from '../../components/Toggle';
 import Button from '../../components/Button';
+import FormHeader from '../../components/FormHeader';
 
 export default function UserTypeForm() {
   const [searchParams] = useSearchParams();
@@ -69,15 +70,10 @@ export default function UserTypeForm() {
     <div className="row g-3 mb-3">
       <div className="col-12">
         <div className="card h-md-100 ecommerce-card-min-width">
-          <div className="card-header pt-3 pb-2">
-            <div className="row flex-between-end">
-              <div className="col-auto align-self-center">
-                <h5 className="d-flex align-items-center">
-                  User Type {unique_id ? 'Update' : 'Create'}
-                </h5>
-              </div>
-            </div>
-          </div>
+          <FormHeader
+            title={`${unique_id ? 'Update' : 'New'} User Type`}
+            backTo="/user_type/list"
+          />
           <div className="card-body d-flex flex-column justify-content-end">
             {isLoading && !formData.user_type && unique_id ? (
               <div className="text-center py-4">
@@ -87,6 +83,9 @@ export default function UserTypeForm() {
               </div>
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
+                <p className="form-section-title">
+                  <i className="ri-user-settings-line me-1"></i> User Type Details
+                </p>
                 <div className="row">
                   <div className="col-12 col-md-4">
                     <TextInput
