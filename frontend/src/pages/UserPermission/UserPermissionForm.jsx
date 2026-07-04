@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import djangoClient from '../../api/djangoClient';
 import Select from '../../components/Select';
 import Button from '../../components/Button';
+import FormHeader from '../../components/FormHeader';
 
 const ACTION_LABELS = { view: 'View', create: 'Create', edit: 'Edit', delete: 'Delete' };
 
@@ -133,15 +134,12 @@ export default function UserPermissionForm() {
     <div className="row g-3 mb-3">
       <div className="col-12">
         <div className="card h-md-100 ecommerce-card-min-width">
-          <div className="card-header pt-3 pb-2">
-            <div className="row flex-between-end">
-              <div className="col-auto align-self-center">
-                <h5 className="d-flex align-items-center">User Permission</h5>
-              </div>
-            </div>
-          </div>
+          <FormHeader title="User Permission" backTo="/user_permission/list" />
           <div className="card-body">
             <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
+              <p className="form-section-title">
+                <i className="ri-user-settings-line me-1"></i> User Type Selection
+              </p>
               <div className="row mb-3">
                 <div className="col-12 col-md-4">
                   <Select
@@ -158,7 +156,9 @@ export default function UserPermissionForm() {
               {userTypeId && !isLoading && (
                 <>
                   <div className="mb-4">
-                    <h6 className="mb-2">Main Screens (sidebar sections)</h6>
+                    <p className="form-section-title">
+                      <i className="ri-layout-grid-line me-1"></i> Main Screens Access (sidebar sections)
+                    </p>
                     <div className="d-flex flex-wrap gap-3">
                       {mainScreens.map((ms) => (
                         <div className="form-check" key={ms.unique_id}>
@@ -177,7 +177,9 @@ export default function UserPermissionForm() {
                     </div>
                   </div>
 
-                  <h6 className="mb-2">Module Access</h6>
+                  <p className="form-section-title">
+                    <i className="ri-shield-check-line me-1"></i> Module Access
+                  </p>
                   <div className="table-responsive">
                     <table className="table table-sm align-middle">
                       <tbody>
