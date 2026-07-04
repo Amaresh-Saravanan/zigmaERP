@@ -6,6 +6,7 @@ import useAuth from '../../hooks/useAuth';
 import TextInput from '../../components/TextInput';
 import Select from '../../components/Select';
 import Button from '../../components/Button';
+import FormHeader from '../../components/FormHeader';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -124,15 +125,10 @@ export default function MaterialReceivedForm() {
     <div className="row g-3 mb-3">
       <div className="col-12">
         <div className="card h-md-100 ecommerce-card-min-width">
-          <div className="card-header pt-3 pb-2">
-            <div className="row flex-between-end">
-              <div className="col-auto align-self-center">
-                <h5 className="d-flex align-items-center">
-                  Material Received {unique_id ? 'Update' : 'Create'}
-                </h5>
-              </div>
-            </div>
-          </div>
+          <FormHeader
+            title={`${unique_id ? 'Update' : 'New'} Material Received`}
+            backTo="/material_received/list"
+          />
 
           <div className="card-body">
             {isLoading && !supplierOptions.length ? (
@@ -143,6 +139,9 @@ export default function MaterialReceivedForm() {
               </div>
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
+                <p className="form-section-title">
+                  <i className="ri-truck-line me-1"></i> Supplier & Item
+                </p>
                 <div className="row">
                   <div className="col-12 col-md-3">
                     <DateInput
@@ -200,7 +199,12 @@ export default function MaterialReceivedForm() {
                       required
                     />
                   </div>
+                </div>
 
+                <p className="form-section-title mt-2">
+                  <i className="ri-file-text-line me-1"></i> Invoice Details
+                </p>
+                <div className="row">
                   <div className="col-12 col-md-3">
                     <DateInput
                       id="invoice_date"
