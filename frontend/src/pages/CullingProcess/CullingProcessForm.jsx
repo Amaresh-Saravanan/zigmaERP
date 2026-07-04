@@ -5,6 +5,7 @@ import DateInput from '../../components/DateInput';
 import TextInput from '../../components/TextInput';
 import Select from '../../components/Select';
 import Button from '../../components/Button';
+import FormHeader from '../../components/FormHeader';
 
 const SHIFT_OPTIONS = [{ value: '1', label: 'Day' }, { value: '2', label: 'Night' }, { value: '3', label: 'General' }];
 const CYLINDER_OPTIONS = [{ value: '1', label: 'O2' }, { value: '2', label: 'LPG' }, { value: '3', label: 'Other' }];
@@ -115,15 +116,10 @@ export default function CullingProcessForm() {
     <div className="row g-3 mb-3">
       <div className="col-12">
         <div className="card h-md-100 ecommerce-card-min-width">
-          <div className="card-header pt-3 pb-2">
-            <div className="row flex-between-end">
-              <div className="col-auto align-self-center">
-                <h5 className="d-flex align-items-center">
-                  Culling Process {unique_id ? 'Update' : 'Create'}
-                </h5>
-              </div>
-            </div>
-          </div>
+          <FormHeader
+            title={`${unique_id ? 'Update' : 'New'} Culling Process`}
+            backTo="/culling_process/list"
+          />
 
           <div className="card-body">
             {isLoading && unique_id ? (
@@ -134,6 +130,9 @@ export default function CullingProcessForm() {
               </div>
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
+                <p className="form-section-title">
+                  <i className="ri-user-settings-line me-1"></i> Shift & Cylinder Details
+                </p>
                 <div className="row">
 
                   <div className="col-12 col-md-3">
@@ -178,7 +177,12 @@ export default function CullingProcessForm() {
                       required
                     />
                   </div>
+                </div>
 
+                <p className="form-section-title mt-2">
+                  <i className="ri-scales-3-line me-1"></i> Weight & Fuel Measurements
+                </p>
+                <div className="row">
                   <div className="col-12 col-md-3">
                     <TextInput
                       type="number"
@@ -240,7 +244,12 @@ export default function CullingProcessForm() {
                       required
                     />
                   </div>
+                </div>
 
+                <p className="form-section-title mt-2">
+                  <i className="ri-checkbox-circle-line me-1"></i> Work Completion
+                </p>
+                <div className="row">
                   <div className="col-12 col-md-3">
                     <Select
                       label="Work Done"
