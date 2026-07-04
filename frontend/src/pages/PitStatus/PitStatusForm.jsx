@@ -1,12 +1,44 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DateInput from '../../components/DateInput';
 import TextInput from '../../components/TextInput';
 import Select from '../../components/Select';
 import Button from '../../components/Button';
+import FormHeader from '../../components/FormHeader';
 
 const TODAY = new Date().toISOString().split('T')[0];
+
+// '6' (Vibro Screen) is owned by ScreeningProcessForm against this same backend model.
+const ORG_STATUS_OPTIONS = [
+  { value: '1', label: 'Organic Waste Added in Pit' },
+  { value: '2', label: 'Baby Larvae Added' },
+  { value: '3', label: 'Aeration Process' },
+  { value: '4', label: 'Measurement' },
+  { value: '5', label: 'Harvesting' },
+  { value: '7', label: 'Tippi' },
+];
+const METHOD_OPTIONS = [
+  { value: 'Machine', label: 'Machine' },
+  { value: 'Manual', label: 'Manual' },
+];
+const MEASURE_TIME_OPTIONS = [
+  { value: 'morning', label: 'Morning' },
+  { value: 'evening', label: 'Evening' },
+];
+const HARVEST_COMP_OPTIONS = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'completed', label: 'Completed' },
+];
+
+const REQUIRED_FIELDS_BY_STATUS = {
+  '1': ['feed_qty', 'feed_count'],
+  '2': ['batch', 'larvae_qty_in'],
+  '3': ['method'],
+  '4': ['measure_time', 'temp_start', 'temp_mid', 'temp_end', 'humi_start', 'humi_mid', 'humi_end'],
+  '5': ['larvae_qty', 'qty_manure_1', 'qty_manure_2', 'qty_manure_3', 'qty_rejets', 'harvest_comp'],
+  '7': ['tippi_qty'],
+};
 
 export default function PitStatusForm() {
   const [searchParams] = useSearchParams();
@@ -15,226 +47,179 @@ export default function PitStatusForm() {
 
   const [formData, setFormData] = useState({
     entry_date: TODAY,
-    pit_id: '',
+    pit: '',
     org_status: '',
     notes: '',
-    batch_id: '',
-    tray_no: [],
-    tray_no_hide: '',
     feed_qty: '',
     feed_count: '',
-    tippi_qty: '',
+    batch: '',
+    larvae_qty_in: '',
     method: '',
     measure_time: '',
-    tempstart: '',
-    tempmid: '',
-    tempend: '',
-    humistart: '',
-    humimid: '',
-    humiend: '',
-    larvae_qty_in: '',
+    temp_start: '',
+    temp_mid: '',
+    temp_end: '',
+    humi_start: '',
+    humi_mid: '',
+    humi_end: '',
     larvae_qty: '',
     qty_manure_1: '',
     qty_manure_2: '',
     qty_manure_3: '',
     qty_rejets: '',
     harvest_comp: '',
-    screen_unique_id: '',
-    screen_unique_id_up: '',
-    unique: unique_id || '',
+    tippi_qty: '',
   });
+  const [selectedTrays, setSelectedTrays] = useState([]);
 
-  const [options, setOptions] = useState({
-    pit_id: [],
-    org_status: [],
-    batch_id: [],
-    tray_no: [],
-    method: [],
-    measure_time: [],
-    harvest_comp: [],
-  });
+  const [pitOptions, setPitOptions] = useState([]);
+  const [batchOptions, setBatchOptions] = useState([]);
+  const [trayOptions, setTrayOptions] = useState([]);
+  const [pitStatusRecords, setPitStatusRecords] = useState([]);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [feedCountName, setFeedCountName] = useState('');
 
   useEffect(() => {
-    fetchFormHtml();
+    fetchPits();
+    fetchBatches();
+    fetchTrays();
+    fetchPitStatusRecords();
+    if (unique_id) fetchRecord();
   }, [unique_id]);
 
+  // ponytail: feed-count suggestion approximated from the last 100 records (no per-pit
+  // filter on the API); good enough for this pit's recent history, add a dedicated
+  // aggregation endpoint if pit_status volume ever exceeds that.
   useEffect(() => {
-    if (formData.org_status === '1' && formData.pit_id) {
-      fetchFeedCount();
-    }
-  }, [formData.org_status, formData.pit_id]);
+    if (unique_id || formData.org_status !== '1' || !formData.pit) return;
+    const forPit = pitStatusRecords.filter((r) => r.pit?.unique_id === formData.pit && r.org_status === '1');
+    const maxCount = forPit.reduce((max, r) => Math.max(max, r.feed_count || 0), 0);
+    setFormData((prev) => ({ ...prev, feed_count: String(maxCount + 1) }));
+  }, [formData.org_status, formData.pit, pitStatusRecords, unique_id]);
 
-  useEffect(() => {
-    if (formData.org_status === '2' && formData.batch_id) {
-      fetchTrayOptions(formData.batch_id);
+  const fetchPits = async () => {
+    try {
+      const res = await djangoClient.get('/pits', { params: { page_size: 100 } });
+      setPitOptions((res.data.results || []).map((p) => ({ value: p.unique_id, label: p.pit_name })));
+    } catch (error) {
+      console.error(error);
     }
-  }, [formData.batch_id]);
+  };
 
-  const fetchFormHtml = async () => {
+  const fetchBatches = async () => {
+    try {
+      const res = await djangoClient.get('/material-received', { params: { page_size: 100 } });
+      setBatchOptions((res.data.results || []).map((b) => ({ value: b.unique_id, label: b.batch_id })));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchTrays = async () => {
+    try {
+      const res = await djangoClient.get('/trays', { params: { page_size: 100 } });
+      setTrayOptions((res.data.results || []).map((t) => ({ value: t.unique_id, label: t.bin_name })));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchPitStatusRecords = async () => {
+    try {
+      const res = await djangoClient.get('/pit-status', { params: { page_size: 100 } });
+      setPitStatusRecords(res.data.results || []);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchRecord = async () => {
     setIsLoading(true);
     try {
-      const url = unique_id 
-        ? `folders/pit_status/form.php?unique_id=${unique_id}`
-        : `folders/pit_status/form.php`;
-      const res = await client.get(url, { responseType: 'text' });
-      const doc = new DOMParser().parseFromString(res.data, 'text/html');
-      
-      const parseOptions = (selector) => {
-        const el = doc.querySelector(selector);
-        return el ? Array.from(el.options).map(o => ({ value: o.value, label: o.text })) : [];
-      };
-
-      const newOptions = {
-        pit_id: parseOptions('#pit_id'),
-        org_status: parseOptions('#org_status'),
-        batch_id: parseOptions('#batch_id'),
-        method: parseOptions('#method'),
-        measure_time: parseOptions('#measure_time'),
-        harvest_comp: parseOptions('#harvest_comp'),
-        tray_no: parseOptions('#tray_no'),
-      };
-
-      setOptions(newOptions);
-
-      if (unique_id) {
-        const g = (id) => doc.querySelector(`#${id}`)?.value ?? '';
-        
-        const traySelect = doc.querySelector('#tray_no');
-        const selectedTrays = traySelect 
-          ? Array.from(traySelect.options).filter(o => o.selected || o.hasAttribute('selected')).map(o => o.value)
-          : [];
-
-        setFormData(prev => ({
-          ...prev,
-          entry_date: g('entry_date') || TODAY,
-          pit_id: g('pit_id'),
-          org_status: g('org_status'),
-          notes: g('notes'),
-          batch_id: g('batch_id'),
-          tray_no: selectedTrays,
-          tray_no_hide: g('tray_no_hide'),
-          feed_qty: g('feed_qty'),
-          feed_count: g('feed_count'),
-          tippi_qty: g('tippi_qty'),
-          method: g('method'),
-          measure_time: g('measure_time'),
-          tempstart: g('tempstart'),
-          tempmid: g('tempmid'),
-          tempend: g('tempend'),
-          humistart: g('humistart'),
-          humimid: g('humimid'),
-          humiend: g('humiend'),
-          larvae_qty_in: g('larvae_qty_in'),
-          larvae_qty: g('larvae_qty'),
-          qty_manure_1: g('qty_manure_1'),
-          qty_manure_2: g('qty_manure_2'),
-          qty_manure_3: g('qty_manure_3'),
-          qty_rejets: g('qty_rejets'),
-          harvest_comp: g('harvest_comp'),
-          screen_unique_id: g('screen_unique_id'),
-          screen_unique_id_up: g('screen_unique_id_up'),
-          unique: g('unique'),
-        }));
-      } else {
-        const g = (id) => doc.querySelector(`#${id}`)?.value ?? '';
-        setFormData(prev => ({
-            ...prev,
-            screen_unique_id: g('screen_unique_id'),
-        }));
-      }
-    } catch (err) {
-      console.error(err);
+      const res = await djangoClient.get(`/pit-status/${unique_id}`);
+      const ps = res.data.data;
+      setFormData({
+        entry_date: ps.entry_date || TODAY,
+        pit: ps.pit?.unique_id || '',
+        org_status: ps.org_status || '',
+        notes: ps.notes || '',
+        feed_qty: String(ps.feed_qty ?? ''),
+        feed_count: String(ps.feed_count ?? ''),
+        batch: ps.batch?.unique_id || '',
+        larvae_qty_in: String(ps.larvae_qty_in ?? ''),
+        method: ps.method || '',
+        measure_time: ps.measure_time || '',
+        temp_start: String(ps.temp_start ?? ''),
+        temp_mid: String(ps.temp_mid ?? ''),
+        temp_end: String(ps.temp_end ?? ''),
+        humi_start: String(ps.humi_start ?? ''),
+        humi_mid: String(ps.humi_mid ?? ''),
+        humi_end: String(ps.humi_end ?? ''),
+        larvae_qty: String(ps.larvae_qty ?? ''),
+        qty_manure_1: String(ps.qty_manure_1 ?? ''),
+        qty_manure_2: String(ps.qty_manure_2 ?? ''),
+        qty_manure_3: String(ps.qty_manure_3 ?? ''),
+        qty_rejets: String(ps.qty_rejets ?? ''),
+        harvest_comp: ps.harvest_comp || '',
+        tippi_qty: String(ps.tippi_qty ?? ''),
+      });
+      setSelectedTrays((ps.trays || []).map((t) => t.unique_id));
+    } catch (error) {
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchFeedCount = async () => {
-    try {
-      const params = new URLSearchParams();
-      params.append('action', 'gen_feed_count');
-      params.append('pit_id', formData.pit_id);
-      params.append('unique', unique_id || '');
-      const res = await client.post('folders/pit_status/crud.php', params);
-      
-      let count = parseInt(res.data?.feed_count) || 0;
-      if (!unique_id) count += 1;
-
-      setFormData(prev => ({ ...prev, feed_count: count }));
-      
-      const countNames = ['Zero', 'First Feeding', 'Second Feeding', 'Third Feeding', 'Fourth Feeding', 'Fifth Feeding', 'Sixth Feeding'];
-      setFeedCountName(countNames[count] || `${count}th Feeding`);
-    } catch (err) {
-      console.error('Error fetching feed count', err);
-    }
-  };
-
-  const fetchTrayOptions = async (batchId) => {
-    // If updating, we might already have the tray options from HTML parsing
-    if (unique_id && formData.batch_id === batchId && options.tray_no.length > 0) return;
-
-    try {
-      const params = new URLSearchParams();
-      params.append('action', 'select_tray_no');
-      params.append('batch_id', batchId);
-      const res = await client.post('folders/pit_status/crud.php', params);
-      
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = `<select>${res.data}</select>`;
-      const parsedOptions = Array.from(tempDiv.querySelector('select').options).map(o => ({ value: o.value, label: o.text }));
-      setOptions(prev => ({ ...prev, tray_no: parsedOptions }));
-    } catch (err) {
-      console.error('Error fetching trays', err);
-    }
-  };
-
   const handleChange = (e) => {
-    const { name, value, type, selectedOptions } = e.target;
-    if (type === 'select-multiple') {
-      const values = Array.from(selectedOptions).map(opt => opt.value);
-      setFormData(prev => ({ ...prev, [name]: values }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
+  const handleTrayToggle = (trayId) => {
+    setSelectedTrays((prev) =>
+      prev.includes(trayId) ? prev.filter((id) => id !== trayId) : [...prev, trayId]
+    );
+  };
+
+  const NUMBER_FIELDS = new Set([
+    'feed_qty', 'feed_count', 'larvae_qty_in', 'temp_start', 'temp_mid', 'temp_end',
+    'humi_start', 'humi_mid', 'humi_end', 'larvae_qty', 'qty_manure_1', 'qty_manure_2',
+    'qty_manure_3', 'qty_rejets', 'tippi_qty',
+  ]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    try {
-      const payload = new URLSearchParams();
-      payload.append('action', 'createupdate');
-      
-      // Selectively append fields based on org_status
-      Object.entries(formData).forEach(([key, val]) => {
-        if (key === 'tray_no') {
-          if (formData.org_status === '2') {
-            val.forEach(v => payload.append('tray_no[]', v));
-          }
-        } else {
-          payload.append(key, val);
-        }
-      });
-      
-      if (unique_id) payload.append('unique_id', unique_id);
-      
-      const pitSelect = document.getElementById('pit_id');
-      const pitNameText = pitSelect?.options[pitSelect.selectedIndex]?.text || '';
-      payload.append('pit_name', pitNameText);
 
-      const res = await client.post('folders/pit_status/crud.php', payload);
-      if (res.data?.msg === 'already') {
-        alert('Record already exists.');
-        return;
+    const payload = {
+      entry_date: formData.entry_date,
+      pit: { unique_id: formData.pit },
+      org_status: formData.org_status,
+      notes: formData.notes,
+    };
+
+    for (const field of REQUIRED_FIELDS_BY_STATUS[formData.org_status] || []) {
+      if (field === 'batch') {
+        payload.batch = { unique_id: formData.batch };
+      } else {
+        payload[field] = NUMBER_FIELDS.has(field) ? parseFloat(formData[field]) || 0 : formData[field];
       }
+    }
+    if (formData.org_status === '2') {
+      payload.trays = selectedTrays.map((id) => ({ unique_id: id }));
+    }
+
+    try {
+      const res = unique_id
+        ? await djangoClient.put(`/pit-status/${unique_id}`, payload)
+        : await djangoClient.post('/pit-status', payload);
+
       if (res.data?.msg === 'create' || res.data?.msg === 'update') {
         navigate('/pit_status/list');
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error('An error occurred while saving.', error);
     } finally {
       setIsLoading(false);
     }
@@ -244,18 +229,13 @@ export default function PitStatusForm() {
     <div className="row g-3 mb-3">
       <div className="col-12">
         <div className="card h-md-100 ecommerce-card-min-width">
-          <div className="card-header pt-3 pb-2">
-            <div className="row flex-between-end">
-              <div className="col-auto align-self-center">
-                <h5 className="d-flex align-items-center">
-                  Pit Status {unique_id ? 'Update' : 'Create'}
-                </h5>
-              </div>
-            </div>
-          </div>
+          <FormHeader
+            title={`${unique_id ? 'Update' : 'New'} Pit Status`}
+            backTo="/pit_status/list"
+          />
 
           <div className="card-body">
-            {isLoading && !options.pit_id.length ? (
+            {isLoading && !pitOptions.length && unique_id ? (
               <div className="text-center py-4">
                 <div className="spinner-border text-primary" role="status">
                   <span className="visually-hidden">Loading...</span>
@@ -263,8 +243,10 @@ export default function PitStatusForm() {
               </div>
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
+                <p className="form-section-title">
+                  <i className="ri-map-pin-2-line me-1"></i> Status Selection
+                </p>
                 <div className="row">
-                  {/* Common Fields */}
                   <div className="col-12 col-md-3">
                     <DateInput
                       id="entry_date"
@@ -279,10 +261,10 @@ export default function PitStatusForm() {
                   <div className="col-12 col-md-3">
                     <Select
                       label="Pit Number"
-                      name="pit_id"
-                      value={formData.pit_id}
+                      name="pit"
+                      value={formData.pit}
                       onChange={handleChange}
-                      options={options.pit_id}
+                      options={pitOptions}
                       required
                     />
                   </div>
@@ -293,7 +275,7 @@ export default function PitStatusForm() {
                       name="org_status"
                       value={formData.org_status}
                       onChange={handleChange}
-                      options={options.org_status}
+                      options={ORG_STATUS_OPTIONS}
                       required
                     />
                   </div>
@@ -308,15 +290,19 @@ export default function PitStatusForm() {
                   </div>
                 </div>
 
-                {/* Conditional Section 1: Organic Waste Added in Pit */}
                 {formData.org_status === '1' && (
-                  <div className="row border-top pt-3 mt-2">
+                  <>
+                    <p className="form-section-title mt-2">
+                      <i className="ri-plant-line me-1"></i> Feeding Details
+                    </p>
+                    <div className="row">
                     <div className="col-12 col-md-3">
                       <TextInput
                         label="Feeding Count"
-                        name="feed_count_name"
-                        value={feedCountName}
-                        readOnly
+                        name="feed_count"
+                        value={formData.feed_count}
+                        onChange={handleChange}
+                        required
                       />
                     </div>
                     <div className="col-12 col-md-3">
@@ -330,19 +316,23 @@ export default function PitStatusForm() {
                         required
                       />
                     </div>
-                  </div>
+                    </div>
+                  </>
                 )}
 
-                {/* Conditional Section 2: Baby Larvae Added */}
                 {formData.org_status === '2' && (
-                  <div className="row border-top pt-3 mt-2">
+                  <>
+                    <p className="form-section-title mt-2">
+                      <i className="ri-seedling-line me-1"></i> Baby Larvae Intake
+                    </p>
+                    <div className="row">
                     <div className="col-12 col-md-3">
                       <Select
                         label="Batch Id"
-                        name="batch_id"
-                        value={formData.batch_id}
+                        name="batch"
+                        value={formData.batch}
                         onChange={handleChange}
-                        options={options.batch_id}
+                        options={batchOptions}
                         required
                       />
                     </div>
@@ -358,69 +348,92 @@ export default function PitStatusForm() {
                       />
                     </div>
                     <div className="col-12 col-md-6 mb-3">
-                      <label htmlFor="tray_no" className="form-label app-form-label">Tray No</label>
-                      <select id="tray_no" name="tray_no" className="form-select app-form-control"
-                        multiple size="3" value={formData.tray_no} onChange={handleChange} required>
-                        {options.tray_no.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                      </select>
-                      <small className="text-muted">Hold Ctrl/Cmd to select multiple</small>
+                      <label className="form-label app-form-label d-block">Tray No</label>
+                      <div className="d-flex flex-wrap gap-3">
+                        {trayOptions.map((tray) => (
+                          <div key={tray.value} className="form-check">
+                            <input
+                              className="form-check-input"
+                              type="checkbox"
+                              id={`tray_${tray.value}`}
+                              checked={selectedTrays.includes(tray.value)}
+                              onChange={() => handleTrayToggle(tray.value)}
+                            />
+                            <label className="form-check-label" htmlFor={`tray_${tray.value}`}>
+                              {tray.label}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                    </div>
+                  </>
                 )}
 
-                {/* Conditional Section 3: Aeration Process */}
                 {formData.org_status === '3' && (
-                  <div className="row border-top pt-3 mt-2">
+                  <>
+                    <p className="form-section-title mt-2">
+                      <i className="ri-windy-line me-1"></i> Aeration Method
+                    </p>
+                    <div className="row">
                     <div className="col-12 col-md-3">
                       <Select
                         label="Method"
                         name="method"
                         value={formData.method}
                         onChange={handleChange}
-                        options={options.method}
+                        options={METHOD_OPTIONS}
                         placeholder="Select Method"
                         required
                       />
                     </div>
-                  </div>
+                    </div>
+                  </>
                 )}
 
-                {/* Conditional Section 4: Measurement */}
                 {formData.org_status === '4' && (
-                  <div className="row border-top pt-3 mt-2">
+                  <>
+                    <p className="form-section-title mt-2">
+                      <i className="ri-thermometer-line me-1"></i> Temperature & Humidity
+                    </p>
+                    <div className="row">
                     <div className="col-12 col-md-3">
                       <Select
                         label="Measurement Time"
                         name="measure_time"
                         value={formData.measure_time}
                         onChange={handleChange}
-                        options={options.measure_time}
+                        options={MEASURE_TIME_OPTIONS}
                         placeholder="Select Time"
                         required
                       />
                     </div>
                     <div className="col-12 col-md-4">
-                      <TextInput type="number" step="0.01" label="Temperature(°c)" name="tempstart" className="mb-1" placeholder="Start"
-                        value={formData.tempstart} onChange={handleChange} required />
-                      <TextInput type="number" step="0.01" name="tempmid" className="mb-1" placeholder="Mid"
-                        value={formData.tempmid} onChange={handleChange} required />
-                      <TextInput type="number" step="0.01" name="tempend" placeholder="End"
-                        value={formData.tempend} onChange={handleChange} required />
+                      <TextInput type="number" step="0.01" label="Temperature(°c)" name="temp_start" className="mb-1" placeholder="Start"
+                        value={formData.temp_start} onChange={handleChange} required />
+                      <TextInput type="number" step="0.01" name="temp_mid" className="mb-1" placeholder="Mid"
+                        value={formData.temp_mid} onChange={handleChange} required />
+                      <TextInput type="number" step="0.01" name="temp_end" placeholder="End"
+                        value={formData.temp_end} onChange={handleChange} required />
                     </div>
                     <div className="col-12 col-md-4">
-                      <TextInput type="number" step="0.01" label="Humidity(%)" name="humistart" className="mb-1" placeholder="Start"
-                        value={formData.humistart} onChange={handleChange} required />
-                      <TextInput type="number" step="0.01" name="humimid" className="mb-1" placeholder="Mid"
-                        value={formData.humimid} onChange={handleChange} required />
-                      <TextInput type="number" step="0.01" name="humiend" placeholder="End"
-                        value={formData.humiend} onChange={handleChange} required />
+                      <TextInput type="number" step="0.01" label="Humidity(%)" name="humi_start" className="mb-1" placeholder="Start"
+                        value={formData.humi_start} onChange={handleChange} required />
+                      <TextInput type="number" step="0.01" name="humi_mid" className="mb-1" placeholder="Mid"
+                        value={formData.humi_mid} onChange={handleChange} required />
+                      <TextInput type="number" step="0.01" name="humi_end" placeholder="End"
+                        value={formData.humi_end} onChange={handleChange} required />
                     </div>
-                  </div>
+                    </div>
+                  </>
                 )}
 
-                {/* Conditional Section 5: Harvesting */}
                 {formData.org_status === '5' && (
-                  <div className="row border-top pt-3 mt-2">
+                  <>
+                    <p className="form-section-title mt-2">
+                      <i className="ri-scales-3-line me-1"></i> Harvest Measurements
+                    </p>
+                    <div className="row">
                     <div className="col-12 col-md-3">
                       <TextInput
                         type="number"
@@ -433,22 +446,70 @@ export default function PitStatusForm() {
                       />
                     </div>
                     <div className="col-12 col-md-3">
+                      <TextInput
+                        type="number"
+                        step="0.01"
+                        label="Qty of Manure 1(kg)"
+                        name="qty_manure_1"
+                        value={formData.qty_manure_1}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                    <div className="col-12 col-md-3">
+                      <TextInput
+                        type="number"
+                        step="0.01"
+                        label="Qty of Manure 2(kg)"
+                        name="qty_manure_2"
+                        value={formData.qty_manure_2}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                    <div className="col-12 col-md-3">
+                      <TextInput
+                        type="number"
+                        step="0.01"
+                        label="Qty of Manure 3(kg)"
+                        name="qty_manure_3"
+                        value={formData.qty_manure_3}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                    <div className="col-12 col-md-3">
+                      <TextInput
+                        type="number"
+                        step="0.01"
+                        label="Qty of Rejects(kg)"
+                        name="qty_rejets"
+                        value={formData.qty_rejets}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                    <div className="col-12 col-md-3">
                       <Select
                         label="Harvest Status"
                         name="harvest_comp"
                         value={formData.harvest_comp}
                         onChange={handleChange}
-                        options={options.harvest_comp}
+                        options={HARVEST_COMP_OPTIONS}
                         placeholder="Select Status"
                         required
                       />
                     </div>
-                  </div>
+                    </div>
+                  </>
                 )}
 
-                {/* Conditional Section 7: Tippi */}
                 {formData.org_status === '7' && (
-                  <div className="row border-top pt-3 mt-2">
+                  <>
+                    <p className="form-section-title mt-2">
+                      <i className="ri-scales-3-line me-1"></i> Tippi Quantity
+                    </p>
+                    <div className="row">
                     <div className="col-12 col-md-3">
                       <TextInput
                         type="number"
@@ -460,7 +521,8 @@ export default function PitStatusForm() {
                         required
                       />
                     </div>
-                  </div>
+                    </div>
+                  </>
                 )}
 
                 <div className="row mt-2">
