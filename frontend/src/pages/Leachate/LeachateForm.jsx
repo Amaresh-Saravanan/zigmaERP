@@ -4,6 +4,7 @@ import djangoClient from '../../api/djangoClient';
 import DateInput from '../../components/DateInput';
 import TextInput from '../../components/TextInput';
 import Button from '../../components/Button';
+import FormHeader from '../../components/FormHeader';
 
 const now = new Date();
 const pad = (n) => n.toString().padStart(2, '0');
@@ -75,15 +76,10 @@ export default function LeachateForm() {
     <div className="row g-3 mb-3">
       <div className="col-12">
         <div className="card h-md-100 ecommerce-card-min-width">
-          <div className="card-header pt-3 pb-2">
-            <div className="row flex-between-end">
-              <div className="col-auto align-self-center">
-                <h5 className="d-flex align-items-center">
-                  Leachate {unique_id ? 'Update' : 'Create'}
-                </h5>
-              </div>
-            </div>
-          </div>
+          <FormHeader
+            title={`${unique_id ? 'Update' : 'New'} Leachate`}
+            backTo="/leachate/list"
+          />
 
           <div className="card-body">
             {isLoading && unique_id ? (
@@ -94,6 +90,9 @@ export default function LeachateForm() {
               </div>
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
+                <p className="form-section-title">
+                  <i className="ri-drop-line me-1"></i> Leachate Details
+                </p>
                 <div className="row">
                   <div className="col-12 col-md-3">
                     <DateInput
