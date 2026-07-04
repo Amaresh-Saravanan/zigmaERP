@@ -4,6 +4,7 @@ import djangoClient from '../../api/djangoClient';
 import TextInput from '../../components/TextInput';
 import Toggle from '../../components/Toggle';
 import Button from '../../components/Button';
+import FormHeader from '../../components/FormHeader';
 
 export default function MainScreenForm() {
   const navigate = useNavigate();
@@ -72,9 +73,10 @@ export default function MainScreenForm() {
     <div className="row g-3 mb-3">
       <div className="col-12">
         <div className="card h-md-100 ecommerce-card-min-width">
-          <div className="card-header pt-3 pb-2">
-            <h5 className="mb-0">Main Screen {unique_id ? 'Update' : 'Create'}</h5>
-          </div>
+          <FormHeader
+            title={`${unique_id ? 'Update' : 'New'} Main Screen`}
+            backTo="/main_screen/list"
+          />
           <div className="card-body">
             {isLoading && !formData.screen_name && unique_id ? (
               <div className="text-center py-4">
@@ -84,6 +86,9 @@ export default function MainScreenForm() {
               </div>
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
+                <p className="form-section-title">
+                  <i className="ri-layout-grid-line me-1"></i> Main Screen Details
+                </p>
                 <div className="row">
                   <div className="col-12 col-md-4">
                     <TextInput
