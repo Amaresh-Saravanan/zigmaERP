@@ -4,6 +4,7 @@ import djangoClient from '../../api/djangoClient';
 import DateInput from '../../components/DateInput';
 import TextInput from '../../components/TextInput';
 import Button from '../../components/Button';
+import FormHeader from '../../components/FormHeader';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -106,15 +107,10 @@ export default function OvenProcessForm() {
     <div className="row g-3 mb-3">
       <div className="col-12">
         <div className="card h-md-100 ecommerce-card-min-width">
-          <div className="card-header pt-3 pb-2">
-            <div className="row flex-between-end">
-              <div className="col-auto align-self-center">
-                <h5 className="d-flex align-items-center">
-                  Oven Process {unique_id ? 'Update' : 'Create'}
-                </h5>
-              </div>
-            </div>
-          </div>
+          <FormHeader
+            title={`${unique_id ? 'Update' : 'New'} Oven Process`}
+            backTo="/oven_process/list"
+          />
 
           <div className="card-body">
             {isLoading && unique_id ? (
@@ -125,6 +121,9 @@ export default function OvenProcessForm() {
               </div>
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
+                <p className="form-section-title">
+                  <i className="ri-time-line me-1"></i> Run Time
+                </p>
                 <div className="row">
 
                   <div className="col-12 col-md-3">
@@ -173,7 +172,12 @@ export default function OvenProcessForm() {
                       <small className="text-muted">Auto-calculated (handles overnight)</small>
                     </TextInput>
                   </div>
+                </div>
 
+                <p className="form-section-title mt-2">
+                  <i className="ri-scales-3-line me-1"></i> Production Quantities
+                </p>
+                <div className="row">
                   <div className="col-12 col-md-3">
                     <TextInput
                       type="number"
