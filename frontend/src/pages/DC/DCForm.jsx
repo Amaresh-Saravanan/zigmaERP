@@ -158,6 +158,9 @@ export default function DCForm() {
               </div>
 
               {/* Document Details */}
+              <p className="form-section-title">
+                <i className="ri-file-list-3-line me-1"></i> Document Details
+              </p>
               <div className="row bg-light p-3 rounded mb-4">
                 <div className="col-md-3 mb-3">
                   <DateInput
@@ -200,7 +203,9 @@ export default function DCForm() {
               {/* Bill To */}
               <div className="row mb-4">
                 <div className="col-md-6">
-                  <h6 className="fw-bold text-uppercase border-bottom pb-2">Bill To / Ship To</h6>
+                  <p className="form-section-title">
+                    <i className="ri-map-pin-2-line me-1"></i> Bill To / Ship To
+                  </p>
                   <div className="mb-2">
                     <label htmlFor="billToCompany" className="form-label app-form-label">Company Name</label>
                     <input type="text" id="billToCompany" name="billToCompany" className="form-control form-control-sm"
