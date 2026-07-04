@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DateInput from '../../components/DateInput';
 import TextInput from '../../components/TextInput';
 import Select from '../../components/Select';
 import Button from '../../components/Button';
+import FormHeader from '../../components/FormHeader';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -15,54 +16,51 @@ export default function FrpTrayProcessForm() {
 
   const [formData, setFormData] = useState({
     entry_date: TODAY,
-    egg_batch_id: '',
+    batch: '',
     frp_tray_count: '',
-    frp_tray_name: [],
   });
+  const [selectedTrays, setSelectedTrays] = useState([]);
 
   const [batchOptions, setBatchOptions] = useState([]);
   const [trayOptions, setTrayOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
-    fetchFormHtml();
+    fetchBatches();
+    fetchTrays();
+    if (unique_id) fetchRecord();
   }, [unique_id]);
 
-  const fetchFormHtml = async () => {
+  const fetchBatches = async () => {
+    try {
+      const res = await djangoClient.get('/material-received', { params: { page_size: 100 } });
+      setBatchOptions((res.data.results || []).map((b) => ({ value: b.unique_id, label: b.batch_id })));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchTrays = async () => {
+    try {
+      const res = await djangoClient.get('/trays', { params: { page_size: 100 } });
+      setTrayOptions((res.data.results || []).map((t) => ({ value: t.unique_id, label: t.bin_name })));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchRecord = async () => {
     setIsLoading(true);
     try {
-      const url = unique_id 
-        ? `folders/frp_tray_process/form.php?unique_id=${unique_id}`
-        : `folders/frp_tray_process/form.php`;
-      const res = await client.get(url, { responseType: 'text' });
-      const doc = new DOMParser().parseFromString(res.data, 'text/html');
-      
-      const batchSelect = doc.querySelector('#egg_batch_id');
-      if (batchSelect) setBatchOptions(Array.from(batchSelect.options).map(o => ({ value: o.value, label: o.text })));
-
-      const traySelect = doc.querySelector('#frp_tray_name');
-      if (traySelect) setTrayOptions(Array.from(traySelect.options).map(o => ({ value: o.value, label: o.text })));
-
-      if (unique_id) {
-        const g = (id) => doc.querySelector(`#${id}`)?.value ?? '';
-        
-        // Handle multiple select parsing
-        const selectedTrays = [];
-        if (traySelect) {
-            Array.from(traySelect.options).forEach(opt => {
-                if (opt.selected || opt.hasAttribute('selected')) {
-                    selectedTrays.push(opt.value);
-                }
-            });
-        }
-
-        setFormData({
-          entry_date:      g('entry_date') || TODAY,
-          egg_batch_id:    g('egg_batch_id'),
-          frp_tray_count:  g('frp_tray_count'),
-          frp_tray_name:   selectedTrays,
-        });
-      }
+      const res = await djangoClient.get(`/frp-tray-process/${unique_id}`);
+      const fp = res.data.data;
+      setFormData({
+        entry_date: fp.entry_date || TODAY,
+        batch: fp.batch?.unique_id || '',
+        frp_tray_count: String(fp.frp_tray_count ?? ''),
+      });
+      setSelectedTrays((fp.trays || []).map((t) => t.unique_id));
     } catch (err) {
       console.error(err);
     } finally {
@@ -71,45 +69,46 @@ export default function FrpTrayProcessForm() {
   };
 
   const handleChange = (e) => {
-    const { name, value, type, selectedOptions } = e.target;
-    if (type === 'select-multiple') {
-      const values = Array.from(selectedOptions).map(opt => opt.value);
-      setFormData(prev => ({ ...prev, [name]: values }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleTrayToggle = (trayId) => {
+    setSelectedTrays((prev) =>
+      prev.includes(trayId) ? prev.filter((id) => id !== trayId) : [...prev, trayId]
+    );
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (parseInt(formData.frp_tray_count) !== formData.frp_tray_name.length) {
-      alert(`Validation Error: FRP Tray Count (${formData.frp_tray_count}) must equal the number of selected trays (${formData.frp_tray_name.length}).`);
+    setErrorMsg('');
+
+    if (parseInt(formData.frp_tray_count, 10) !== selectedTrays.length) {
+      alert(`Validation Error: FRP Tray Count (${formData.frp_tray_count}) must equal the number of selected trays (${selectedTrays.length}).`);
       return;
     }
 
     setIsLoading(true);
-    try {
-      const payload = new URLSearchParams();
-      payload.append('action', 'createupdate');
-      payload.append('entry_date', formData.entry_date);
-      payload.append('egg_batch_id', formData.egg_batch_id);
-      payload.append('frp_tray_count', formData.frp_tray_count);
-      formData.frp_tray_name.forEach(tray => {
-        payload.append('frp_tray_name[]', tray);
-      });
-      
-      if (unique_id) payload.append('unique_id', unique_id);
+    const payload = {
+      entry_date: formData.entry_date,
+      batch: { unique_id: formData.batch },
+      frp_tray_count: parseInt(formData.frp_tray_count, 10) || 0,
+      trays: selectedTrays.map((id) => ({ unique_id: id })),
+    };
 
-      const res = await client.post('folders/frp_tray_process/crud.php', payload);
-      if (res.data?.msg === 'already') {
-        alert('This batch already exists.');
-        return;
-      }
+    try {
+      const res = unique_id
+        ? await djangoClient.put(`/frp-tray-process/${unique_id}`, payload)
+        : await djangoClient.post('/frp-tray-process', payload);
       if (res.data?.msg === 'create' || res.data?.msg === 'update') {
         navigate('/frp_tray_process/list');
       }
     } catch (err) {
-      console.error(err);
+      if (err.response?.status === 400) {
+        setErrorMsg(err.response.data?.error || 'This batch already exists.');
+      } else {
+        console.error(err);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -119,18 +118,13 @@ export default function FrpTrayProcessForm() {
     <div className="row g-3 mb-3">
       <div className="col-12">
         <div className="card h-md-100 ecommerce-card-min-width">
-          <div className="card-header pt-3 pb-2">
-            <div className="row flex-between-end">
-              <div className="col-auto align-self-center">
-                <h5 className="d-flex align-items-center">
-                  FRP Tray Process {unique_id ? 'Update' : 'Create'}
-                </h5>
-              </div>
-            </div>
-          </div>
+          <FormHeader
+            title={`${unique_id ? 'Update' : 'New'} FRP Tray Process`}
+            backTo="/frp_tray_process/list"
+          />
 
           <div className="card-body">
-            {isLoading && !batchOptions.length ? (
+            {isLoading && !batchOptions.length && unique_id ? (
               <div className="text-center py-4">
                 <div className="spinner-border text-primary" role="status">
                   <span className="visually-hidden">Loading...</span>
@@ -138,6 +132,10 @@ export default function FrpTrayProcessForm() {
               </div>
             ) : (
               <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
+                {errorMsg && <div className="alert alert-danger py-2">{errorMsg}</div>}
+                <p className="form-section-title">
+                  <i className="ri-stack-line me-1"></i> Tray Assignment
+                </p>
                 <div className="row">
                   <div className="col-12 col-md-3">
                     <DateInput
@@ -153,11 +151,12 @@ export default function FrpTrayProcessForm() {
                   <div className="col-12 col-md-3">
                     <Select
                       label="Egg Batch Id"
-                      name="egg_batch_id"
-                      value={formData.egg_batch_id}
+                      name="batch"
+                      value={formData.batch}
                       onChange={handleChange}
                       options={batchOptions}
                       required
+                      disabled={!!unique_id}
                     />
                   </div>
 
@@ -174,12 +173,25 @@ export default function FrpTrayProcessForm() {
                   </div>
 
                   <div className="col-12 col-md-3 mb-3">
-                    <label htmlFor="frp_tray_name" className="form-label app-form-label">FRP Tray Name</label>
-                    <select id="frp_tray_name" name="frp_tray_name" className="form-select app-form-control"
-                      multiple size="5" value={formData.frp_tray_name} onChange={handleChange} required>
-                      {trayOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
-                    <small className="text-muted">Hold Ctrl/Cmd to select multiple</small>
+                    <label className="form-label app-form-label d-block">
+                      FRP Tray Name ({selectedTrays.length})
+                    </label>
+                    <div className="d-flex flex-wrap gap-3">
+                      {trayOptions.map((tray) => (
+                        <div key={tray.value} className="form-check">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            id={`tray_${tray.value}`}
+                            checked={selectedTrays.includes(tray.value)}
+                            onChange={() => handleTrayToggle(tray.value)}
+                          />
+                          <label className="form-check-label" htmlFor={`tray_${tray.value}`}>
+                            {tray.label}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
