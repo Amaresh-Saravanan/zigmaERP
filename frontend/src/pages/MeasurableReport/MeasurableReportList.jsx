@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DataTable from '../../components/DataTable';
 import DateInput from '../../components/DateInput';
 
@@ -14,33 +14,28 @@ const LOCATIONS = [
 ];
 
 export default function MeasurableReportList() {
-  const [filters, setFilters] = useState({ from_date: FIRST_DAY_OF_MONTH, to_date: TODAY, location: '', pit_name: '' });
+  const [filters, setFilters] = useState({ from_date: FIRST_DAY_OF_MONTH, to_date: TODAY, location: '', pit_id: '' });
   const [pitOptions, setPitOptions] = useState([]);
 
   useEffect(() => {
-    // Fetch pit options from pit_status form.php since it has a convenient select element
-    client.get('folders/pit_status/form.php', { responseType: 'text' })
+    djangoClient.get('/pits', { params: { page_size: 100 } })
       .then(res => {
-        const doc = new DOMParser().parseFromString(res.data, 'text/html');
-        const pitSelect = doc.querySelector('#pit_id');
-        if (pitSelect) {
-          const opts = Array.from(pitSelect.options).map(o => ({ value: o.value, label: o.text }));
-          setPitOptions(opts.filter(o => o.value !== ''));
-        }
+        const pits = res.data.results || [];
+        setPitOptions(pits.map(p => ({ value: p.unique_id, label: p.pit_name })));
       })
-      .catch(err => console.error("Could not fetch pit options", err));
+      .catch(err => console.error('Could not fetch pit options', err));
   }, []);
 
   const columns = [
-    { label: 'S.No' },
-    { label: 'Entry Date' },
-    { label: 'Pit ID' },
-    { label: 'Temperature (Start-Mid-End)' },
-    { label: 'Humidity (Start-Mid-End)' },
-    { label: 'Location' },
-    { label: 'Temperature (outside)' },
-    { label: 'Humidity (outside)' },
-    { label: 'Remarks' },
+    { label: 'S.No', sno: true },
+    { label: 'Entry Date', key: 'entry_date' },
+    { label: 'Pit', key: 'pit_name' },
+    { label: 'Temperature (Start-Mid-End)', key: 'temp_p' },
+    { label: 'Humidity (Start-Mid-End)', key: 'humi_p' },
+    { label: 'Location', key: 'location' },
+    { label: 'Temperature (outside)', key: 'temp' },
+    { label: 'Humidity (outside)', key: 'humi' },
+    { label: 'Remarks', key: 'remarks' },
   ];
 
   const handleFilterChange = (e) => {
@@ -82,7 +77,7 @@ export default function MeasurableReportList() {
               </div>
               <div className="col-12 col-md-3">
                 <label className="form-label mb-1" style={{ fontSize: '0.72rem', color: 'var(--vz-secondary-color)' }}>Pit</label>
-                <select name="pit_name" className="form-select form-select-sm" value={filters.pit_name} onChange={handleFilterChange}>
+                <select name="pit_id" className="form-select form-select-sm" value={filters.pit_id} onChange={handleFilterChange}>
                   <option value="">All Pits</option>
                   {pitOptions.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                 </select>
@@ -92,9 +87,11 @@ export default function MeasurableReportList() {
 
           <div className="card-body pt-0">
             <DataTable
-              ajaxUrl="folders/measurable_report/crud.php"
+              mode="django"
+              ajaxUrl="/measurable-report"
               columns={columns}
               extraParams={extraParams}
+              showActiveFilter={false}
             />
           </div>
         </div>

@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.routers import DefaultRouter
 
 from accounts.views import UserTypeViewSet, UserViewSet, login, logout, me
+from core.dashboard import dashboard
 from core.views import MainScreenViewSet, ScreenViewSet, menu
 from inventory.views import ItemViewSet, PitViewSet, SupplierViewSet, TrayViewSet, UnitViewSet
 from process.views import (
@@ -24,6 +25,7 @@ from reports.views import (
     MeasurableViewSet,
     LogsheetViewSet,
     DCViewSet,
+    measurable_report,
 )
 
 
@@ -77,6 +79,8 @@ urlpatterns = [
     path('api/auth/logout', logout, name='logout'),
     path('api/auth/me', me, name='me'),
     path('api/menu', menu, name='menu'),
+    path('api/dashboard', dashboard, name='dashboard'),
+    path('api/measurable-report', measurable_report, name='measurable-report'),
     path('api/permission-catalog', permission_catalog, name='permission-catalog'),
     path('api/', include(router.urls)),
 ]

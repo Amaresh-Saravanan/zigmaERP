@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import useTheme from '../hooks/useTheme';
-import client from '../api/client';
-import djangoClient from '../api/djangoClient';
+import djangoClient, { mapDjangoUser } from '../api/djangoClient';
 import Swal from 'sweetalert2';
 import heroBg from '../assets/images/auth-one-bg.jpg';
 import zigflyLogo from '../assets/images/zigfly-logo-clean.png';
@@ -19,22 +18,15 @@ export default function Login() {
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  // Best-effort: Django modules need a token, but PHP session auth is still the
-  // source of truth for everything not yet cut over (TASK-B10), so a failure here
-  // (Django user doesn't exist yet, backend down, etc.) must not block login.
-  const acquireDjangoToken = async (userName, password) => {
-    try {
-      const res = await djangoClient.post(
-        '/auth/login',
-        { user_name: userName, password },
-        { suppressError: true }
-      );
-      if (res.data?.status === 1) {
-        localStorage.setItem('django_token', res.data.data.access_token);
-      }
-    } catch {
-      localStorage.removeItem('django_token');
-    }
+  const showIncorrect = () => {
+    setLoading(false);
+    Swal.fire({
+      title: 'Incorrect UserName and Password',
+      icon: 'error',
+      showConfirmButton: true,
+      timer: 2000,
+      timerProgressBar: true
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -63,40 +55,38 @@ export default function Login() {
     };
 
     try {
-      const res = await client.post('folders/login/crud.php', new URLSearchParams({
-        action: 'login', user_name: form.user, password: form.password
-      }), { suppressError: true });
+      // Django token auth is now the source of truth. Success → { status:1,
+      // data:{ access_token, user } }; bad credentials → HTTP 401 (axios throws).
+      const res = await djangoClient.post('/auth/login', {
+        user_name: form.user, password: form.password
+      }, { suppressError: true });
 
       if (res.data?.status === 1) {
+        localStorage.setItem('django_token', res.data.data.access_token);
+        login(mapDjangoUser(res.data.data.user));
         if (form.password === 'password') {
           navigate('/password/update?default=true');
           return;
         }
-        await acquireDjangoToken(form.user, form.password);
-        login(res.data.user);
         navigate('/');
         return;
       }
 
-      // API returned but not a success — fall through to demo mode check below
-      if (res.data?.msg === 'incorrect') {
-        setLoading(false);
-        Swal.fire({
-          title: 'Incorrect UserName and Password',
-          icon: 'error',
-          showConfirmButton: true,
-          timer: 2000,
-          timerProgressBar: true
-        });
+      // 2xx but not a success payload — treat as bad credentials
+      showIncorrect();
+      return;
+    } catch (err) {
+      // Only a 401 means the server actually rejected these credentials.
+      // Any other status (404 misrouted proxy, 500, etc.) is a real backend/
+      // network problem and must not be shown as "incorrect password".
+      if (err.response?.status === 401) {
+        showIncorrect();
         return;
       }
-    } catch (err) {
-      // API error — fall through to demo mode fallback
     }
 
-    // API failed or no valid response — demo mode fallback
+    // Backend unreachable — demo mode fallback
     if (form.user === 'admin' && form.password === 'admin123') {
-      await acquireDjangoToken(form.user, form.password);
       login(demoUser);
       navigate('/');
     } else {

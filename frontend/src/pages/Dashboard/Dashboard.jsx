@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import KPICard from './KPICard';
 import PitStatusChart from './PitStatusChart';
 import TrayStatusWidget from './TrayStatusWidget';
@@ -94,7 +94,7 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     setIsLoading(true);
     try {
-      const res = await client.post('folders/dashboard/api.php', new URLSearchParams({ month }));
+      const res = await djangoClient.get('/dashboard', { params: { month } });
       if (res.data) {
         setData(res.data);
       }

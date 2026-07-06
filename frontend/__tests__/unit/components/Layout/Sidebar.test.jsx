@@ -3,7 +3,7 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import Sidebar from '../../../../src/components/Layout/Sidebar';
 import useAuth from '../../../../src/hooks/useAuth';
-import client from '../../../../src/api/client';
+import djangoClient from '../../../../src/api/djangoClient';
 
 vi.mock('../../../../src/hooks/useAuth');
 
@@ -11,7 +11,7 @@ describe('Unit: Sidebar Component', () => {
   beforeEach(() => {
     cleanup();
     vi.clearAllMocks();
-    vi.spyOn(client, 'get');
+    vi.spyOn(djangoClient, 'get');
   });
 
   const renderSidebar = () => render(
@@ -39,8 +39,8 @@ describe('Unit: Sidebar Component', () => {
       }
     });
 
-    client.get.mockResolvedValueOnce({
-      data: { status: 1, menu: mockMenu }
+    djangoClient.get.mockResolvedValueOnce({
+      data: { status: 1, data: mockMenu }
     });
 
     renderSidebar();
@@ -61,8 +61,8 @@ describe('Unit: Sidebar Component', () => {
       }
     });
 
-    client.get.mockResolvedValueOnce({
-      data: { status: 1, menu: mockMenu }
+    djangoClient.get.mockResolvedValueOnce({
+      data: { status: 1, data: mockMenu }
     });
 
     renderSidebar();

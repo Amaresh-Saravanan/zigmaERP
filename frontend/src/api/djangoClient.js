@@ -5,9 +5,27 @@ import axios from 'axios';
 import { attachFeedbackInterceptors } from './interceptors';
 
 const djangoClient = axios.create({
-  baseURL: '/api',
+  // Defaults to the same-origin '/api' (dev: Vite proxy → :8000; prod: reverse
+  // proxy). Set VITE_API_URL to point at an absolute backend if ever split.
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: { 'Content-Type': 'application/json' },
 });
+
+// Django serializes users snake_case with a nested user_type; the React app reads
+// camelCase (userName/userType/mainScreens/screens) — map once here so login,
+// /auth/me and any future consumer stay consistent.
+export function mapDjangoUser(u) {
+  if (!u) return null;
+  return {
+    userId: u.unique_id,
+    userName: u.user_name,
+    userEmail: u.user_email ?? '',
+    userType: u.user_type?.unique_id ?? '',
+    mainScreens: u.main_screens ?? [],
+    screens: u.screens ?? [],
+    sections: [],
+  };
+}
 
 djangoClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('django_token');

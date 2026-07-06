@@ -2,19 +2,16 @@ import { renderHook, act } from '@testing-library/react';
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { AuthProvider } from '../../../src/context/AuthContext';
 import useAuth from '../../../src/hooks/useAuth';
-import client from '../../../src/api/client';
-
-vi.mock('../../../src/api/client');
+import djangoClient from '../../../src/api/djangoClient';
 
 describe('Unit: useAuth Hook', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.restoreAllMocks();
     localStorage.clear();
-    
-    // Mock checkSession to resolve quickly so AuthProvider renders children
-    client.get.mockResolvedValue({
-      data: { isAuthenticated: false }
-    });
+
+    // AuthProvider.checkSession hits /auth/me on mount — report "not authenticated"
+    vi.spyOn(djangoClient, 'get').mockResolvedValue({ data: { status: 0 } });
+    vi.spyOn(djangoClient, 'post').mockResolvedValue({ data: {} });
   });
 
   test('remains unauthenticated initially if no localStorage', async () => {
@@ -29,18 +26,7 @@ describe('Unit: useAuth Hook', () => {
   });
 
   test('sets user in context on successful login', async () => {
-    client.post.mockResolvedValueOnce({
-      data: {
-        status: 1,
-        data: {
-          unique_id: '123',
-          user_name: 'testuser',
-          user_type_unique_id: 'type123',
-          main_screens: ['ms_admin'],
-          screens: ['us_user']
-        }
-      }
-    });
+    // AuthContext.login is local (setUser + localStorage) — no API call
 
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
     
@@ -59,10 +45,6 @@ describe('Unit: useAuth Hook', () => {
   });
 
   test('remains unauthenticated on failed login', async () => {
-    client.post.mockResolvedValueOnce({
-      data: { status: 0, msg: 'incorrect' }
-    });
-
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
     
     await act(async () => {
@@ -84,12 +66,7 @@ describe('Unit: useAuth Hook', () => {
   });
 
   test('clears user context on logout', async () => {
-    // Start with a valid session
-    client.get.mockResolvedValue({
-      data: { isAuthenticated: true, user: { uniqueId: '123' } }
-    });
-    client.post.mockResolvedValue({}); // mock logout.php
-    
+    // djangoClient.post('/auth/logout') is mocked in beforeEach
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
     
     await act(async () => {

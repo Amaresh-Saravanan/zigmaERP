@@ -40,12 +40,13 @@ class ItemSerializer(serializers.Serializer):
     def _next_item_code():
         # ponytail: read-then-increment, good enough for single-writer/low-concurrency
         # ERP data entry; move to an atomic counter document if concurrent creates
-        # ever collide on item_code.
-        last = Item.objects.order_by('-created_at').first()
+        # ever collide on item_code. Scan the max suffix across IT- codes only —
+        # looking at just the newest row breaks when it's a non-IT- code (e.g. a
+        # seeded ITM-DEMO-###), which reset the counter to IT-001 and collided.
         last_num = 0
-        if last and last.item_code:
+        for it in Item.objects(item_code__startswith='IT-').only('item_code'):
             try:
-                last_num = int(last.item_code.split('-')[1])
+                last_num = max(last_num, int(it.item_code.split('-')[1]))
             except (IndexError, ValueError):
                 pass
         return f'IT-{last_num + 1:03d}'

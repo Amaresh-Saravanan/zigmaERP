@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import zigFlyLogo from '../../assets/images/zig-fly-logo.png';
 import faviIcon from '../../assets/images/favi-icon.png';
 
-// ponytail: static fallback shown when menu.php is unavailable (IIS offline / demo mode)
+// ponytail: static fallback shown when /api/menu is unavailable (backend offline / demo mode)
 // unique_ids here match db_setup/menu_setup.sql so permissions work when DB is live
 const DEMO_MENU = [
   {
@@ -91,14 +91,9 @@ export default function Sidebar() {
   const flyoutRef = useRef(null);
 
   useEffect(() => {
-    client.get('folders/login/menu.php').then(res => {
-      if (res.data?.status === 1 && res.data.menu?.length) {
-        const items = res.data.menu;
-        setMenu(items);
-        const active = items.find(m =>
-          m.sub_screens?.some(s => location.pathname.startsWith(`/${s.folder_name}`))
-        );
-        if (active) setOpenId(active.unique_id);
+    djangoClient.get('/menu', { suppressError: true }).then(res => {
+      if (res.data?.status === 1 && res.data.data?.length) {
+        setMenu(res.data.data);
       }
     }).catch(() => { });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -133,17 +128,16 @@ export default function Sidebar() {
     return () => document.removeEventListener('mousedown', closeFlyout);
   }, [flyoutId, hoverId, closeFlyout]);
 
-  const hasMainScreen = (id) => {
-    if (!user?.mainScreens) return false;
-    if (Array.isArray(user.mainScreens)) return user.mainScreens.includes(id);
-    return user.mainScreens.split(',').includes(id);
-  };
-
   const hasScreen = (id) => {
     if (!user?.screens) return false;
     if (Array.isArray(user.screens)) return user.screens.includes(id);
     return user.screens.split(',').includes(id);
   };
+
+  const visibleSubs = (main) =>
+    menu.length
+      ? (main.sub_screens?.filter(s => hasScreen(s.unique_id)) ?? [])
+      : (main.sub_screens ?? []);
 
   const isWorker = user?.userType === '6213273aa04b228161';
   const toggle = (id) => setOpenId(prev => (prev === id ? null : id));
@@ -177,19 +171,15 @@ export default function Sidebar() {
   // body only expands when flyoutId matches (i.e. the pill was clicked, not just hovered).
   const pillId = flyoutId || hoverId;
   const pillMenu = pillId ? activeMenu.find(m => m.unique_id === pillId) : null;
-  const pillSubs = pillMenu
-    ? (menu.length
-      ? (pillMenu.sub_screens?.filter(s => hasScreen(s.unique_id)) ?? [])
-      : (pillMenu.sub_screens ?? []))
-    : [];
+  const pillSubs = pillMenu ? visibleSubs(pillMenu) : [];
 
   return (
     <>
       <div className="app-menu navbar-menu">
-        <div className="navbar-brand-box mt-2 pb-2" style={isCollapsed ? { display: 'flex', justifyContent: 'center', alignItems: 'center' } : {}}>
+        <div className="navbar-brand-box mt-2 pb-2">
           <a href="/" className="logo logo-dark" onClick={(e) => { e.preventDefault(); window.location.reload(); }}>
             <span className="logo-sm">
-              <img src={faviIcon} alt="Zigfly Logo Small" height="32" style={isCollapsed ? { display: 'block', margin: '0 auto' } : {}} />
+              <img src={faviIcon} alt="Zigfly Logo Small" height="32" />
             </span>
             <span className="logo-lg">
               <img src={zigFlyLogo} alt="Zigfly Logo" height="64" />
@@ -197,7 +187,7 @@ export default function Sidebar() {
           </a>
           <a href="/" className="logo logo-light" onClick={(e) => { e.preventDefault(); window.location.reload(); }}>
             <span className="logo-sm">
-              <img src={faviIcon} alt="Zigfly Logo Small" height="32" style={isCollapsed ? { display: 'block', margin: '0 auto' } : {}} />
+              <img src={faviIcon} alt="Zigfly Logo Small" height="32" />
             </span>
             <span className="logo-lg">
               <img src={zigFlyLogo} alt="Zigfly Logo" height="64" />
@@ -229,9 +219,7 @@ export default function Sidebar() {
 
               {/* Dynamic menu categories */}
               {activeMenu.map(main => {
-                const subs = menu.length
-                  ? (main.sub_screens?.filter(s => hasScreen(s.unique_id)) ?? [])
-                  : (main.sub_screens ?? []);
+                const subs = visibleSubs(main);
                 const isOpen = openId === main.unique_id;
                 const isActive = subs.some(s => location.pathname.startsWith(`/${s.folder_name}`));
 

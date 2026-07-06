@@ -17,7 +17,10 @@ export default defineConfig({
         secure: false,
       },
       '/api': {
-        target: 'http://localhost:8000',
+        // Pinned to 127.0.0.1 (not 'localhost'): Node resolves 'localhost' to
+        // the IPv6 loopback first, which an unrelated Docker container can
+        // also be bound to on this machine, silently shadowing Django on :8000.
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
         secure: false,
       }

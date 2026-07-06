@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect } from 'react';
-import client from '../api/client';
+import djangoClient, { mapDjangoUser } from '../api/djangoClient';
 
 export const AuthContext = createContext(null);
 
@@ -9,16 +9,19 @@ export function AuthProvider({ children }) {
 
   const checkSession = async () => {
     try {
-      const res = await client.get('folders/login/session.php');
-      if (res.data?.isAuthenticated) {
-        setUser(res.data.user);
-        localStorage.setItem('auth_user', JSON.stringify(res.data.user));
+      // Django token auth: /auth/me validates the stored token → { status:1, data:user }.
+      const res = await djangoClient.get('/auth/me', { suppressError: true });
+      if (res.data?.status === 1) {
+        const mapped = mapDjangoUser(res.data.data);
+        setUser(mapped);
+        localStorage.setItem('auth_user', JSON.stringify(mapped));
       } else {
         setUser(null);
         localStorage.removeItem('auth_user');
       }
     } catch {
-      // ponytail: fallback to localStorage if backend is offline/502
+      // ponytail: no/invalid token or backend offline → fall back to the last
+      // known user (keeps demo mode and cached sessions working when :8000 is down)
       try {
         const saved = localStorage.getItem('auth_user');
         setUser(saved ? JSON.parse(saved) : null);
@@ -41,9 +44,9 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
-      await client.post('logout.php', 'logout=true');
+      await djangoClient.post('/auth/logout', {}, { suppressError: true });
     } catch {
-      // Ignored
+      // Ignored — clear local state regardless
     } finally {
       setUser(null);
       localStorage.removeItem('auth_user');

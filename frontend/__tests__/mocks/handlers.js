@@ -1,37 +1,35 @@
 import { http, HttpResponse } from 'msw';
 
 export const handlers = [
-  // Login endpoint
-  http.post('*/folders/login/crud.php', async ({ request }) => {
-    const body = await request.formData();
-    const action = body.get('action');
-    
-    if (action === 'login') {
-      const userName = body.get('user_name');
-      const password = body.get('password');
-      
-      if (userName === 'testuser' && password === 'password123') {
-        return HttpResponse.json({
-          status: 1,
-          data: {
+  // Login endpoint (Django token auth)
+  http.post('*/api/auth/login', async ({ request }) => {
+    const { user_name, password } = await request.json();
+
+    if (user_name === 'testuser' && password === 'password123') {
+      return HttpResponse.json({
+        status: 1,
+        msg: 'success_login',
+        error: '',
+        data: {
+          access_token: 'test-token',
+          user: {
             unique_id: 'uid-admin',
             user_name: 'testuser',
-            user_type_unique_id: '5f97fc3257f2525529',
+            user_email: '',
+            user_type: { unique_id: '5f97fc3257f2525529', type_name: 'Admin' },
             main_screens: ['ms_inventory', 'ms_process', 'ms_admin'],
-            screens: ['item_create', 'item_edit', 'item_delete', 'tray_view', 'user_create']
+            screens: ['item_create', 'item_edit', 'item_delete', 'tray_view', 'user_create'],
+            is_active: true,
           },
-          error: 0,
-          msg: 'success_login'
-        });
-      }
-      
-      return HttpResponse.json({
-        status: 0,
-        data: 1,
-        error: 0,
-        msg: 'incorrect'
+        },
       });
     }
+
+    // Django returns HTTP 401 on invalid credentials
+    return HttpResponse.json(
+      { status: 0, msg: 'incorrect', data: null, error: 'Invalid credentials' },
+      { status: 401 }
+    );
   }),
 
   // Item Creation CRUD
