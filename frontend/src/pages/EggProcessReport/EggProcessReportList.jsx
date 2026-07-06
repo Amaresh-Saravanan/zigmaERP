@@ -1,39 +1,50 @@
 import React, { useState, useEffect } from 'react';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DateInput from '../../components/DateInput';
 import DataTable from '../../components/DataTable';
 
 const TODAY = new Date().toISOString().split('T')[0];
 const FIRST_OF_MONTH = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
 
+const STATUS_BADGES = {
+  completed: <span className="badge bg-success">Completed</span>,
+  progressing: <span className="badge bg-danger">Progressing</span>,
+  pending: <span className="badge bg-warning text-dark">Pending</span>,
+};
+
+// ponytail: rewired from PHP crud.php to Django REST endpoint
 export default function EggProcessReportList() {
-  const [filters, setFilters] = useState({ 
-    from_date: FIRST_OF_MONTH, 
-    to_date: TODAY, 
-    batch_id: '', 
-    supplier_name: '' 
+  const [filters, setFilters] = useState({
+    from_date: FIRST_OF_MONTH,
+    to_date: TODAY,
+    batch_id: '',
+    supplier_name: '',
   });
-  
+
   const [batchOptions, setBatchOptions] = useState([]);
   const [supplierOptions, setSupplierOptions] = useState([]);
 
   useEffect(() => {
-    // Fetch dropdown options from PHP via DOM parsing
-    client.get('folders/egg_process_report/list.php', { responseType: 'text' })
+    // Load dropdown options from Django endpoints
+    djangoClient.get('/material-received', { params: { page_size: 100 } })
       .then(res => {
-        const doc = new DOMParser().parseFromString(res.data, 'text/html');
-        
-        const batchSelect = doc.querySelector('#batch_id');
-        if (batchSelect) {
-          setBatchOptions(Array.from(batchSelect.options).map(o => ({ value: o.value, label: o.text })));
-        }
-
-        const supplierSelect = doc.querySelector('#supplier_name');
-        if (supplierSelect) {
-          setSupplierOptions(Array.from(supplierSelect.options).map(o => ({ value: o.value, label: o.text })));
-        }
+        const batches = res.data.results || [];
+        setBatchOptions([
+          { value: '', label: 'All Batches' },
+          ...batches.map(b => ({ value: b.unique_id, label: b.batch_id })),
+        ]);
       })
-      .catch(err => console.error("Could not fetch filter options", err));
+      .catch(err => console.error('Could not fetch batch options', err));
+
+    djangoClient.get('/suppliers', { params: { page_size: 100 } })
+      .then(res => {
+        const suppliers = res.data.results || [];
+        setSupplierOptions([
+          { value: '', label: 'All Suppliers' },
+          ...suppliers.map(s => ({ value: s.supplier_name, label: s.supplier_name })),
+        ]);
+      })
+      .catch(err => console.error('Could not fetch supplier options', err));
   }, []);
 
   const handleFilterChange = (e) => {
@@ -42,31 +53,20 @@ export default function EggProcessReportList() {
   };
 
   const columns = [
-    { label: 'S.No' },
-    { label: 'Hatching Start / End Date' },
-    { label: 'Batch ID' },
-    { label: 'Egg Qty (g)' },
-    { label: 'Tray Utilized' },
-    { label: 'Add On Detials', render: (val) => <span dangerouslySetInnerHTML={{ __html: val }} /> },
-    { label: 'Egg Cycle (days)' },
-    { label: 'Pit Number', render: (val) => <span dangerouslySetInnerHTML={{ __html: val }} /> },
-    { label: 'Baby Larvae Qty', render: (val) => <span dangerouslySetInnerHTML={{ __html: val }} /> },
-    { 
-      label: 'Invoice Image', 
-      render: (val) => <span dangerouslySetInnerHTML={{ __html: val }} />
-    },
-    { 
+    { label: 'S.No', sno: true },
+    { label: 'Hatching Start / End Date', key: 'hatching_dates' },
+    { label: 'Batch ID', key: 'batch_id' },
+    { label: 'Egg Qty (g)', key: 'egg_qty' },
+    { label: 'Tray Utilized', key: 'tray_utilized' },
+    { label: 'Add On Details', key: 'addon_details' },
+    { label: 'Egg Cycle (days)', key: 'egg_cycle' },
+    { label: 'Pit Number', key: 'pit_names' },
+    { label: 'Baby Larvae Qty', key: 'larvae_qty' },
+    {
       label: 'Egg Hatching Status',
-      render: (val) => {
-        if (!val) return null;
-        if (val.includes('Progressing')) {
-          return <span className="badge bg-danger">Progressing</span>;
-        } else if (val.includes('Completed')) {
-          return <span className="badge bg-success">Completed</span>;
-        }
-        return <span dangerouslySetInnerHTML={{ __html: val }} />;
-      }
-    }
+      key: 'hatching_status',
+      render: (val) => STATUS_BADGES[val] || val,
+    },
   ];
 
   const extraParams = Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== ''));
@@ -119,9 +119,11 @@ export default function EggProcessReportList() {
 
           <div className="card-body pt-0">
             <DataTable
-              ajaxUrl="folders/egg_process_report/crud.php"
+              mode="django"
+              ajaxUrl="/egg-process-report"
               columns={columns}
               extraParams={extraParams}
+              showActiveFilter={false}
             />
           </div>
         </div>

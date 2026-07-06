@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DataTable from '../../components/DataTable';
 import DateInput from '../../components/DateInput';
 
@@ -12,17 +12,13 @@ export default function LoginHistoryList() {
   const [staffOptions, setStaffOptions] = useState([]);
 
   useEffect(() => {
-    // Fetch staff options from login_history/list.php via DOM parsing
-    client.get('folders/login_history/list.php', { responseType: 'text' })
+    djangoClient.get('/users', { params: { page_size: 100 } })
       .then(res => {
-        const doc = new DOMParser().parseFromString(res.data, 'text/html');
-        const staffSelect = doc.querySelector('#staff_name');
-        if (staffSelect) {
-          const opts = Array.from(staffSelect.options).map(o => ({ value: o.value, label: o.text }));
-          setStaffOptions(opts);
-        }
+        const users = res.data.results || [];
+        setStaffOptions([{ value: '', label: 'All Staff' },
+          ...users.map(u => ({ value: u.unique_id, label: u.user_name }))]);
       })
-      .catch(err => console.error("Could not fetch staff options", err));
+      .catch(err => console.error('Could not fetch staff options', err));
   }, []);
 
   const handleFilterChange = (e) => {
@@ -31,34 +27,24 @@ export default function LoginHistoryList() {
   };
 
   const columns = [
-    { label: 'S.No' },
-    { label: 'User Name' },
-    { label: 'Entry Date' },
-    { label: 'Login Time' },
-    { label: 'Logout Time' },
-    { label: 'User Type' },
-    { label: 'Total Worked Hours' },
-    { 
+    { label: 'S.No', sno: true },
+    { label: 'User Name', key: 'user_name' },
+    { label: 'Entry Date', key: 'entry_date' },
+    { label: 'Login Time', key: 'login_time' },
+    { label: 'Logout Time', key: 'logout_time' },
+    { label: 'User Type', key: 'user_type' },
+    { label: 'Total Worked Hours', key: 'total_worked_hours' },
+    {
       label: 'View',
       className: 'text-center',
-      render: (val, row) => {
-        if (!val || val === '') return null;
-        
-        // Extract unique_id and entry_date from the onclick event in the legacy PHP string
-        // e.g. onclick="get_model_load('123', '2024-01-01')"
-        const match = val.match(/get_model_load\(['"]([^'"]+)['"]\s*,\s*['"]([^'"]+)['"]/);
-        if (match) {
-          return (
-            <button 
-              className="btn btn-sm btn-ghost-primary waves-effect waves-light" 
-              onClick={() => navigate(`/login_history/view?unique_id=${match[1]}&entry_date=${match[2]}`)}
-            >
-              <i className="ri-eye-line fs-15"></i>
-            </button>
-          );
-        }
-        return <span dangerouslySetInnerHTML={{ __html: val }} />;
-      }
+      render: (_val, row) => (
+        <button
+          className="btn btn-sm btn-ghost-primary waves-effect waves-light"
+          onClick={() => navigate(`/login_history/view?unique_id=${row.user_id}&entry_date=${row.entry_date}`)}
+        >
+          <i className="ri-eye-line fs-15"></i>
+        </button>
+      )
     }
   ];
 
@@ -98,9 +84,11 @@ export default function LoginHistoryList() {
 
           <div className="card-body pt-0">
             <DataTable
-              ajaxUrl="folders/login_history/crud.php"
+              mode="django"
+              ajaxUrl="/login-history-report"
               columns={columns}
               extraParams={extraParams}
+              showActiveFilter={false}
             />
           </div>
         </div>

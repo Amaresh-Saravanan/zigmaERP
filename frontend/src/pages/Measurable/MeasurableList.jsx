@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import DateInput from '../../components/DateInput';
 import DataTable from '../../components/DataTable';
 
@@ -9,11 +9,13 @@ const pad = (n) => n.toString().padStart(2, '0');
 const FIRST_DAY_OF_MONTH = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-01`;
 const TODAY = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 
+const LOCATION_LABELS = { '1': 'Weigh Bridge Side', '2': 'Solar Side' };
 const LOCATIONS = [
-  { value: "1", label: "Weight Bridge Side" },
-  { value: "2", label: "Solar Side" }
+  { value: '1', label: 'Weigh Bridge Side' },
+  { value: '2', label: 'Solar Side' },
 ];
 
+// ponytail: follows ItemCreationList pattern — djangoClient + mode="django"
 export default function MeasurableList() {
   const navigate = useNavigate();
   const [filters, setFilters] = useState({ from_date: FIRST_DAY_OF_MONTH, to_date: TODAY, location: '' });
@@ -23,10 +25,7 @@ export default function MeasurableList() {
   const handleDelete = async (uniqueId) => {
     if (!window.confirm('Are you sure you want to delete this record?')) return;
     try {
-      const params = new URLSearchParams();
-      params.append('action', 'delete');
-      params.append('unique_id', uniqueId);
-      const res = await client.post('folders/measurable/crud.php', params);
+      const res = await djangoClient.delete(`/measurable/${uniqueId}`);
       if (res.data?.msg === 'success_delete') window.location.reload();
     } catch (err) {
       console.error('Error deleting Measurable', err);
@@ -34,41 +33,13 @@ export default function MeasurableList() {
   };
 
   const columns = [
-    { label: 'S.No' },
-    { label: 'Entry Date' },
-    { label: 'Location' },
-    { label: 'Temperature (C)' },
-    { label: 'Humidity (%)' },
-    { label: 'Remarks' },
-    { label: 'Entry Person' },
-    { 
-      label: 'Action', 
-      className: 'text-end',
-      render: (val, row) => {
-        if (!val || val === '') return null;
-        
-        const updateMatch = val.match(/unique_id=([^&'"]+)/);
-        const deleteMatch = val.match(/_delete\(['"]([^'"]+)['"]/);
-        
-        const uniqueId = updateMatch ? updateMatch[1] : (deleteMatch ? deleteMatch[1] : null);
-        if (!uniqueId) return <span dangerouslySetInnerHTML={{ __html: val }} />;
-
-        return (
-          <div className="hstack gap-2 flex-wrap justify-content-end">
-            {val.includes('btn_update') || val.includes('mdi-square-edit-outline') ? (
-              <button onClick={() => handleEdit(uniqueId)} className="btn btn-sm btn-ghost-success waves-effect waves-light">
-                <i className="ri-edit-2-line fs-15"></i>
-              </button>
-            ) : null}
-            {deleteMatch ? (
-              <button onClick={() => handleDelete(deleteMatch[1])} className="btn btn-sm btn-ghost-danger waves-effect waves-light">
-                <i className="ri-delete-bin-line fs-15"></i>
-              </button>
-            ) : null}
-          </div>
-        );
-      }
-    },
+    { label: 'S.No', sno: true },
+    { label: 'Entry Date', key: 'entry_date' },
+    { label: 'Location', key: 'location', render: (val) => LOCATION_LABELS[val] || val },
+    { label: 'Temperature (C)', key: 'temp' },
+    { label: 'Humidity (%)', key: 'humi' },
+    { label: 'Remarks', key: 'remarks' },
+    { label: 'Action', className: 'text-end', actions: true },
   ];
 
   const handleFilterChange = (e) => {
@@ -125,9 +96,13 @@ export default function MeasurableList() {
 
           <div className="card-body pt-0">
             <DataTable
-              ajaxUrl="folders/measurable/crud.php"
+              mode="django"
+              ajaxUrl="/measurable"
               columns={columns}
               extraParams={extraParams}
+              showActiveFilter={false}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
             />
           </div>
         </div>

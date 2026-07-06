@@ -35,7 +35,7 @@ export default function OverallStatusChart({ data }) {
   const total = series.reduce((sum, v) => sum + v, 0);
 
   const options = {
-    chart: { type: 'donut', foreColor: palette.foreColor },
+    chart: { type: 'donut', foreColor: palette.foreColor, background: 'transparent' },
     theme: { mode: theme === 'dark' ? 'dark' : 'light' },
     labels: labels,
     colors: colors,
@@ -53,13 +53,13 @@ export default function OverallStatusChart({ data }) {
               show: true,
               label: 'Total',
               fontSize: '0.78rem',
-              color: palette.foreColor,
+              color: theme === 'light' ? '#000000' : palette.foreColor,
               formatter: () => total.toFixed(1),
             },
             value: {
               fontSize: '1.4rem',
               fontWeight: 700,
-              color: palette.dataLabel,
+              color: theme === 'light' ? '#000000' : palette.dataLabel,
             },
           },
         },
@@ -81,7 +81,7 @@ export default function OverallStatusChart({ data }) {
         ) : (
           <div className="row align-items-center g-3">
             <div className="col-md-5 d-flex justify-content-center">
-              <Chart options={options} series={series} type="donut" height={280} width={280} />
+              <Chart key={theme} options={options} series={series} type="donut" height={280} width={280} />
             </div>
             <div className="col-md-7">
               <div className="row row-cols-1 row-cols-sm-2 g-2">

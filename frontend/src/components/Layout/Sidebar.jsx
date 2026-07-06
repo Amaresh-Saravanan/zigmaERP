@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import djangoClient from '../../api/djangoClient';
@@ -83,12 +83,8 @@ export default function Sidebar() {
   const { user } = useAuth();
   const [menu, setMenu] = useState([]);
   const [openId, setOpenId] = useState(null); // ponytail: single-accordion
-  const [flyoutId, setFlyoutId] = useState(null); // collapsed pill: click-pinned open (shows dropdown)
-  const [hoverId, setHoverId] = useState(null); // collapsed pill: hover-shown (name only, no dropdown)
-  const [pillTop, setPillTop] = useState(0);
   const location = useLocation();
   const isCollapsed = useIsCollapsed();
-  const flyoutRef = useRef(null);
 
   useEffect(() => {
     djangoClient.get('/menu', { suppressError: true }).then(res => {
@@ -111,23 +107,6 @@ export default function Sidebar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeMenu]);
 
-  // Close pill/flyout when sidebar expands
-  useEffect(() => {
-    if (!isCollapsed) { setFlyoutId(null); setHoverId(null); }
-  }, [isCollapsed]);
-
-  // Close pill/flyout on outside click
-  const closeFlyout = useCallback((e) => {
-    if (flyoutRef.current && !flyoutRef.current.contains(e.target)) {
-      setFlyoutId(null);
-      setHoverId(null);
-    }
-  }, []);
-  useEffect(() => {
-    if (flyoutId || hoverId) document.addEventListener('mousedown', closeFlyout);
-    return () => document.removeEventListener('mousedown', closeFlyout);
-  }, [flyoutId, hoverId, closeFlyout]);
-
   const hasScreen = (id) => {
     if (!user?.screens) return false;
     if (Array.isArray(user.screens)) return user.screens.includes(id);
@@ -142,36 +121,12 @@ export default function Sidebar() {
   const isWorker = user?.userType === '6213273aa04b228161';
   const toggle = (id) => setOpenId(prev => (prev === id ? null : id));
 
+  // ponytail: collapsed mode is icons-only (no sub-menu popout) — a click there is a
+  // no-op; expand the sidebar via the header toggle to navigate sub-screens.
   const handleIconClick = (e, main) => {
     e.preventDefault();
-    if (!isCollapsed) {
-      toggle(main.unique_id);
-      return;
-    }
-    // Position the pill at the clicked icon's Y position, pin it open (dropdown shows)
-    const rect = e.currentTarget.getBoundingClientRect();
-    setPillTop(rect.top);
-    setHoverId(main.unique_id);
-    setFlyoutId(prev => (prev === main.unique_id ? null : main.unique_id));
+    if (!isCollapsed) toggle(main.unique_id);
   };
-
-  const handleIconEnter = (e, main) => {
-    if (!isCollapsed) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    setPillTop(rect.top);
-    setHoverId(main.unique_id);
-  };
-
-  const handleIconLeave = (main) => {
-    if (!isCollapsed) return;
-    if (flyoutId !== main.unique_id) setHoverId(null);
-  };
-
-  // pillMenu drives the visible white pill: shown on hover OR click; the dropdown
-  // body only expands when flyoutId matches (i.e. the pill was clicked, not just hovered).
-  const pillId = flyoutId || hoverId;
-  const pillMenu = pillId ? activeMenu.find(m => m.unique_id === pillId) : null;
-  const pillSubs = pillMenu ? visibleSubs(pillMenu) : [];
 
   return (
     <>
@@ -229,30 +184,32 @@ export default function Sidebar() {
                       className={`nav-link menu-link${isActive ? ' active' : ''}`}
                       href="#"
                       onClick={e => handleIconClick(e, main)}
-                      onMouseEnter={e => handleIconEnter(e, main)}
-                      onMouseLeave={() => handleIconLeave(main)}
-                      aria-expanded={isCollapsed ? flyoutId === main.unique_id : isOpen}
+                      aria-expanded={isOpen}
                     >
                       {main.icon_name && <i className={main.icon_name}></i>}
                       <span>{main.screen_main_name}</span>
                     </a>
 
-                    {/* Normal expanded accordion */}
+                    {/* Normal expanded accordion — grid-rows animates open/close since
+                        toggling bootstrap's collapse/show classes without its JS plugin
+                        (which drives the .collapsing height transition) just snaps instantly. */}
                     {!isCollapsed && (
-                      <div className={`collapse menu-dropdown ${isOpen ? 'show' : ''}`}>
-                        <ul className="nav nav-sm flex-column">
-                          {subs.map(sub => {
-                            const path = `/${sub.folder_name}/list`;
-                            const isSubActive = location.pathname.startsWith(`/${sub.folder_name}`);
-                            return (
-                              <li className={`nav-item ${isSubActive ? 'active' : ''}`} key={sub.unique_id}>
-                                <Link to={path} className={`nav-link ${isSubActive ? 'active' : ''}`}>
-                                  {sub.screen_name}
-                                </Link>
-                              </li>
-                            );
-                          })}
-                        </ul>
+                      <div className={`menu-dropdown-grid${isOpen ? ' is-open' : ''}`}>
+                        <div className="menu-dropdown-inner">
+                          <ul className="nav nav-sm flex-column">
+                            {subs.map(sub => {
+                              const path = `/${sub.folder_name}/list`;
+                              const isSubActive = location.pathname.startsWith(`/${sub.folder_name}`);
+                              return (
+                                <li className={`nav-item ${isSubActive ? 'active' : ''}`} key={sub.unique_id}>
+                                  <Link to={path} className={`nav-link ${isSubActive ? 'active' : ''}`}>
+                                    {sub.screen_name}
+                                  </Link>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
                       </div>
                     )}
                   </li>
@@ -264,124 +221,37 @@ export default function Sidebar() {
         <div className="sidebar-background"></div>
       </div>
 
-      {/* Collapsed pill — white "name" pill on hover/click, expands into a connected
-          white dropdown on click. Rendered outside the sidebar so it can overflow. */}
-      {isCollapsed && pillMenu && (
-        <div
-          ref={flyoutRef}
-          className={`sb-pill${flyoutId === pillMenu.unique_id ? ' sb-pill-open' : ''}`}
-          style={{ top: pillTop }}
-          onMouseEnter={() => setHoverId(pillMenu.unique_id)}
-          onMouseLeave={() => { if (flyoutId !== pillMenu.unique_id) setHoverId(null); }}
-        >
-          <button
-            type="button"
-            className="sb-pill-head"
-            onClick={e => handleIconClick(e, pillMenu)}
-          >
-            {pillMenu.icon_name && <i className={pillMenu.icon_name}></i>}
-            <span>{pillMenu.screen_main_name}</span>
-          </button>
-
-          <div className="sb-pill-body-wrap">
-            <div className="sb-pill-body">
-              <ul className="sb-pill-list">
-                {pillSubs.map(sub => {
-                  const path = `/${sub.folder_name}/list`;
-                  const isSubActive = location.pathname.startsWith(`/${sub.folder_name}`);
-                  return (
-                    <li key={sub.unique_id}>
-                      <Link
-                        to={path}
-                        className={`sb-pill-link${isSubActive ? ' active' : ''}`}
-                        onClick={() => { setFlyoutId(null); setHoverId(null); }}
-                      >
-                        {sub.screen_name}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
-
       <style>{`
-        @keyframes sbPillIn {
-          from { opacity: 0; transform: translateX(-6px); }
-          to   { opacity: 1; transform: translateX(0); }
+        /* Sidebar collapse width transition. MUST match the vendor rule
+           .main-content { transition: all .1s ease-out } — otherwise the sidebar and
+           the content beside it animate at different speeds and visibly tear/desync. */
+        .app-menu {
+          transition: width 0.1s ease-out;
         }
-        /* Collapsed-sidebar "expanding pill" — icon+name pill on hover/click; on click
-           the grid row below animates open to reveal the submenu, seamlessly connected
-           to the pill above (single white surface, no separate floating box). */
-        .sb-pill {
-          position: fixed;
-          left: 76px;
-          z-index: 1100;
+
+        /* Accordion submenu open/close — grid-rows animates height without knowing the
+           content height upfront (0fr → 1fr). */
+        .menu-dropdown-grid {
           display: grid;
-          grid-template-rows: auto 0fr;
-          min-width: 190px;
-          background: #fff;
-          border-radius: 12px;
-          box-shadow: 0 10px 28px rgba(15, 23, 42, 0.18), 0 2px 8px rgba(15, 23, 42, 0.08);
+          grid-template-rows: 0fr;
+          transition: grid-template-rows 0.28s ease;
+        }
+        .menu-dropdown-grid.is-open {
+          grid-template-rows: 1fr;
+        }
+        .menu-dropdown-inner {
           overflow: hidden;
-          animation: sbPillIn 0.18s ease;
-          transition: grid-template-rows 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .sb-pill-open {
-          grid-template-rows: auto 1fr;
-        }
-        .sb-pill-head {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          width: 100%;
-          border: none;
-          background: transparent;
-          padding: 12px 18px;
-          font-size: 0.86rem;
-          font-weight: 600;
-          color: #1a2232;
-          white-space: nowrap;
-          text-align: left;
-          cursor: pointer;
-        }
-        .sb-pill-head i {
-          font-size: 1.05rem;
-          color: #25a96b;
-        }
-        .sb-pill-body-wrap {
           min-height: 0;
-          overflow: hidden;
+          /* restore the indent the vendor .menu-dropdown class provided, dropped when
+             we swapped it for the grid wrapper — keeps sub-items aligned under the parent. */
+          padding-left: 28px;
         }
-        .sb-pill-body {
-          border-top: 1px solid rgba(15, 23, 42, 0.08);
-          padding: 4px 0;
+
+        /* Smooth the vendor dropdown-arrow rotation to match the panel animation. */
+        .menu-link:after {
+          transition: transform 0.25s ease;
         }
-        .sb-pill-list {
-          list-style: none;
-          margin: 0;
-          padding: 4px 0;
-        }
-        .sb-pill-link {
-          display: block;
-          padding: 8px 18px 8px 40px;
-          font-size: 0.82rem;
-          color: #333c4d;
-          text-decoration: none;
-          white-space: nowrap;
-          transition: background 0.15s, color 0.15s;
-        }
-        .sb-pill-link:hover {
-          background: #f1f3f6;
-          color: #1a2232;
-        }
-        .sb-pill-link.active {
-          background: #eafaf1;
-          color: #25a96b;
-          font-weight: 600;
-        }
+
         /* Center the favicon when sidebar is in sm (collapsed) mode */
         [data-sidebar-size='sm'] .navbar-brand-box {
           display: flex !important;

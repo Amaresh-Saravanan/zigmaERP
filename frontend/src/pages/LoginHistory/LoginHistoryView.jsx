@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 
 export default function LoginHistoryView() {
   const [searchParams] = useSearchParams();
@@ -20,33 +20,17 @@ export default function LoginHistoryView() {
   const fetchViewData = async () => {
     setIsLoading(true);
     try {
-      const res = await client.get(
-        `folders/login_history/view.php?unique_id=${unique_id}&entry_date=${entry_date}`,
-        { responseType: 'text' }
-      );
-      const doc = new DOMParser().parseFromString(res.data, 'text/html');
-
+      const res = await djangoClient.get('/login-history-detail', {
+        params: { unique_id, entry_date },
+      });
+      const d = res.data || {};
       setUserInfo({
-        name: doc.querySelector('#user_id')?.textContent?.trim() || '',
-        type: doc.querySelector('#user_type')?.textContent?.trim() || '',
-        date: doc.querySelector('#entry_date')?.textContent?.trim() || entry_date,
+        name: d.user?.name || '',
+        type: d.user?.type || '',
+        date: d.user?.date || entry_date,
       });
-
-      const rows = Array.from(doc.querySelectorAll('tbody tr'));
-      const parsed = [];
-      let total = '';
-
-      rows.forEach(tr => {
-        const tds = Array.from(tr.querySelectorAll('td')).map(td => td.textContent.trim());
-        if (tds.length === 6) {
-          parsed.push({ sno: tds[0], date: tds[1], login: tds[2], logout: tds[3], worked: tds[4], type: tds[5] });
-        } else if (tds.length === 3 && tds[0].includes('Total Worked Hours')) {
-          total = tds[1];
-        }
-      });
-
-      setSessions(parsed);
-      setTotalHours(total);
+      setSessions(d.sessions || []);
+      setTotalHours(d.total_worked_hours || '');
     } catch (err) {
       console.error('Error fetching view data', err);
     } finally {

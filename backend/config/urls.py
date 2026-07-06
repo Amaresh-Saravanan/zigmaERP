@@ -5,7 +5,15 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.routers import DefaultRouter
 
-from accounts.views import UserTypeViewSet, UserViewSet, login, logout, me
+from accounts.views import (
+    UserTypeViewSet,
+    UserViewSet,
+    login,
+    login_history_detail,
+    login_history_report,
+    logout,
+    me,
+)
 from core.dashboard import dashboard
 from core.views import MainScreenViewSet, ScreenViewSet, menu
 from inventory.views import ItemViewSet, PitViewSet, SupplierViewSet, TrayViewSet, UnitViewSet
@@ -25,7 +33,12 @@ from reports.views import (
     MeasurableViewSet,
     LogsheetViewSet,
     DCViewSet,
+    RejectViewSet,
+    RejectImageViewSet,
     measurable_report,
+    egg_process_report,
+    pit_status_report,
+    rejects_report,
 )
 
 
@@ -56,6 +69,8 @@ router.register(r'frp-status-update', FrpStatusUpdateViewSet, basename='frp-stat
 router.register(r'measurable', MeasurableViewSet, basename='measurable')
 router.register(r'logsheet', LogsheetViewSet, basename='logsheet')
 router.register(r'dc', DCViewSet, basename='dc')
+router.register(r'rejects', RejectViewSet, basename='reject')
+router.register(r'reject-images', RejectImageViewSet, basename='reject-image')
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -81,6 +96,11 @@ urlpatterns = [
     path('api/menu', menu, name='menu'),
     path('api/dashboard', dashboard, name='dashboard'),
     path('api/measurable-report', measurable_report, name='measurable-report'),
+    path('api/egg-process-report', egg_process_report, name='egg-process-report'),
+    path('api/pit-status-report', pit_status_report, name='pit-status-report'),
+    path('api/rejects-report', rejects_report, name='rejects-report'),
+    path('api/login-history-report', login_history_report, name='login-history-report'),
+    path('api/login-history-detail', login_history_detail, name='login-history-detail'),
     path('api/permission-catalog', permission_catalog, name='permission-catalog'),
     path('api/', include(router.urls)),
 ]

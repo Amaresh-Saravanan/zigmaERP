@@ -14,53 +14,68 @@ export default function PitStatusChart({ data }) {
   const avgAge = pitCount ? (data.data.reduce((s, v) => s + v, 0) / pitCount).toFixed(1) : 0;
   const totalFeed = (data.feed_qty || []).reduce((s, v) => s + v, 0).toFixed(1);
 
+  // Days is an integer count — force whole-number axis ticks (no 0.2/0.4/0.6).
+  // Floor the scale at 5 days: with a real max of 1, the axis has nowhere to put a
+  // tick between 0 and 1 (looks broken/empty) and a 1-day batch renders as a
+  // full-width bar, which reads as "mature" when it's actually brand new.
+  const realMaxAge = Math.max(1, ...data.data);
+  const axisMax = Math.max(realMaxAge, 5);
+  const days = (n) => `${n} Day${n === 1 ? '' : 's'}`;
+
   const options = {
     chart: {
       type: 'bar',
       height: 350,
+      background: 'transparent',
       foreColor: palette.foreColor,
-      toolbar: {
-        show: true,
-        tools: {
-          download: true,
-          selection: false,
-          zoom: false,
-          zoomin: false,
-          zoomout: false,
-          pan: false,
-          reset: false
-        }
-      }
+      fontFamily: 'inherit',
+      // Glanceable dashboard widget — the per-chart export toolbar just adds clutter.
+      toolbar: { show: false },
+      animations: { easing: 'easeinout', speed: 500 }
     },
     theme: { mode: theme === 'dark' ? 'dark' : 'light' },
     grid: {
       borderColor: palette.gridBorder,
-      strokeDashArray: 3
+      strokeDashArray: 3,
+      padding: { left: 8, right: 8 }
     },
     plotOptions: {
-      bar: { horizontal: true, barHeight: '50%', dataLabels: { position: 'top' } }
+      bar: {
+        horizontal: true,
+        barHeight: '58%',
+        borderRadius: 4,
+        borderRadiusApplication: 'end'
+      }
     },
+    // Labels ride inside the bar (white, centered) so they can never clip off the
+    // plot edge the way end-anchored labels did on full-width bars. Zero-age pits
+    // get no label — an empty bar reads as "just started" on its own.
     dataLabels: {
       enabled: true,
       formatter: function (val, opts) {
+        if (!val) return '';
         const feed = data.feed_qty[opts.dataPointIndex] || 0;
-        return `${val} Days - ${feed} Tons`;
+        return `${days(val)}  ·  ${feed}t`;
       },
-      style: { colors: [palette.dataLabel] },
-      offsetX: 20
+      style: { colors: ['#ffffff'], fontSize: '12px', fontWeight: 600 },
+      dropShadow: { enabled: true, top: 0, left: 0, blur: 2, opacity: 0.25 }
     },
     colors: [colors[0]],
     xaxis: {
       categories: data.categories,
-      title: { text: 'Batch Age (days)' }
+      title: { text: 'Batch Age (days)', style: { fontWeight: 500 } },
+      min: 0,
+      max: axisMax,
+      tickAmount: Math.min(axisMax, 6),
+      labels: { formatter: (v) => `${Math.round(v)}` }
     },
-    yaxis: { title: { text: 'Pit Name' } },
+    yaxis: { labels: { style: { fontSize: '12px' } } },
     tooltip: {
       theme: palette.tooltip,
       y: {
         formatter: function (val, opts) {
           const feed = data.feed_qty[opts.dataPointIndex] || 0;
-          return `${val} Days (${feed} Tons Feed)`;
+          return `${days(val)} · ${feed}t feed`;
         }
       }
     }
@@ -91,7 +106,7 @@ export default function PitStatusChart({ data }) {
             <p className="text-muted mb-0 mt-2" style={{ fontSize: '0.85rem' }}>No active pits for this period</p>
           </div>
         ) : (
-          <Chart options={options} series={series} type="bar" height={350} />
+          <Chart key={theme} options={options} series={series} type="bar" height={350} />
         )}
       </div>
     </div>

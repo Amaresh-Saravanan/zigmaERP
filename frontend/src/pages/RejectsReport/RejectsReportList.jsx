@@ -1,73 +1,43 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import djangoClient from '../../api/djangoClient';
 import DataTable from '../../components/DataTable';
 import DateInput from '../../components/DateInput';
 
 const TODAY = new Date().toISOString().split('T')[0];
 const FIRST_OF_MONTH = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
 
+// ponytail: rewired from PHP crud.php to Django REST endpoint
 export default function RejectsReportList() {
-  const [filters, setFilters] = useState({ 
-    from_date: FIRST_OF_MONTH, 
-    to_date: TODAY
+  const [filters, setFilters] = useState({
+    from_date: FIRST_OF_MONTH,
+    to_date: TODAY,
   });
-  
-  useEffect(() => {
-    // Define global functions for legacy inline onclick handlers from PHP
-    window.new_external_window_print = function(e, url, ticket) {
-      e.preventDefault();
-      window.open(`${url}?ticket_no=${ticket}`, '_blank', 'height=550,width=950,resizable=no,left=200,top=150');
-    };
-
-    window.new_external_window_upload = function(e, url, ticket) {
-      e.preventDefault();
-      window.open(`${url}?ticket_no=${ticket}`, '_blank', 'height=550,width=950,resizable=no,left=200,top=150');
-    };
-
-    return () => {
-      delete window.new_external_window_print;
-      delete window.new_external_window_upload;
-    };
-  }, []);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
   };
 
-  const handlePrintOverall = () => {
-    const { from_date, to_date } = filters;
-    if (from_date && to_date) {
-      window.open(
-        `folders/rejects_report/print_overall.php?from_date=${from_date}&to_date=${to_date}`,
-        '_blank',
-        'height=550,width=950,resizable=no,left=200,top=150'
-      );
-    } else {
-      alert("Please select both From Date and To Date");
-    }
-  };
-
   const columns = [
-    { label: 'S.No' },
-    { label: 'Ticket No' },
-    { label: 'Vehicle No' },
-    { label: 'Vendor' },
-    { label: 'Date' },
-    { label: 'Time' },
-    { label: 'Empty Weight(Tons)' },
-    { label: 'Loaded Weight(Tons)' },
-    { label: 'Net Weight(Tons)' },
-    { 
-      label: 'Print', 
-      className: 'text-center',
-      render: (val) => <span dangerouslySetInnerHTML={{ __html: val }} /> 
+    { label: 'S.No', sno: true },
+    { label: 'Ticket No', key: 'ticket_no' },
+    { label: 'Vehicle No', key: 'vehicle_no' },
+    { label: 'Vendor', key: 'vendor' },
+    { label: 'Date', key: 'date' },
+    { label: 'Time', key: 'time' },
+    { label: 'Empty Weight (Tons)', key: 'empty_weight' },
+    { label: 'Loaded Weight (Tons)', key: 'loaded_weight' },
+    { label: 'Net Weight (Tons)', key: 'net_weight' },
+    {
+      label: 'Image',
+      key: 'has_image',
+      render: (val) => val
+        ? <span className="badge bg-success-subtle text-success">Uploaded</span>
+        : <span className="badge bg-secondary-subtle text-secondary">None</span>,
     },
-    { 
-      label: 'Uploaded Image', 
-      className: 'text-center',
-      render: (val) => <span dangerouslySetInnerHTML={{ __html: val }} /> 
-    }
   ];
+
+  const extraParams = Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== ''));
 
   return (
     <div className="row g-3 mb-3">
@@ -92,23 +62,16 @@ export default function RejectsReportList() {
                 <DateInput name="to_date" className="form-control form-control-sm"
                   value={filters.to_date} onChange={handleFilterChange} />
               </div>
-              <div className="col-md-8 align-self-end text-end">
-                <button 
-                  type="button" 
-                  className="btn btn-success btn-sm waves-effect waves-light" 
-                  onClick={handlePrintOverall}
-                >
-                  <i className="ri-printer-line me-1"></i> Print Overall
-                </button>
-              </div>
             </div>
           </div>
 
           <div className="card-body pt-0">
             <DataTable
-              ajaxUrl="folders/rejects_report/crud.php"
+              mode="django"
+              ajaxUrl="/rejects-report"
               columns={columns}
-              extraParams={filters}
+              extraParams={extraParams}
+              showActiveFilter={false}
             />
           </div>
         </div>

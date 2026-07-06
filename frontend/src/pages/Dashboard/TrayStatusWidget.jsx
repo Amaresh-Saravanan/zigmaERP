@@ -41,8 +41,7 @@ export default function TrayStatusWidget({ data, unutilizedTrays }) {
             <li
               key={idx}
               className="d-flex align-items-center justify-content-between py-2"
-              style={{ cursor: 'pointer', borderBottom: idx < rows.length - 1 ? '1px solid var(--vz-border-color)' : 'none' }}
-              onClick={() => window.open(`folders/dashboard/tray_status.php?day=${row.label.replace('Day ', '')}`, '_blank')}
+              style={{ cursor: 'default', borderBottom: idx < rows.length - 1 ? '1px solid var(--vz-border-color)' : 'none' }}
             >
               <span className="d-flex align-items-center gap-2">
                 <span

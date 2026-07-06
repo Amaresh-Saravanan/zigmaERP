@@ -1,4 +1,5 @@
 import React from 'react';
+import useCountUp from '../../hooks/useCountUp';
 
 // accent map — matches the icon coloring in Dashboard.jsx
 const ACCENT = {
@@ -12,6 +13,12 @@ const ACCENT = {
 
 export default function KPICard({ title, value, unit, icon, colorClass, onClick }) {
   const accent = ACCENT[colorClass] ?? ACCENT['text-muted'];
+  const animatedValue = useCountUp(value || 0, 1500);
+
+  // Format value to 1 decimal place if it's not an integer
+  const displayValue = Number.isInteger(parseFloat(value)) 
+    ? Math.round(animatedValue) 
+    : animatedValue.toFixed(1);
 
   return (
     <div className="col">
@@ -42,7 +49,7 @@ export default function KPICard({ title, value, unit, icon, colorClass, onClick 
         </div>
 
         <h3 className="mb-0 fw-bold" style={{ fontSize: '1.6rem', lineHeight: 1.1, color: 'var(--vz-emphasis-color)' }}>
-          {value ?? 0}
+          {displayValue}
         </h3>
         <span style={{ fontSize: '0.72rem', color: 'var(--vz-secondary-color)' }}>{unit}</span>
       </div>

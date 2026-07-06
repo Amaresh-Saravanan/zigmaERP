@@ -105,9 +105,8 @@ export default function Dashboard() {
     }
   };
 
-  const openDrillDown = (type) => {
-    window.open(`folders/dashboard/organic.php?month=${month}&type=${type}`, '_blank');
-  };
+  // ponytail: legacy PHP drill-down removed; will be a React page in future
+  const openDrillDown = () => {};
 
   const syncTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 

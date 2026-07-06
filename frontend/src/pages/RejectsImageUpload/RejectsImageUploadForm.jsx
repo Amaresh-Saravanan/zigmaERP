@@ -1,132 +1,120 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import client from '../../api/client';
+import djangoClient from '../../api/djangoClient';
 import TextInput from '../../components/TextInput';
 import Select from '../../components/Select';
-import FileInput from '../../components/FileInput';
+import DateInput from '../../components/DateInput';
 import Button from '../../components/Button';
 import FormHeader from '../../components/FormHeader';
 
+const TODAY = new Date().toISOString().split('T')[0];
+
+// ponytail: rewired from PHP form.php/crud.php/get_ticket_details.php to Django REST
 export default function RejectsImageUploadForm() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const unique_id = searchParams.get('unique_id');
 
   const [formData, setFormData] = useState({
-    entry_date: new Date().toISOString().slice(0, 16),
-    ticket_number: '',
+    upload_date: TODAY,
+    ticket_no: '',
     weigh_date: '',
-    vehicle_number: '',
+    vehicle_no: '',
     net_weight: '',
-    net_weight_ton: '',
-    test_file: []
+    image_path: '',
   });
 
   const [ticketOptions, setTicketOptions] = useState([]);
-  const [existingImagesHTML, setExistingImagesHTML] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    client.get(`folders/rejects_image_upload/form.php${unique_id ? `?unique_id=${unique_id}` : ''}`, { responseType: 'text' })
+    // Load ticket options from rejects endpoint
+    djangoClient.get('/rejects', { params: { page_size: 100 } })
       .then(res => {
-        const doc = new DOMParser().parseFromString(res.data, 'text/html');
-
-        const ticketSelect = doc.querySelector('#ticket_number');
-        if (ticketSelect) setTicketOptions(Array.from(ticketSelect.options).map(o => ({ value: o.value, label: o.text })));
-
-        if (unique_id) {
-          setFormData({
-            entry_date: doc.querySelector('#entry_date')?.value || new Date().toISOString().slice(0, 16),
-            ticket_number: doc.querySelector('#ticket_number')?.value || '',
-            weigh_date: doc.querySelector('#weigh_date')?.value || '',
-            vehicle_number: doc.querySelector('#vehicle_number')?.value || '',
-            net_weight: doc.querySelector('#net_weight')?.value || '',
-            net_weight_ton: doc.querySelector('#net_weight_ton')?.value || '',
-            test_file: []
-          });
-
-          // Extract existing uploaded files HTML block
-          const fileBlock = doc.querySelector('.row.mb-3');
-          if (fileBlock && fileBlock.innerHTML.includes('Uploaded Files:')) {
-            setExistingImagesHTML(fileBlock.innerHTML);
-          }
-        }
+        const rejects = res.data.results || [];
+        setTicketOptions([
+          { value: '', label: 'Select Ticket' },
+          ...rejects.map(r => ({ value: r.ticket_no, label: r.ticket_no })),
+        ]);
       })
-      .catch(err => console.error(err));
+      .catch(err => console.error('Could not fetch ticket options', err));
+
+    if (unique_id) fetchRecord();
   }, [unique_id]);
 
-  const fetchTicketDetails = async (ticket_number) => {
-    if (!ticket_number) {
-      setFormData(prev => ({ ...prev, weigh_date: '', vehicle_number: '', net_weight: '', net_weight_ton: '' }));
+  const fetchRecord = async () => {
+    setIsLoading(true);
+    try {
+      const res = await djangoClient.get(`/reject-images/${unique_id}`);
+      const d = res.data.data;
+      setFormData({
+        upload_date: d.upload_date || TODAY,
+        ticket_no: d.ticket_no || '',
+        weigh_date: d.weigh_date || '',
+        vehicle_no: d.vehicle_no || '',
+        net_weight: d.net_weight ?? '',
+        image_path: d.image_path || '',
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchTicketDetails = async (ticket_no) => {
+    if (!ticket_no) {
+      setFormData(prev => ({ ...prev, weigh_date: '', vehicle_no: '', net_weight: '' }));
       return;
     }
     try {
-      const payload = new URLSearchParams({ ticket_number });
-      const res = await client.post('folders/rejects_image_upload/get_ticket_details.php', payload);
-      
-      // Legacy PHP returns a JSON string, axios parses it if content-type is json.
-      // But if it's text, we need to parse it manually.
-      let data = res.data;
-      if (typeof data === 'string') {
-        data = JSON.parse(data);
-      }
-      
-      if (data && data.status) {
+      // Look up the reject by ticket_no from existing data
+      const res = await djangoClient.get('/rejects', { params: { search: ticket_no, page_size: 1 } });
+      const rejects = res.data.results || [];
+      const match = rejects.find(r => r.ticket_no === ticket_no);
+      if (match) {
         setFormData(prev => ({
           ...prev,
-          vehicle_number: data.vehicle_number || '',
-          net_weight: data.net_weight || '',
-          net_weight_ton: data.net_weight_ton || '',
-          weigh_date: data.weigh_date ? data.weigh_date.slice(0, 16) : ''
+          weigh_date: match.date || '',
+          vehicle_no: match.vehicle_no || '',
+          net_weight: match.net_weight ?? '',
         }));
-      } else {
-        alert("No data found for this ticket number.");
       }
     } catch (err) {
       console.error(err);
-      alert("Error fetching ticket details.");
     }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
-    if (name === 'ticket_number') {
-      fetchTicketDetails(value);
-    }
+    if (name === 'ticket_no') fetchTicketDetails(value);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
-      const payload = new FormData();
-      payload.append('action', unique_id ? 'update' : 'create');
-      payload.append('unique_id', unique_id || '');
-      payload.append('entry_date', formData.entry_date);
-      payload.append('ticket_number', formData.ticket_number);
-      payload.append('weigh_date', formData.weigh_date);
-      payload.append('vehicle_number', formData.vehicle_number);
-      payload.append('net_weight', formData.net_weight);
-      payload.append('net_weight_ton', formData.net_weight_ton);
-      
-      if (formData.test_file.length > 0) {
-        for (let i = 0; i < formData.test_file.length; i++) {
-          payload.append('test_file[]', formData.test_file[i]);
-        }
-      }
+      const payload = {
+        upload_date: formData.upload_date,
+        ticket_no: formData.ticket_no,
+        weigh_date: formData.weigh_date || null,
+        vehicle_no: formData.vehicle_no,
+        net_weight: parseFloat(formData.net_weight) || 0,
+        image_path: formData.image_path,
+      };
 
-      const res = await client.post('folders/rejects_image_upload/crud.php', payload, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      
-      if (res.data.status === 'Success') {
+      const res = unique_id
+        ? await djangoClient.put(`/reject-images/${unique_id}`, payload)
+        : await djangoClient.post('/reject-images', payload);
+
+      if (res.data?.msg === 'create' || res.data?.msg === 'update') {
         navigate('/rejects_image_upload/list');
-      } else {
-        alert(res.data.message || 'Error saving record');
       }
     } catch (err) {
       console.error(err);
-      alert('Network error');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -139,88 +127,99 @@ export default function RejectsImageUploadForm() {
             backTo="/rejects_image_upload/list"
           />
           <div className="card-body">
-            <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
-              <p className="form-section-title">
-                <i className="ri-file-list-3-line me-1"></i> Ticket Details
-              </p>
-              <div className="row">
-                <div className="col-12 col-md-4">
-                  <TextInput
-                    type="datetime-local"
-                    label="Date"
-                    name="entry_date"
-                    value={formData.entry_date}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-
-                <div className="col-12 col-md-4">
-                  <Select
-                    label="Ticket Number"
-                    name="ticket_number"
-                    value={formData.ticket_number}
-                    onChange={handleChange}
-                    options={ticketOptions}
-                    required
-                  />
-                </div>
-
-                <div className="col-12 col-md-4">
-                  <TextInput
-                    type="datetime-local"
-                    label="Weigh Date"
-                    name="weigh_date"
-                    value={formData.weigh_date}
-                    readOnly
-                  />
-                </div>
-
-                <div className="col-12 col-md-4">
-                  <TextInput
-                    label="Vehicle Number"
-                    name="vehicle_number"
-                    value={formData.vehicle_number}
-                    readOnly
-                  />
-                </div>
-
-                <div className="col-12 col-md-4">
-                  <input type="hidden" name="net_weight" value={formData.net_weight} />
-                  <TextInput
-                    label="Net Weight(MT)"
-                    name="net_weight_ton"
-                    value={formData.net_weight_ton}
-                    readOnly
-                  />
+            {isLoading && !formData.ticket_no && unique_id ? (
+              <div className="text-center py-4">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Loading...</span>
                 </div>
               </div>
+            ) : (
+              <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
+                <p className="form-section-title">
+                  <i className="ri-file-list-3-line me-1"></i> Ticket Details
+                </p>
+                <div className="row">
+                  <div className="col-12 col-md-4">
+                    <DateInput
+                      label="Upload Date"
+                      name="upload_date"
+                      value={formData.upload_date}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
 
-              <p className="form-section-title mt-2">
-                <i className="ri-image-line me-1"></i> Image Upload
-              </p>
-              <div className="row">
-                <div className="col-12 col-md-4">
-                  <FileInput
-                    label="Image Upload"
-                    name="test_file"
-                    onFilesChange={(files) => setFormData(prev => ({ ...prev, test_file: files }))}
-                    required={!unique_id}
-                  />
+                  <div className="col-12 col-md-4">
+                    <Select
+                      label="Ticket Number"
+                      name="ticket_no"
+                      value={formData.ticket_no}
+                      onChange={handleChange}
+                      options={ticketOptions}
+                      required
+                    />
+                  </div>
+
+                  <div className="col-12 col-md-4">
+                    <TextInput
+                      label="Weigh Date"
+                      name="weigh_date"
+                      value={formData.weigh_date}
+                      readOnly
+                    />
+                  </div>
+
+                  <div className="col-12 col-md-4">
+                    <TextInput
+                      label="Vehicle Number"
+                      name="vehicle_no"
+                      value={formData.vehicle_no}
+                      readOnly
+                    />
+                  </div>
+
+                  <div className="col-12 col-md-4">
+                    <TextInput
+                      label="Net Weight (Tons)"
+                      name="net_weight"
+                      value={formData.net_weight}
+                      readOnly
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {existingImagesHTML && (
-                <div className="row mb-3 bg-light p-3 rounded mx-1" dangerouslySetInnerHTML={{ __html: existingImagesHTML }} />
-              )}
-
-              <div className="row mt-3">
-                <div className="col-12 text-end">
-                  <Button variant="danger" className="me-2" onClick={() => navigate('/rejects_image_upload/list')}>Cancel</Button>
-                  <Button type="submit">{unique_id ? 'Update' : 'Save'}</Button>
+                <p className="form-section-title mt-2">
+                  <i className="ri-image-line me-1"></i> Image
+                </p>
+                <div className="row">
+                  <div className="col-12 col-md-6">
+                    <TextInput
+                      label="Image URL / Path"
+                      name="image_path"
+                      value={formData.image_path}
+                      onChange={handleChange}
+                      placeholder="Enter image URL or path"
+                    />
+                  </div>
+                  {formData.image_path && (
+                    <div className="col-12 col-md-6 d-flex align-items-end mb-3">
+                      <a href={formData.image_path} target="_blank" rel="noreferrer" className="btn btn-outline-primary btn-sm">
+                        <i className="ri-eye-line me-1"></i> Preview Image
+                      </a>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </form>
+
+                <div className="row mt-3">
+                  <div className="col-12 text-end">
+                    <Button variant="danger" className="me-2" onClick={() => navigate('/rejects_image_upload/list')}>Cancel</Button>
+                    <Button type="submit" disabled={isLoading}>
+                      {isLoading ? 'Saving...' : unique_id ? 'Update' : 'Save'}
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       </div>

@@ -118,3 +118,11 @@ body {
 }
 
 /* Dark mode login overrides live in darkmode.css */
+
+/* Force apexcharts donut hover value to be black in light mode */
+[data-theme-mode="light"] .apexcharts-datalabel-value,
+[data-bs-theme="light"] .apexcharts-datalabel-value,
+[data-theme-mode="light"] .apexcharts-datalabel-label,
+[data-bs-theme="light"] .apexcharts-datalabel-label {
+  fill: #000000 !important;
+}

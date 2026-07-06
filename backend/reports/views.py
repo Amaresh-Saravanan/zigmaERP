@@ -5,9 +5,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from core.mongo_viewset import MongoModelViewSet
-from process.models import PitStatus
-from reports.models import DC, Logsheet, Measurable
-from reports.serializers import DCSerializer, LogsheetSerializer, MeasurableSerializer
+from process.models import EggProcess, PitStatus, StatusUpdate
+from reports.models import DC, Logsheet, Measurable, Reject, RejectImage
+from reports.serializers import (
+    DCSerializer, LogsheetSerializer, MeasurableSerializer,
+    RejectSerializer, RejectImageSerializer,
+)
 
 
 _LOCATION_LABELS = {'1': 'Weigh Bridge Side', '2': 'Solar Side'}
@@ -60,6 +63,151 @@ def measurable_report(request):
     return _paginate(request, rows)
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def egg_process_report(request):
+    """Replaces legacy egg_process_report/crud.php: EggProcess joined with
+    StatusUpdate (latest hatching status) and PitStatus (baby larvae added).
+    Filters: from_date, to_date, batch_id, supplier_name."""
+    p = request.query_params
+    from_date, to_date = p.get('from_date'), p.get('to_date')
+    batch_id, supplier_name = p.get('batch_id'), p.get('supplier_name')
+
+    # ponytail: load all status updates once, index by batch unique_id
+    status_by_batch = defaultdict(list)
+    for su in StatusUpdate.objects(is_deleted=False):
+        if su.batch:
+            status_by_batch[su.batch.unique_id].append(su)
+
+    # ponytail: load pit_status org_status='2' (baby larvae added) indexed by batch
+    pit_by_batch = defaultdict(list)
+    for ps in PitStatus.objects(is_deleted=False, org_status='2'):
+        if ps.batch:
+            pit_by_batch[ps.batch.unique_id].append(ps)
+
+    rows = []
+    for ep in EggProcess.objects(is_deleted=False).order_by('-entry_date'):
+        d = ep.entry_date.isoformat() if ep.entry_date else ''
+        if from_date and d < from_date:
+            continue
+        if to_date and d > to_date:
+            continue
+
+        batch_uid = ep.batch.unique_id if ep.batch else ''
+        if batch_id and batch_uid != batch_id:
+            continue
+
+        sup_name = ep.supplier.supplier_name if ep.supplier else ''
+        if supplier_name and sup_name != supplier_name:
+            continue
+
+        # Latest status update for this batch
+        statuses = status_by_batch.get(batch_uid, [])
+        latest_su = max(statuses, key=lambda s: s.day, default=None)
+        hatching_status = latest_su.hatching_status if latest_su else 'pending'
+        egg_cycle = latest_su.day if latest_su else 0
+
+        # End date = entry_date + cycle days
+        end_date = ''
+        if ep.entry_date and egg_cycle:
+            from datetime import timedelta
+            end_date = (ep.entry_date + timedelta(days=egg_cycle)).isoformat()
+
+        # Pit info where baby larvae were added from this batch
+        pits = pit_by_batch.get(batch_uid, [])
+        pit_names = ', '.join(ps.pit.pit_name for ps in pits if ps.pit) or '—'
+        larvae_qty = sum(ps.larvae_qty_in or 0 for ps in pits) or '—'
+
+        # Addon details
+        addon_details = ', '.join(
+            f"{a.item.item_name}: {a.qty}" for a in (ep.addons or []) if a.item
+        ) or '—'
+
+        rows.append({
+            'hatching_dates': f"{d} / {end_date}" if end_date else d,
+            'batch_id': ep.batch.batch_id if ep.batch else '',
+            'egg_qty': ep.tot_qty,
+            'tray_utilized': ep.tray_utilized,
+            'addon_details': addon_details,
+            'egg_cycle': egg_cycle,
+            'pit_names': pit_names,
+            'larvae_qty': larvae_qty,
+            'hatching_status': hatching_status,
+            'supplier_name': sup_name,
+        })
+    return _paginate(request, rows)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def pit_status_report(request):
+    """Replaces legacy pit_status_report/crud.php: aggregates PitStatus records
+    per pit+batch. Filters: from_date, to_date, pit_id, harvest_comp."""
+    p = request.query_params
+    from_date, to_date = p.get('from_date'), p.get('to_date')
+    pit_id, harvest_comp = p.get('pit_id'), p.get('harvest_comp')
+
+    all_ps = PitStatus.objects(is_deleted=False).order_by('entry_date')
+
+    # Group by pit + form_batch_id prefix (PIT-<suffix>)
+    batches = defaultdict(list)
+    for ps in all_ps:
+        d = ps.entry_date.isoformat() if ps.entry_date else ''
+        if from_date and d < from_date:
+            continue
+        if to_date and d > to_date:
+            continue
+        if pit_id and (not ps.pit or ps.pit.unique_id != pit_id):
+            continue
+        # Group key = pit unique_id + batch prefix
+        pit_uid = ps.pit.unique_id if ps.pit else ''
+        # ponytail: form_batch_id like PIT-WB01-00001; group by pit
+        batches[(pit_uid, ps.form_batch_id)].append(ps)
+
+    rows = []
+    for (pit_uid, batch_id), entries in batches.items():
+        pit_name = entries[0].pit.pit_name if entries[0].pit else ''
+        dates = [e.entry_date for e in entries if e.entry_date]
+        start_date = min(dates).isoformat() if dates else ''
+        end_date = max(dates).isoformat() if dates else ''
+
+        # Baby larvae added (org_status='2')
+        larvae_entries = [e for e in entries if e.org_status == '2']
+        larvae_added = sum(e.larvae_qty_in or 0 for e in larvae_entries)
+        larvae_dates = ', '.join(e.entry_date.isoformat() for e in larvae_entries if e.entry_date) or '—'
+
+        # Feed qty (org_status='1')
+        feed_qty = sum(e.feed_qty or 0 for e in entries if e.org_status == '1')
+
+        # Tippi qty (org_status='7')
+        tippi_qty = sum(e.tippi_qty or 0 for e in entries if e.org_status == '7')
+
+        # Harvest (org_status='5')
+        harvest_entries = [e for e in entries if e.org_status == '5']
+        larvae_harvested = sum(e.larvae_qty or 0 for e in harvest_entries)
+        manure_1 = sum(e.qty_manure_1 or 0 for e in harvest_entries)
+        manure_2 = sum(e.qty_manure_2 or 0 for e in harvest_entries)
+        manure_3 = sum(e.qty_manure_3 or 0 for e in harvest_entries)
+        rejects = sum(e.qty_rejets or 0 for e in harvest_entries)
+        h_comp = harvest_entries[-1].harvest_comp if harvest_entries else 'pending'
+
+        if harvest_comp and h_comp != harvest_comp:
+            continue
+
+        rows.append({
+            'pit_name': pit_name,
+            'batch_id': batch_id,
+            'process_dates': f"{start_date} / {end_date}",
+            'baby_larvae': f"{larvae_dates} ({larvae_added} kg)" if larvae_added else '—',
+            'feed_qty': round(feed_qty, 2),
+            'tippi_qty': round(tippi_qty, 2),
+            'larvae_harvested': round(larvae_harvested, 2),
+            'manure_rejects': f"{round(manure_1, 2)} / {round(manure_2 + manure_3, 2)} / {round(rejects, 2)}",
+            'harvest_status': h_comp or 'pending',
+        })
+    return _paginate(request, rows)
+
+
 class MeasurableViewSet(MongoModelViewSet):
     document_class = Measurable
     serializer_class = MeasurableSerializer
@@ -100,3 +248,63 @@ class DCViewSet(MongoModelViewSet):
 
     def filter_search(self, queryset, term):
         return queryset.filter(dc_number__icontains=term)
+
+
+class RejectViewSet(MongoModelViewSet):
+    document_class = Reject
+    serializer_class = RejectSerializer
+    required_screens = {
+        'list': 'rejects_report_view',
+        'retrieve': 'rejects_report_view',
+        'create': 'rejects_report_create',
+        'update': 'rejects_report_edit',
+        'destroy': 'rejects_report_delete',
+    }
+
+    def filter_search(self, queryset, term):
+        return queryset.filter(ticket_no__icontains=term)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def rejects_report(request):
+    """Paginated rejects list with date filtering for the report page."""
+    p = request.query_params
+    from_date, to_date = p.get('from_date'), p.get('to_date')
+
+    rows = []
+    for r in Reject.objects(is_deleted=False).order_by('-date'):
+        d = r.date.isoformat() if r.date else ''
+        if from_date and d < from_date:
+            continue
+        if to_date and d > to_date:
+            continue
+        # Check if image uploaded for this ticket
+        has_image = RejectImage.objects(ticket_no=r.ticket_no, is_deleted=False).count() > 0
+        rows.append({
+            'ticket_no': r.ticket_no,
+            'vehicle_no': r.vehicle_no,
+            'vendor': r.vendor,
+            'date': d,
+            'time': r.time,
+            'empty_weight': r.empty_weight,
+            'loaded_weight': r.loaded_weight,
+            'net_weight': r.net_weight,
+            'has_image': has_image,
+        })
+    return _paginate(request, rows)
+
+
+class RejectImageViewSet(MongoModelViewSet):
+    document_class = RejectImage
+    serializer_class = RejectImageSerializer
+    required_screens = {
+        'list': 'rejects_image_upload_view',
+        'retrieve': 'rejects_image_upload_view',
+        'create': 'rejects_image_upload_create',
+        'update': 'rejects_image_upload_edit',
+        'destroy': 'rejects_image_upload_delete',
+    }
+
+    def filter_search(self, queryset, term):
+        return queryset.filter(ticket_no__icontains=term)

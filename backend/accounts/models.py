@@ -2,7 +2,15 @@ import secrets
 import uuid
 
 from django.utils import timezone
-from mongoengine import BooleanField, DateTimeField, Document, ReferenceField, StringField
+from mongoengine import (
+    BooleanField,
+    DateField,
+    DateTimeField,
+    Document,
+    IntField,
+    ReferenceField,
+    StringField,
+)
 
 
 class UserType(Document):
@@ -71,3 +79,32 @@ class AuthToken(Document):
         """One token per user — re-login reuses the existing token instead of piling up rows."""
         token = cls.objects(user=user).first()
         return token or cls(user=user).save()
+
+
+class LoginHistory(Document):
+    """One row per login/logout event (legacy: user_login_details). The report
+    groups these by user+date into first-login / last-logout / worked-hours."""
+    unique_id = StringField(unique=True, required=True, default=lambda: str(uuid.uuid4()))
+    user = ReferenceField(User, required=True)
+    sess_user_type = StringField(default='')  # user_type unique_id at login time
+    entry_date = DateField(required=True)
+    entry_time = StringField(required=True)   # 'HH:MM:SS'
+    log_type = IntField(required=True)        # 1 = login, 2 = logout
+    is_deleted = BooleanField(default=False)
+    created_at = DateTimeField(default=timezone.now)
+
+    meta = {
+        'collection': 'user_login_details',
+        'indexes': ['unique_id', 'user', 'entry_date', '-created_at'],
+    }
+
+    @classmethod
+    def record(cls, user, log_type):
+        now = timezone.localtime()
+        return cls(
+            user=user,
+            sess_user_type=user.user_type.unique_id if user.user_type else '',
+            entry_date=now.date(),
+            entry_time=now.strftime('%H:%M:%S'),
+            log_type=log_type,
+        ).save()

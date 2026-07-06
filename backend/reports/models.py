@@ -84,3 +84,43 @@ class DC(Document):
         'collection': 'dc',
         'indexes': ['unique_id', 'dc_number', '-created_at'],
     }
+
+
+# ── Reject (weigh-bridge ticket) ──
+
+class Reject(Document):
+    unique_id = StringField(unique=True, required=True, default=lambda: str(uuid.uuid4()))
+    ticket_no = StringField(unique=True, required=True)
+    vehicle_no = StringField(required=True)
+    vendor = StringField(required=True)
+    date = DateField(required=True)
+    time = StringField(default='')
+    empty_weight = FloatField(default=0)
+    loaded_weight = FloatField(default=0)
+    net_weight = FloatField(default=0)  # server-computed if omitted
+    is_deleted = BooleanField(default=False)
+    created_at = DateTimeField(default=timezone.now)
+
+    meta = {
+        'collection': 'reject',
+        'indexes': ['unique_id', 'ticket_no', '-created_at'],
+    }
+
+
+# ── Reject Image Upload ──
+
+class RejectImage(Document):
+    unique_id = StringField(unique=True, required=True, default=lambda: str(uuid.uuid4()))
+    ticket_no = StringField(required=True)  # ponytail: string ref to Reject.ticket_no, not FK
+    image_path = StringField(default='')
+    upload_date = DateField(required=True)
+    weigh_date = DateField(null=True)
+    vehicle_no = StringField(default='')
+    net_weight = FloatField(default=0)
+    is_deleted = BooleanField(default=False)
+    created_at = DateTimeField(default=timezone.now)
+
+    meta = {
+        'collection': 'reject_image',
+        'indexes': ['unique_id', 'ticket_no', '-created_at'],
+    }

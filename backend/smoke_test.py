@@ -104,8 +104,10 @@ if FRP:
          'batch': {'unique_id': FRP}, 'day': 1, 'hatching_status': 'progressing'})
 
 # ── Drying ──
-test('Oven Process', '/oven-process', {'entry_date': TODAY, 'starting_time': '08:00',
-     'closing_time': '12:00', 'diesel_topup': 10, 'raw_larvae_process': 100,
+# starting_time tagged with run time: (entry_date, starting_time) is a real unique
+# index (one oven run per start time per day), so a fixed '08:00' collides on re-run.
+test('Oven Process', '/oven-process', {'entry_date': TODAY, 'starting_time': f'{TAG[:2]}:{TAG[2:4]}',
+     'closing_time': '23:59', 'diesel_topup': 10, 'raw_larvae_process': 100,
      'dried_larvae_production': 30, 'dried_larvae_stock': 25})
 test('Dry Process', '/dry-process', {'date': TODAY, 'type': '1', 'drying_method': '1', 'quantity': 50, 'qty_manure': 10})
 test('Leachate', '/leachate', {'entry_date': TODAY, 'qty_leachate': 15})
@@ -124,6 +126,28 @@ MS = test('Main Screen', '/main-screens', {'screen_main_name': f'MS-{TAG}', 'ico
 if MS:
     test('User Screen', '/screens', {'screen_name': f'Scr-{TAG}', 'folder_name': 'item_creation',
          'main_screen': {'unique_id': MS}})
+
+
+def test_get(name, path, params, shape_ok):
+    from urllib.parse import urlencode
+    st, j = req('GET', f'{path}?{urlencode(params)}', TOKEN)
+    ok = st == 200 and shape_ok(j)
+    results.append((name, ok, '' if ok else f'[{st}] {json.dumps(j)[:220]}'))
+
+
+# ── Dashboard + Reports (GET, read-only checks) ──
+test_get('Dashboard', '/dashboard', {'month': TODAY[:7]},
+         lambda j: 'kpi' in j and 'pit_chart' in j and 'tray_status' in j)
+test_get('Measurable Report', '/measurable-report', {'from_date': '2000-01-01', 'to_date': TODAY},
+         lambda j: 'results' in j and 'count' in j)
+test_get('Egg Process Report', '/egg-process-report', {'from_date': '2000-01-01', 'to_date': TODAY},
+         lambda j: 'results' in j and 'count' in j)
+test_get('Pit Status Report', '/pit-status-report', {'from_date': '2000-01-01', 'to_date': TODAY},
+         lambda j: 'results' in j and 'count' in j)
+test_get('Rejects Report', '/rejects-report', {'from_date': '2000-01-01', 'to_date': TODAY},
+         lambda j: 'results' in j and 'count' in j)
+test_get('Login History Report', '/login-history-report', {'from_date': '2000-01-01', 'to_date': TODAY},
+         lambda j: 'results' in j and 'count' in j)
 
 # ── Report ──
 passed = sum(1 for _, ok, _ in results if ok)

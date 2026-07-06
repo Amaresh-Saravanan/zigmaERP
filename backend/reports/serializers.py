@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import DC, Logsheet, Measurable
+from .models import DC, Logsheet, Measurable, Reject, RejectImage
 
 
 class MeasurableSerializer(serializers.Serializer):
@@ -83,3 +83,49 @@ class DCSerializer(serializers.Serializer):
         instance.grand_total = self._compute_grand_total(items, instance.tax_rate)
         instance.save()
         return instance
+
+
+class RejectSerializer(serializers.Serializer):
+    unique_id = serializers.CharField(read_only=True)
+    ticket_no = serializers.CharField()
+    vehicle_no = serializers.CharField()
+    vendor = serializers.CharField()
+    date = serializers.DateField()
+    time = serializers.CharField(required=False, allow_blank=True)
+    empty_weight = serializers.FloatField(default=0)
+    loaded_weight = serializers.FloatField(default=0)
+    net_weight = serializers.FloatField(read_only=True)
+
+    def create(self, validated_data):
+        # ponytail: auto-compute net_weight
+        validated_data['net_weight'] = validated_data.get('loaded_weight', 0) - validated_data.get('empty_weight', 0)
+        return Reject(**validated_data).save()
+
+    def update(self, instance, validated_data):
+        for field in ('ticket_no', 'vehicle_no', 'vendor', 'date', 'time', 'empty_weight', 'loaded_weight'):
+            if field in validated_data:
+                setattr(instance, field, validated_data[field])
+        instance.net_weight = instance.loaded_weight - instance.empty_weight
+        instance.save()
+        return instance
+
+
+class RejectImageSerializer(serializers.Serializer):
+    unique_id = serializers.CharField(read_only=True)
+    ticket_no = serializers.CharField()
+    image_path = serializers.CharField(required=False, allow_blank=True)
+    upload_date = serializers.DateField()
+    weigh_date = serializers.DateField(required=False, allow_null=True)
+    vehicle_no = serializers.CharField(required=False, allow_blank=True)
+    net_weight = serializers.FloatField(default=0)
+
+    def create(self, validated_data):
+        return RejectImage(**validated_data).save()
+
+    def update(self, instance, validated_data):
+        for field in ('ticket_no', 'image_path', 'upload_date', 'weigh_date', 'vehicle_no', 'net_weight'):
+            if field in validated_data:
+                setattr(instance, field, validated_data[field])
+        instance.save()
+        return instance
+
