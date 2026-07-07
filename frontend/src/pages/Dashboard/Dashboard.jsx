@@ -4,6 +4,7 @@ import KPICard from './KPICard';
 import PitStatusChart from './PitStatusChart';
 import TrayStatusWidget from './TrayStatusWidget';
 import OverallStatusChart from './OverallStatusChart';
+import MonthYearPicker from '../../components/MonthYearPicker';
 
 // BSF bioconversion strip — the facility's core performance thesis at a glance
 function EfficiencyStrip({ kpi, month }) {
@@ -111,10 +112,6 @@ export default function Dashboard() {
   const syncTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   const [year, monthNum] = month.split('-').map(Number);
-  const monthStart = new Date(year, monthNum - 1, 1);
-  const monthEnd = new Date(year, monthNum, 0);
-  const fmt = (d) => d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  const rangeLabel = `${fmt(monthStart)} — ${fmt(monthEnd)}`;
 
   return (
     <div className="container-fluid px-0">
@@ -142,25 +139,7 @@ export default function Dashboard() {
           </span>
         </div>
         <div className="col-auto">
-          <label
-            className="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill position-relative"
-            style={{
-              background: 'var(--vz-secondary-bg)',
-              border: '1px solid var(--vz-border-color)',
-              cursor: 'pointer',
-            }}
-          >
-            <i className="ri-calendar-line" style={{ fontSize: '0.9rem', color: 'var(--vz-secondary-color)' }}></i>
-            <span style={{ fontSize: '0.82rem', fontWeight: 500, color: 'var(--vz-emphasis-color)' }}>
-              {rangeLabel}
-            </span>
-            <input
-              type="month"
-              value={month}
-              onChange={(e) => setMonth(e.target.value)}
-              style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}
-            />
-          </label>
+          <MonthYearPicker value={month} onChange={setMonth} />
         </div>
       </div>
 

@@ -132,44 +132,10 @@ export default function Login() {
             </p>
           </div>
 
-          {/* BOTTOM: status card + copyright */}
-          <div>
-            <div className="lp-status-card">
-              <div className="lp-status-head">
-                <span>System Status</span>
-                <span className="lp-status-live">
-                  <i className="lp-live-dot" aria-hidden="true" /> Operational
-                </span>
-              </div>
-              <div className="lp-status-row">
-                <div className="lp-status-icon"><i className="ri-refresh-line" aria-hidden="true" /></div>
-                <div className="lp-status-meta">
-                  <span>Live Sync</span>
-                  <span>Last sync: just now</span>
-                </div>
-                <span className="lp-status-pill">LIVE</span>
-              </div>
-              <div className="lp-status-row">
-                <div className="lp-status-icon"><i className="ri-stack-line" aria-hidden="true" /></div>
-                <div className="lp-status-meta">
-                  <span>Active Farms</span>
-                  <span>24 online</span>
-                </div>
-                <span className="lp-status-pill">ONLINE</span>
-              </div>
-              <div className="lp-status-row">
-                <div className="lp-status-icon"><i className="ri-line-chart-line" aria-hidden="true" /></div>
-                <div className="lp-status-meta">
-                  <span>Conversion Rate</span>
-                  <span>96.45%</span>
-                </div>
-                <span className="lp-status-pill lp-pill-up">↑ 3.4%</span>
-              </div>
-            </div>
-            <p className="lp-copyright">
-              <i className="ri-leaf-fill" aria-hidden="true" /> {new Date().getFullYear()} © Zigfly. All rights reserved.
-            </p>
-          </div>
+          {/* BOTTOM: copyright */}
+          <p className="lp-copyright" style={{ position: 'relative', zIndex: 1 }}>
+            <i className="ri-leaf-fill" aria-hidden="true" /> {new Date().getFullYear()} © Zigfly. All rights reserved.
+          </p>
         </div>
 
         {/* ── RIGHT: Form 55% ── */}
