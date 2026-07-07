@@ -30,10 +30,21 @@ describe('E2E: Login User Journey', () => {
   });
 
   it('redirects to /password when default password is used', () => {
+    // Mock the backend to pretend 'password' is the correct password
+    cy.intercept('POST', '**/api/auth/login', {
+      statusCode: 200,
+      body: {
+        status: 1,
+        msg: 'success_login',
+        data: { access_token: 'fake', user: { unique_id: 'fake', user_name: 'demo' } }
+      }
+    }).as('loginApi');
+
     cy.fixture('users').then(({ admin }) => {
       cy.get('#lp_user').type(admin.username);
       cy.get('#lp_pass').type('password');
       cy.get('button[type="submit"]').click();
+      cy.wait('@loginApi');
       cy.url().should('include', '/password');
     });
   });
