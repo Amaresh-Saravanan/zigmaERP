@@ -17,6 +17,7 @@ class UserSerializer(serializers.Serializer):
     screens = serializers.SerializerMethodField()
     main_screens = serializers.SerializerMethodField()
     is_active = serializers.BooleanField()
+    must_change_password = serializers.BooleanField()
 
     def get_screens(self, obj):
         return obj.screens.split(',') if obj.screens else []

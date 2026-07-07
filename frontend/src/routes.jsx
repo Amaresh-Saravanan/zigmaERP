@@ -1,6 +1,9 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
+import SignUp from './pages/SignUp';
+import PasswordUpdate from './pages/PasswordUpdate';
 import ProtectedRoute from './components/ProtectedRoute';
+import GuestRoute from './components/GuestRoute';
 import MainLayout from './components/Layout/MainLayout';
 import PlaceholderPage from './pages/PlaceholderPage';
 import UnitCreationList from './pages/UnitCreation/UnitCreationList';
@@ -64,6 +67,8 @@ import RejectsImageUploadForm from './pages/RejectsImageUpload/RejectsImageUploa
 // ponytail: Using a single PlaceholderPage component for all unmigrated screens to avoid 30+ boilerplate files.
 const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
+  { path: '/signup', element: <GuestRoute><SignUp /></GuestRoute> },
+  { path: '/password/update', element: <ProtectedRoute><PasswordUpdate /></ProtectedRoute> },
   {
     path: '/',
     element: (

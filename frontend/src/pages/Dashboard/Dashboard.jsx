@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import client from '../../api/client';
+import React, { useState, useEffect, useRef } from 'react';
+import djangoClient from '../../api/djangoClient';
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
 import KPICard from './KPICard';
 import PitStatusChart from './PitStatusChart';
 import TrayStatusWidget from './TrayStatusWidget';
@@ -86,15 +88,33 @@ export default function Dashboard() {
     unutilized_trays: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const monthInputRef = useRef(null);
 
   useEffect(() => {
     fetchDashboardData();
   }, [month]);
 
+  useEffect(() => {
+    if (monthInputRef.current) {
+      flatpickr(monthInputRef.current, {
+        mode: 'single',
+        dateFormat: 'Y-m',
+        defaultDate: new Date(month.split('-')[0], month.split('-')[1] - 1, 1),
+        onChange: (selectedDates) => {
+          if (selectedDates[0]) {
+            const y = selectedDates[0].getFullYear();
+            const m = String(selectedDates[0].getMonth() + 1).padStart(2, '0');
+            setMonth(`${y}-${m}`);
+          }
+        },
+      });
+    }
+  }, []);
+
   const fetchDashboardData = async () => {
     setIsLoading(true);
     try {
-      const res = await client.post('folders/dashboard/api.php', new URLSearchParams({ month }));
+      const res = await djangoClient.get('/dashboard', { params: { month } });
       if (res.data) {
         setData(res.data);
       }
@@ -105,9 +125,8 @@ export default function Dashboard() {
     }
   };
 
-  const openDrillDown = (type) => {
-    window.open(`folders/dashboard/organic.php?month=${month}&type=${type}`, '_blank');
-  };
+  // ponytail: legacy PHP drill-down removed; will be a React page in future
+  const openDrillDown = () => {};
 
   const syncTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -144,11 +163,12 @@ export default function Dashboard() {
         </div>
         <div className="col-auto">
           <label
-            className="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill position-relative"
+            className="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill"
             style={{
               background: 'var(--vz-secondary-bg)',
               border: '1px solid var(--vz-border-color)',
               cursor: 'pointer',
+              position: 'relative',
             }}
           >
             <i className="ri-calendar-line" style={{ fontSize: '0.9rem', color: 'var(--vz-secondary-color)' }}></i>
@@ -156,10 +176,22 @@ export default function Dashboard() {
               {rangeLabel}
             </span>
             <input
-              type="month"
+              ref={monthInputRef}
+              type="text"
               value={month}
-              onChange={(e) => setMonth(e.target.value)}
-              style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (/^\d{4}-\d{2}$/.test(val)) setMonth(val);
+              }}
+              placeholder="YYYY-MM"
+              style={{
+                position: 'absolute',
+                inset: 0,
+                opacity: 0,
+                cursor: 'pointer',
+                width: '100%',
+                height: '100%',
+              }}
             />
           </label>
         </div>

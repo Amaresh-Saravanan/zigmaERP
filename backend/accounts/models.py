@@ -37,14 +37,16 @@ class User(Document):
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
     updated_at = DateTimeField(default=timezone.now)
+    must_change_password = BooleanField(default=False)
 
     meta = {
         'collection': 'users',
         'indexes': ['unique_id', 'user_name', '-created_at'],
     }
 
-    # Minimal contract DRF's permission checks expect (request.user.is_authenticated).
-    # Always True: this attribute only exists on a User fetched via a valid token.
+    # DRF checks user.is_authenticated to determine if a request is authenticated.
+    # Since we use MongoEngine (not Django's AbstractBaseUser), this property satisfies
+    # the DRF contract without needing a full Django auth user model.
     @property
     def is_authenticated(self):
         return True

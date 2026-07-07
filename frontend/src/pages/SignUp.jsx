@@ -1,42 +1,49 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import useAuth from '../hooks/useAuth';
+import { useNavigate, Link } from 'react-router-dom';
 import useTheme from '../hooks/useTheme';
-import djangoClient, { mapDjangoUser } from '../api/djangoClient';
+import djangoClient from '../api/djangoClient';
 import Swal from 'sweetalert2';
 import heroBg from '../assets/images/auth-one-bg.jpg';
 import zigflyLogo from '../assets/images/zigfly-logo-clean.png';
 
-export default function Login() {
-  const [form, setForm] = useState({ user: '', password: '' });
+export default function SignUp() {
+  const [form, setForm] = useState({
+    first_name: '',
+    last_name: '',
+    user_name: '',
+    user_email: '',
+    password: '',
+    confirm_password: '',
+  });
   const [showPass, setShowPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
   const { isDark, setTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const showIncorrect = () => {
-    setLoading(false);
-    Swal.fire({
-      title: 'Incorrect UserName and Password',
-      icon: 'error',
-      showConfirmButton: true,
-      timer: 2000,
-      timerProgressBar: true
-    });
-  };
-
   const handleSubmit = async (e) => {
     e?.preventDefault();
-    if (!form.user || !form.password) {
+
+    if (!form.first_name || !form.user_name || !form.password || !form.confirm_password) {
       Swal.fire({
-        title: 'Enter Username and Password!',
+        title: 'Please fill all required fields!',
         icon: 'warning',
         showConfirmButton: true,
         timer: 2000,
-        timerProgressBar: true
+        timerProgressBar: true,
+      });
+      return;
+    }
+
+    if (form.password !== form.confirm_password) {
+      Swal.fire({
+        title: 'Passwords do not match!',
+        icon: 'error',
+        showConfirmButton: true,
+        timer: 2000,
+        timerProgressBar: true,
       });
       return;
     }
@@ -44,38 +51,47 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await djangoClient.post('/auth/login', {
-        user_name: form.user, password: form.password
+      const res = await djangoClient.post('/auth/register', {
+        first_name: form.first_name,
+        last_name: form.last_name,
+        user_name: form.user_name,
+        user_email: form.user_email,
+        password: form.password,
       }, { suppressError: true });
 
       if (res.data?.status === 1) {
-        localStorage.setItem('django_token', res.data.data.access_token);
-        login(mapDjangoUser(res.data.data.user));
-        // ponytail: backend sets must_change_password when a default/temp password is active
-        if (res.data.data.must_change_password) {
-          navigate('/password/update?default=true');
-          return;
-        }
-        navigate('/');
+        Swal.fire({
+          title: 'Account Created!',
+          text: 'Your account has been created successfully. Please contact your administrator to activate your account.',
+          icon: 'success',
+          showConfirmButton: true,
+          timer: 3000,
+          timerProgressBar: true,
+        });
+        setTimeout(() => navigate('/login'), 3000);
         return;
       }
 
-      // 2xx but not a success payload — treat as bad credentials
-      showIncorrect();
-      return;
+      Swal.fire({
+        title: 'Registration Failed',
+        text: res.data?.error || 'Something went wrong. Please try again.',
+        icon: 'error',
+        showConfirmButton: true,
+        timer: 3000,
+        timerProgressBar: true,
+      });
     } catch (err) {
       const status = err.response?.status;
       const msg = err.response?.data?.error;
-      if (status === 403) {
+      if (status === 409) {
         Swal.fire({
+          title: 'Username Already Exists',
+          text: msg || 'This username is already taken. Please choose another.',
           icon: 'warning',
-          title: msg || 'Your account is pending administrator activation.',
           showConfirmButton: true,
-          timer: 4000,
-          timerProgressBar: true
+          timer: 3000,
+          timerProgressBar: true,
         });
-      } else if (status === 401) {
-        showIncorrect();
       } else if (status === 429) {
         Swal.fire({
           icon: 'warning',
@@ -94,7 +110,7 @@ export default function Login() {
             : 'Could not reach the server. Check your connection and try again.',
           showConfirmButton: true,
           timer: 6000,
-          timerProgressBar: true
+          timerProgressBar: true,
         });
       }
     }
@@ -105,19 +121,15 @@ export default function Login() {
     <div className="lp-root">
       <div className="lp-split">
 
-        {/* ── LEFT: Hero 45% ── */}
+        {/* LEFT: Hero 45% */}
         <div className="lp-hero" style={{ backgroundImage: `url(${heroBg})` }}>
-          {/* Dark green overlay over the larvae photo */}
           <div className="lp-hero-overlay" aria-hidden="true" />
-          {/* Sunrise glow effect */}
           <div className="lp-hero-glow" aria-hidden="true" />
 
-          {/* TOP: branding */}
           <div className="lp-brand">
             <img src={zigflyLogo} alt="Zigfly" height="120" className="lp-brand-logo-full" />
           </div>
 
-          {/* CENTER: headline */}
           <div className="lp-headline-wrap">
             <div className="lp-accent-bar" aria-hidden="true" />
             <h1 className="lp-headline">
@@ -129,7 +141,6 @@ export default function Login() {
             </p>
           </div>
 
-          {/* BOTTOM: status card + copyright */}
           <div>
             <div className="lp-status-card">
               <div className="lp-status-head">
@@ -169,10 +180,10 @@ export default function Login() {
           </div>
         </div>
 
-        {/* ── RIGHT: Form 55% ── */}
+        {/* RIGHT: Form 55% */}
         <div className="lp-form-side">
 
-          {/* Theme toggle — sliding pill, top-right */}
+          {/* Theme toggle */}
           <div
             className="lp-theme-toggle"
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
@@ -193,9 +204,8 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Login card */}
+          {/* Sign Up card */}
           <div className="lp-card">
-            {/* Dot grid decoration — top-right corner of card */}
             <svg className="lp-card-dots" aria-hidden="true" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
               {Array.from({ length: 6 }, (_, row) =>
                 Array.from({ length: 6 }, (_, col) => (
@@ -205,40 +215,94 @@ export default function Login() {
             </svg>
 
             <h2 className="lp-card-title">
-              Welcome Back, <span>Admin!</span>
+              Create Account, <span>Admin!</span>
             </h2>
-            <p className="lp-card-sub">Sign in to continue to Zigfly Admin Dashboard.</p>
+            <p className="lp-card-sub">Sign up to get started with Zigfly Admin Dashboard.</p>
             <div className="lp-card-rule" aria-hidden="true" />
 
             <form onSubmit={handleSubmit} autoComplete="off" noValidate>
+              <div className="row g-3">
+                <div className="col-6">
+                  <div className="mb-3">
+                    <label className="form-label" htmlFor="su_first_name">First Name <span aria-label="required">*</span></label>
+                    <div className="lp-input-wrap">
+                      <i className="ri-user-line" aria-hidden="true" />
+                      <input
+                        className="form-control"
+                        id="su_first_name"
+                        name="first_name"
+                        type="text"
+                        placeholder="First name"
+                        value={form.first_name}
+                        onChange={handleChange}
+                        required
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="col-6">
+                  <div className="mb-3">
+                    <label className="form-label" htmlFor="su_last_name">Last Name</label>
+                    <div className="lp-input-wrap">
+                      <i className="ri-user-line" aria-hidden="true" />
+                      <input
+                        className="form-control"
+                        id="su_last_name"
+                        name="last_name"
+                        type="text"
+                        placeholder="Last name"
+                        value={form.last_name}
+                        onChange={handleChange}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="mb-3">
-                <label className="form-label" htmlFor="lp_user">Username <span aria-label="required">*</span></label>
+                <label className="form-label" htmlFor="su_user_name">Username <span aria-label="required">*</span></label>
                 <div className="lp-input-wrap">
-                  <i className="ri-user-line" aria-hidden="true" />
+                  <i className="ri-at-line" aria-hidden="true" />
                   <input
                     className="form-control"
-                    id="lp_user"
-                    name="user"
+                    id="su_user_name"
+                    name="user_name"
                     type="text"
-                    placeholder="Enter your username"
-                    value={form.user}
+                    placeholder="Choose a username"
+                    value={form.user_name}
                     onChange={handleChange}
                     required
-                    autoFocus
                   />
                 </div>
               </div>
 
               <div className="mb-3">
-                <label className="form-label" htmlFor="lp_pass">Password <span aria-label="required">*</span></label>
+                <label className="form-label" htmlFor="su_email">Email</label>
+                <div className="lp-input-wrap">
+                  <i className="ri-mail-line" aria-hidden="true" />
+                  <input
+                    className="form-control"
+                    id="su_email"
+                    name="user_email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={form.user_email}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label" htmlFor="su_password">Password <span aria-label="required">*</span></label>
                 <div className="lp-input-wrap">
                   <i className="ri-lock-2-line" aria-hidden="true" />
                   <input
                     type={showPass ? 'text' : 'password'}
                     className="form-control"
-                    id="lp_pass"
+                    id="su_password"
                     name="password"
-                    placeholder="Enter your password"
+                    placeholder="Create a password"
                     value={form.password}
                     onChange={handleChange}
                     required
@@ -254,8 +318,29 @@ export default function Login() {
                 </div>
               </div>
 
-              <div className="d-flex align-items-center justify-content-end mb-3">
-                <a href="#" className="lp-link" onClick={(e) => { e.preventDefault(); Swal.fire({ icon: 'info', title: 'Password Reset', text: 'Please contact your administrator to reset your password.', showConfirmButton: true, timer: 4000, timerProgressBar: true }); }}>Forgot password?</a>
+              <div className="mb-3">
+                <label className="form-label" htmlFor="su_confirm_password">Confirm Password <span aria-label="required">*</span></label>
+                <div className="lp-input-wrap">
+                  <i className="ri-lock-2-line" aria-hidden="true" />
+                  <input
+                    type={showConfirmPass ? 'text' : 'password'}
+                    className="form-control"
+                    id="su_confirm_password"
+                    name="confirm_password"
+                    placeholder="Confirm your password"
+                    value={form.confirm_password}
+                    onChange={handleChange}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="lp-pass-toggle"
+                    onClick={() => setShowConfirmPass(!showConfirmPass)}
+                    aria-label={showConfirmPass ? 'Hide password' : 'Show password'}
+                  >
+                    <i className={showConfirmPass ? 'ri-eye-off-line' : 'ri-eye-line'} aria-hidden="true" />
+                  </button>
+                </div>
               </div>
 
               <button
@@ -263,8 +348,8 @@ export default function Login() {
                 type="submit"
                 disabled={loading}
               >
-                {loading ? 'Signing in…' : (
-                  <><span>Sign In</span><i className="ri-arrow-right-line" aria-hidden="true" /></>
+                {loading ? 'Creating Account…' : (
+                  <><span>Create Account</span><i className="ri-arrow-right-line" aria-hidden="true" /></>
                 )}
               </button>
             </form>
@@ -276,8 +361,8 @@ export default function Login() {
             </div>
 
             <p className="lp-footer-text">
-              Don't have an account?{' '}
-              <a href="/signup" className="lp-link">Sign Up</a>
+              Already have an account?{' '}
+              <Link to="/login" className="lp-link">Sign In</Link>
             </p>
           </div>
         </div>
@@ -304,7 +389,7 @@ export default function Login() {
           overflow: hidden;
         }
 
-        /* ── LEFT HERO (45%) ── */
+        /* LEFT HERO (45%) */
         .lp-hero {
           flex: 0 0 45%;
           position: relative;
@@ -317,8 +402,6 @@ export default function Login() {
           overflow: hidden;
           clip-path: inset(0);
         }
-        /* Dark overlay - logo is transparent so shows well on any background
-           bottom vignette fully opaque for status card; upper section shows texture */
         .lp-hero-overlay {
           position: absolute;
           inset: 0;
@@ -328,7 +411,6 @@ export default function Login() {
           pointer-events: none;
           z-index: 0;
         }
-        /* Warmer, more saturated amber sunrise — creates drama */
         .lp-hero-glow {
           position: absolute;
           top: -15%;
@@ -392,7 +474,6 @@ export default function Login() {
           text-shadow: 0 1px 6px rgba(0,0,0,0.3);
         }
 
-        /* Status card — enhanced glassmorphism with green tint */
         .lp-status-card {
           background: rgba(2,10,6,0.72);
           border: 1.5px solid rgba(37,169,107,0.25);
@@ -503,7 +584,7 @@ export default function Login() {
           z-index: 1;
         }
 
-        /* ── RIGHT FORM SIDE (55%) ── */
+        /* RIGHT FORM SIDE (55%) */
         .lp-form-side {
           flex: 0 0 55%;
           position: relative;
@@ -518,7 +599,6 @@ export default function Login() {
           background: #0d1117;
         }
 
-        /* Theme toggle — sliding pill */
         .lp-theme-toggle {
           position: absolute;
           top: 24px;
@@ -565,7 +645,6 @@ export default function Login() {
           outline-offset: 2px;
         }
 
-        /* Login card — elevated, dramatic shadow */
         .lp-card {
           position: relative;
           z-index: 3;
@@ -589,7 +668,6 @@ export default function Login() {
             0 16px 48px rgba(0,0,0,0.5);
         }
 
-        /* Dot grid decoration — top-right */
         .lp-card-dots {
           position: absolute;
           top: 0;
@@ -648,7 +726,6 @@ export default function Login() {
           z-index: 1;
         }
 
-        /* Input wrapper with inset icon */
         .lp-input-wrap {
           position: relative;
           display: flex;
@@ -757,7 +834,6 @@ export default function Login() {
           border-radius: 2px;
         }
 
-        /* Submit button */
         .lp-submit {
           height: 48px;
           background: linear-gradient(135deg, #1e7a4a 0%, #145c38 100%);
@@ -815,63 +891,7 @@ export default function Login() {
         }
         [data-bs-theme='dark'] .lp-footer-text { color: #8b949e; }
 
-        .form-check-input {
-          appearance: none;
-          -webkit-appearance: none;
-          width: 16px !important;
-          height: 16px !important;
-          min-width: 16px !important;
-          min-height: 16px !important;
-          max-width: 16px !important;
-          max-height: 16px !important;
-          padding: 0 !important;
-          border: 1.5px solid #cbd5e1;
-          border-radius: 50% !important;
-          cursor: pointer;
-          margin-top: 1px;
-          flex-shrink: 0;
-          display: grid;
-          place-content: center;
-          transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
-          background-image: none !important;
-          background-color: transparent !important;
-        }
-        [data-bs-theme='dark'] .form-check-input { border-color: #424752; }
-        .form-check-input::before {
-          content: "";
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          transform: scale(0);
-          transition: 120ms transform ease-in-out;
-          background-color: #25a96b;
-        }
-        .form-check-input:checked {
-          border-color: #25a96b !important;
-        }
-        .form-check-input:checked::before {
-          transform: scale(1);
-        }
-        .form-check-input:focus-visible {
-          box-shadow: 0 0 0 3px rgba(37,169,107,0.2) !important;
-          border-color: #25a96b !important;
-          outline: none;
-        }
-        .form-check {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        .form-check-label {
-          font-size: 0.84rem;
-          color: #374151;
-          cursor: pointer;
-          user-select: none;
-          margin-bottom: 0;
-        }
-        [data-bs-theme='dark'] .form-check-label { color: #8b949e; }
-
-        /* ── Responsive ── */
+        /* Responsive */
         @media (max-width: 991px) {
           .lp-hero { display: none; }
           .lp-form-side {

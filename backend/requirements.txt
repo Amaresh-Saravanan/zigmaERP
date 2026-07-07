@@ -6,3 +6,4 @@ django-cors-headers==4.3
 python-dotenv==1.0
 pytest-django==4.8
 mongomock==4.3  # test-only: lets model tests run without a live Atlas cluster
+django-ratelimit==4.1.0  # rate limiting for auth endpoints (login: 5/m, register: 10/m)
