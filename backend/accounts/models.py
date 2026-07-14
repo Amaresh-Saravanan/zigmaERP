@@ -28,6 +28,20 @@ class UserType(Document):
         'indexes': ['unique_id'],
     }
 
+    @classmethod
+    def get_or_create_pending(cls):
+        """Zero-permission role auto-assigned to self-service signups until an
+        admin reviews the account and assigns a real role."""
+        existing = cls.objects(type_name='Pending Signup', is_deleted=False).first()
+        if existing:
+            return existing
+        return cls(
+            type_name='Pending Signup',
+            description='Auto-assigned to self-registered accounts pending admin review.',
+            screens='',
+            main_screens='',
+        ).save()
+
 
 class User(Document):
     unique_id = StringField(unique=True, required=True, default=lambda: str(uuid.uuid4()))

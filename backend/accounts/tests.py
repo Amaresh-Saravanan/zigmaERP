@@ -60,6 +60,17 @@ def test_user_name_must_be_unique():
         User(user_name='dupe', password_hash='y', user_type=ut).save()
 
 
+def test_user_type_get_or_create_pending_is_idempotent():
+    first = UserType.get_or_create_pending()
+    second = UserType.get_or_create_pending()
+
+    assert first.id == second.id
+    assert first.type_name == 'Pending Signup'
+    assert first.screens == ''
+    assert first.main_screens == ''
+    assert UserType.objects(type_name='Pending Signup').count() == 1
+
+
 def test_login_success_returns_token_and_user(client, active_user):
     res = client.post('/api/auth/login', {'user_name': 'admin1', 'password': 'correcthorse'}, format='json')
     assert res.status_code == 200
