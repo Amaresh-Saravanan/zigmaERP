@@ -1,3 +1,5 @@
+import re
+
 from django.contrib.auth.hashers import check_password, make_password
 from rest_framework import serializers
 
@@ -43,6 +45,58 @@ class LoginSerializer(serializers.Serializer):
 
         data['user'] = user
         return data
+
+
+class SignupSerializer(serializers.Serializer):
+    """Public self-registration. Accounts start is_active=False under the
+    zero-permission 'Pending Signup' role until an admin reviews and assigns
+    a real UserType via the existing User management screen."""
+    user_name = serializers.CharField(min_length=3, max_length=50)
+    user_email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
+    first_name = serializers.CharField(max_length=100)
+    last_name = serializers.CharField(max_length=100)
+
+    def validate_user_name(self, value):
+        if not re.match(r'^[A-Za-z0-9_]+$', value):
+            raise serializers.ValidationError(
+                'Username may only contain letters, numbers, and underscores.'
+            )
+        if User.objects(user_name__iexact=value, is_deleted=False).first():
+            raise serializers.ValidationError('This username is already taken.')
+        return value
+
+    def validate_user_email(self, value):
+        if User.objects(user_email__iexact=value, is_deleted=False).first():
+            raise serializers.ValidationError('An account with this email already exists.')
+        return value
+
+    def validate_password(self, value):
+        rule = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,}$'
+        if not re.match(rule, value):
+            raise serializers.ValidationError(
+                'Password must be at least 8 characters and include an uppercase '
+                'letter, a lowercase letter, a number, and a special character.'
+            )
+        return value
+
+    def validate(self, data):
+        if data['password'] != data['confirm_password']:
+            raise serializers.ValidationError({'confirm_password': 'Passwords do not match.'})
+        return data
+
+    def create(self, validated_data):
+        pending_type = UserType.get_or_create_pending()
+        return User(
+            user_name=validated_data['user_name'],
+            password_hash=make_password(validated_data['password']),
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name'],
+            user_email=validated_data['user_email'],
+            user_type=pending_type,
+            is_active=False,
+        ).save()
 
 
 # ── Management CRUD (TASK-B07) — distinct from the auth-response serializers

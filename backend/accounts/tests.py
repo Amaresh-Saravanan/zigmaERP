@@ -71,6 +71,99 @@ def test_user_type_get_or_create_pending_is_idempotent():
     assert UserType.objects(type_name='Pending Signup').count() == 1
 
 
+from accounts.serializers import SignupSerializer
+
+
+def test_signup_serializer_creates_inactive_pending_user():
+    serializer = SignupSerializer(data={
+        'user_name': 'newuser1',
+        'user_email': 'newuser1@example.com',
+        'password': 'Str0ng!Pass',
+        'confirm_password': 'Str0ng!Pass',
+        'first_name': 'New',
+        'last_name': 'User',
+    })
+    assert serializer.is_valid(), serializer.errors
+
+    user = serializer.save()
+
+    assert user.is_active is False
+    assert user.user_type.type_name == 'Pending Signup'
+    assert check_password('Str0ng!Pass', user.password_hash)
+
+
+def test_signup_serializer_rejects_duplicate_username():
+    UserType.objects.create(type_name='Admin')
+    User(user_name='taken', password_hash='x', user_type=UserType.objects.first()).save()
+
+    serializer = SignupSerializer(data={
+        'user_name': 'taken',
+        'user_email': 'unique@example.com',
+        'password': 'Str0ng!Pass',
+        'confirm_password': 'Str0ng!Pass',
+        'first_name': 'A',
+        'last_name': 'B',
+    })
+    assert not serializer.is_valid()
+    assert 'user_name' in serializer.errors
+
+
+def test_signup_serializer_rejects_duplicate_email():
+    UserType.objects.create(type_name='Admin')
+    User(user_name='other', password_hash='x', user_type=UserType.objects.first(),
+         user_email='dupe@example.com').save()
+
+    serializer = SignupSerializer(data={
+        'user_name': 'brandnew',
+        'user_email': 'dupe@example.com',
+        'password': 'Str0ng!Pass',
+        'confirm_password': 'Str0ng!Pass',
+        'first_name': 'A',
+        'last_name': 'B',
+    })
+    assert not serializer.is_valid()
+    assert 'user_email' in serializer.errors
+
+
+def test_signup_serializer_rejects_weak_password():
+    serializer = SignupSerializer(data={
+        'user_name': 'weakpwuser',
+        'user_email': 'weak@example.com',
+        'password': 'weakpass',
+        'confirm_password': 'weakpass',
+        'first_name': 'Weak',
+        'last_name': 'Pw',
+    })
+    assert not serializer.is_valid()
+    assert 'password' in serializer.errors
+
+
+def test_signup_serializer_rejects_password_mismatch():
+    serializer = SignupSerializer(data={
+        'user_name': 'mismatchuser',
+        'user_email': 'mismatch@example.com',
+        'password': 'Str0ng!Pass',
+        'confirm_password': 'Different!Pass1',
+        'first_name': 'Mis',
+        'last_name': 'Match',
+    })
+    assert not serializer.is_valid()
+    assert 'confirm_password' in serializer.errors
+
+
+def test_signup_serializer_rejects_invalid_username_characters():
+    serializer = SignupSerializer(data={
+        'user_name': 'bad name!',
+        'user_email': 'badname@example.com',
+        'password': 'Str0ng!Pass',
+        'confirm_password': 'Str0ng!Pass',
+        'first_name': 'Bad',
+        'last_name': 'Name',
+    })
+    assert not serializer.is_valid()
+    assert 'user_name' in serializer.errors
+
+
 def test_login_success_returns_token_and_user(client, active_user):
     res = client.post('/api/auth/login', {'user_name': 'admin1', 'password': 'correcthorse'}, format='json')
     assert res.status_code == 200
