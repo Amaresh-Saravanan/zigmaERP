@@ -6,60 +6,62 @@ import zigFlyLogo from '../../assets/images/zig-fly-logo.png';
 import faviIcon from '../../assets/images/favi-icon.png';
 
 // ponytail: static fallback shown when /api/menu is unavailable (backend offline / demo mode)
-// unique_ids here match db_setup/menu_setup.sql so permissions work when DB is live
+// unique_ids here match db_setup/menu_setup.sql so permissions work when DB is live.
+// Grouping matches the official ZigmaERP sidebar spec (screen_name labels + section
+// placement below reflect that spec, not the legacy PHP grouping — see Migration_Tracker.md).
 const DEMO_MENU = [
   {
     unique_id: 'msm_admin', screen_main_name: 'Admin', icon_name: 'ri-team-fill', sub_screens: [
-      { unique_id: 'us_user', screen_name: 'User', folder_name: 'user' },
-      { unique_id: 'us_user_type', screen_name: 'User Type', folder_name: 'user_type' },
-      { unique_id: 'us_user_screen', screen_name: 'User Screen', folder_name: 'user_screen' },
-      { unique_id: 'us_user_perm', screen_name: 'User Permission', folder_name: 'user_permission' },
       { unique_id: 'us_main_screen', screen_name: 'Main Screen', folder_name: 'main_screen' },
-      { unique_id: 'us_login_history', screen_name: 'Login History', folder_name: 'login_history' },
+      { unique_id: 'us_user_screen', screen_name: 'User Screen', folder_name: 'user_screen' },
+      { unique_id: 'us_user_type', screen_name: 'User Type', folder_name: 'user_type' },
+      { unique_id: 'us_user', screen_name: 'User Creation', folder_name: 'user' },
+      { unique_id: 'us_user_perm', screen_name: 'User Permission', folder_name: 'user_permission' },
     ]
   },
   {
     unique_id: 'msm_settings', screen_main_name: 'Settings', icon_name: 'ri-settings-3-fill', sub_screens: [
-      { unique_id: 'us_item', screen_name: 'Item Creation', folder_name: 'item_creation' },
+      { unique_id: 'us_pit', screen_name: 'Pit Creation', folder_name: 'pit_creation' },
       { unique_id: 'us_tray', screen_name: 'Tray Creation', folder_name: 'tray_creation' },
       { unique_id: 'us_unit', screen_name: 'Unit Creation', folder_name: 'unit_creation' },
       { unique_id: 'us_supplier', screen_name: 'Supplier Creation', folder_name: 'supplier_creation' },
-      { unique_id: 'us_pit', screen_name: 'Pit Creation', folder_name: 'pit_creation' },
+      { unique_id: 'us_item', screen_name: 'Item Creation', folder_name: 'item_creation' },
+      { unique_id: 'us_rejects_img', screen_name: 'Rejects Image Upload', folder_name: 'rejects_image_upload' },
+      { unique_id: 'us_leachate', screen_name: 'Lea Chate', folder_name: 'leachate' },
     ]
   },
   {
     unique_id: 'msm_hatching', screen_main_name: 'Hatching Center', icon_name: 'ri-calendar-event-fill', sub_screens: [
-      { unique_id: 'us_screening', screen_name: 'Screening Process', folder_name: 'screening_process' },
+      { unique_id: 'us_mat_recv', screen_name: 'Egg Received', folder_name: 'material_received' },
       { unique_id: 'us_egg', screen_name: 'Egg Process', folder_name: 'egg_process' },
-      { unique_id: 'us_culling', screen_name: 'Culling Process', folder_name: 'culling_process' },
-      { unique_id: 'us_mat_recv', screen_name: 'Material Received', folder_name: 'material_received' },
+      { unique_id: 'us_status_upd', screen_name: 'Egg Status Update', folder_name: 'status_update' },
+      { unique_id: 'us_frp_tray', screen_name: 'FRP Tray Process', folder_name: 'frp_tray_process' },
+      { unique_id: 'us_frp_status', screen_name: 'FRP Tray Status Update', folder_name: 'frp_status_update' },
     ]
   },
   {
     unique_id: 'msm_processing', screen_main_name: 'Processing Center', icon_name: 'ri-stack-fill', sub_screens: [
-      { unique_id: 'us_status_upd', screen_name: 'Status Update', folder_name: 'status_update' },
       { unique_id: 'us_pit_status', screen_name: 'Pit Status', folder_name: 'pit_status' },
-      { unique_id: 'us_frp_tray', screen_name: 'FRP Tray Process', folder_name: 'frp_tray_process' },
-      { unique_id: 'us_frp_status', screen_name: 'FRP Status Update', folder_name: 'frp_status_update' },
+      { unique_id: 'us_screening', screen_name: 'Screening Process', folder_name: 'screening_process' },
+      { unique_id: 'us_measurable', screen_name: 'Measurable', folder_name: 'measurable' },
     ]
   },
   {
     unique_id: 'msm_drying', screen_main_name: 'Drying Center', icon_name: 'ri-calendar-check-fill', sub_screens: [
-      { unique_id: 'us_oven', screen_name: 'Oven Process', folder_name: 'oven_process' },
       { unique_id: 'us_dry', screen_name: 'Dry Process', folder_name: 'dry_process' },
-      { unique_id: 'us_leachate', screen_name: 'Leachate', folder_name: 'leachate' },
+      { unique_id: 'us_culling', screen_name: 'Culling Process', folder_name: 'culling_process' },
+      { unique_id: 'us_oven', screen_name: 'Oven Process', folder_name: 'oven_process' },
     ]
   },
   {
     unique_id: 'msm_report', screen_main_name: 'Report', icon_name: 'ri-file-list-3-fill', sub_screens: [
-      { unique_id: 'us_logsheet', screen_name: 'Logsheet', folder_name: 'logsheet' },
-      { unique_id: 'us_dc', screen_name: 'DC', folder_name: 'dc' },
-      { unique_id: 'us_measurable', screen_name: 'Measurable', folder_name: 'measurable' },
-      { unique_id: 'us_meas_rpt', screen_name: 'Measurable Report', folder_name: 'measurable_report' },
       { unique_id: 'us_egg_rpt', screen_name: 'Egg Process Report', folder_name: 'egg_process_report' },
       { unique_id: 'us_pit_rpt', screen_name: 'Pit Status Report', folder_name: 'pit_status_report' },
+      { unique_id: 'us_meas_rpt', screen_name: 'Measurable Report', folder_name: 'measurable_report' },
       { unique_id: 'us_rejects_rpt', screen_name: 'Rejects Report', folder_name: 'rejects_report' },
-      { unique_id: 'us_rejects_img', screen_name: 'Rejects Image Upload', folder_name: 'rejects_image_upload' },
+      { unique_id: 'us_login_history', screen_name: 'Login History', folder_name: 'login_history' },
+      { unique_id: 'us_logsheet', screen_name: 'Logsheet', folder_name: 'logsheet' },
+      { unique_id: 'us_dc', screen_name: 'DC', folder_name: 'dc' },
     ]
   },
 ];

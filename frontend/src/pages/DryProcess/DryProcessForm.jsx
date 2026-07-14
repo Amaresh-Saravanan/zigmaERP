@@ -4,6 +4,7 @@ import djangoClient from '../../api/djangoClient';
 import DateInput from '../../components/DateInput';
 import TextInput from '../../components/TextInput';
 import Select from '../../components/Select';
+import FileInput from '../../components/FileInput';
 import Button from '../../components/Button';
 import FormHeader from '../../components/FormHeader';
 
@@ -25,6 +26,8 @@ export default function DryProcessForm() {
     qty_manure: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  // ponytail: image capture is UI-only until DryProcess gets an image field + multipart upload endpoint
+  const [imageFile, setImageFile] = useState(null);
 
   useEffect(() => {
     if (unique_id) fetchRecord();
@@ -168,6 +171,16 @@ export default function DryProcessForm() {
                       />
                     </div>
                   )}
+
+                  <div className="col-12 col-md-3">
+                    <FileInput
+                      label="Image Upload"
+                      name="image"
+                      multiple={false}
+                      accept="image/*"
+                      onFilesChange={(files) => setImageFile(files?.[0] || null)}
+                    />
+                  </div>
                 </div>
 
                 <div className="row mt-2">

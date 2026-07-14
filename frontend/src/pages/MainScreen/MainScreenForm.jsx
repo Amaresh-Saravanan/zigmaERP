@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import djangoClient from '../../api/djangoClient';
 import TextInput from '../../components/TextInput';
-import Toggle from '../../components/Toggle';
+import Textarea from '../../components/Textarea';
+import Select from '../../components/Select';
 import Button from '../../components/Button';
 import FormHeader from '../../components/FormHeader';
 
@@ -12,12 +13,16 @@ export default function MainScreenForm() {
   const unique_id = searchParams.get('unique_id');
 
   const [formData, setFormData] = useState({
+    screen_type: '',
     screen_name: '',
-    icon_name: '',
+    order_no: '',
     active_status: '1',
+    icon_name: '',
+    description: '',
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [validated, setValidated] = useState(false);
 
   useEffect(() => {
     if (unique_id) fetchMainScreen();
@@ -29,9 +34,12 @@ export default function MainScreenForm() {
       const res = await djangoClient.get(`/main-screens/${unique_id}`);
       const ms = res.data.data;
       setFormData({
+        screen_type: ms.screen_type || '',
         screen_name: ms.screen_main_name || '',
-        icon_name: ms.icon_name || '',
+        order_no: ms.order_no != null ? String(ms.order_no) : '',
         active_status: ms.is_active ? '1' : '0',
+        icon_name: ms.icon_name || '',
+        description: ms.description || '',
       });
     } catch (err) {
       console.error(err);
@@ -47,8 +55,17 @@ export default function MainScreenForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!e.target.checkValidity()) {
+      setValidated(true);
+      return;
+    }
+
     setIsLoading(true);
 
+    // ponytail: screen_type, order_no, description are UI-only for now —
+    // backend/core/models.py MainScreen has no matching fields yet, so they
+    // stay out of the payload until that lands.
     const payload = {
       screen_main_name: formData.screen_name,
       icon_name: formData.icon_name,
@@ -85,11 +102,26 @@ export default function MainScreenForm() {
                 </div>
               </div>
             ) : (
-              <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
+              <form className={validated ? 'was-validated' : ''} onSubmit={handleSubmit} autoComplete="off" noValidate>
                 <p className="form-section-title">
                   <i className="ri-layout-grid-line me-1"></i> Main Screen Details
                 </p>
                 <div className="row">
+                  <div className="col-12 col-md-4">
+                    {/* ponytail: static placeholder list until backend defines real screen types */}
+                    <Select
+                      label="Screen Type"
+                      name="screen_type"
+                      value={formData.screen_type}
+                      onChange={handleChange}
+                      placeholder="Select the Screen Type"
+                      options={[
+                        { value: 'menu', label: 'Menu' },
+                        { value: 'report', label: 'Report' },
+                      ]}
+                      required
+                    />
+                  </div>
                   <div className="col-12 col-md-4">
                     <TextInput
                       label="Screen Name"
@@ -101,7 +133,32 @@ export default function MainScreenForm() {
                   </div>
                   <div className="col-12 col-md-4">
                     <TextInput
-                      label="Icon Name"
+                      type="number"
+                      label="Order No"
+                      name="order_no"
+                      value={formData.order_no}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="row">
+                  <div className="col-12 col-md-4">
+                    <Select
+                      label="Active Status"
+                      name="active_status"
+                      value={formData.active_status}
+                      onChange={handleChange}
+                      options={[
+                        { value: '1', label: 'Active' },
+                        { value: '0', label: 'Inactive' },
+                      ]}
+                      required
+                    />
+                  </div>
+                  <div className="col-12 col-md-4">
+                    <TextInput
+                      label="Icon"
                       name="icon_name"
                       value={formData.icon_name}
                       onChange={handleChange}
@@ -109,12 +166,11 @@ export default function MainScreenForm() {
                     />
                   </div>
                   <div className="col-12 col-md-4">
-                    <Toggle
-                      label="Active Status"
-                      name="active_status"
-                      value={formData.active_status}
+                    <Textarea
+                      label="Description"
+                      name="description"
+                      value={formData.description}
                       onChange={handleChange}
-                      helperText={formData.active_status === '1' ? 'Active' : 'Inactive'}
                     />
                   </div>
                 </div>

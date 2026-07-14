@@ -171,6 +171,7 @@ class OvenProcessSerializer(serializers.Serializer):
     raw_larvae_process = serializers.FloatField()
     dried_larvae_production = serializers.FloatField()
     dried_larvae_stock = serializers.FloatField()
+    image_path = serializers.CharField(required=False, allow_blank=True)
 
     @staticmethod
     def _to_minutes(hhmm):
@@ -192,7 +193,7 @@ class OvenProcessSerializer(serializers.Serializer):
     def update(self, instance, validated_data):
         for field in (
             'entry_date', 'starting_time', 'closing_time', 'running_hours', 'diesel_topup',
-            'raw_larvae_process', 'dried_larvae_production', 'dried_larvae_stock',
+            'raw_larvae_process', 'dried_larvae_production', 'dried_larvae_stock', 'image_path',
         ):
             if field in validated_data:
                 setattr(instance, field, validated_data[field])
@@ -209,12 +210,13 @@ class DryProcessSerializer(serializers.Serializer):
     drying_method = serializers.ChoiceField(choices=DryProcess.drying_method.choices)
     quantity = serializers.FloatField()
     qty_manure = serializers.FloatField(required=False)
+    image_path = serializers.CharField(required=False, allow_blank=True)
 
     def create(self, validated_data):
         return DryProcess(**validated_data).save()
 
     def update(self, instance, validated_data):
-        for field in ('date', 'type', 'drying_method', 'quantity', 'qty_manure'):
+        for field in ('date', 'type', 'drying_method', 'quantity', 'qty_manure', 'image_path'):
             if field in validated_data:
                 setattr(instance, field, validated_data[field])
         instance.save()
@@ -228,12 +230,13 @@ class LeachateSerializer(serializers.Serializer):
     entry_date = serializers.DateField()
     qty_leachate = serializers.FloatField()
     remarks = serializers.CharField(required=False, allow_blank=True)
+    image_path = serializers.CharField(required=False, allow_blank=True)
 
     def create(self, validated_data):
         return Leachate(**validated_data).save()
 
     def update(self, instance, validated_data):
-        for field in ('entry_date', 'qty_leachate', 'remarks'):
+        for field in ('entry_date', 'qty_leachate', 'remarks', 'image_path'):
             if field in validated_data:
                 setattr(instance, field, validated_data[field])
         instance.save()
@@ -469,12 +472,14 @@ class FrpTrayProcessSerializer(serializers.Serializer):
 
 class FrpStatusUpdateSerializer(serializers.Serializer):
     unique_id = serializers.CharField(read_only=True)
+    entry_no = serializers.CharField(read_only=True)
     entry_date = serializers.DateField()
     staff = UserRefSerializer()
     batch = FrpTrayProcessRefSerializer()
     day = serializers.IntegerField()
     hatching_status = serializers.ChoiceField(choices=FrpStatusUpdate.hatching_status.choices, default='pending')
     remarks = serializers.CharField(required=False, allow_blank=True)
+    image_path = serializers.CharField(required=False, allow_blank=True)
 
     def validate_staff(self, value):
         return _resolve(User, value, 'Staff')
@@ -482,11 +487,23 @@ class FrpStatusUpdateSerializer(serializers.Serializer):
     def validate_batch(self, value):
         return _resolve(FrpTrayProcess, value, 'FRP batch')
 
+    @staticmethod
+    def _next_entry_no():
+        # order by -entry_no (fixed prefix + zero-padded => lexical == numeric); skip legacy docs with no entry_no
+        last = FrpStatusUpdate.objects(entry_no__nin=[None, '']).order_by('-entry_no').first()
+        last_num = 0
+        if last and last.entry_no:
+            try:
+                last_num = int(last.entry_no.rsplit('-', 1)[-1])
+            except ValueError:
+                pass
+        return f'FRP-{last_num + 1:05d}'
+
     def create(self, validated_data):
-        return FrpStatusUpdate(**validated_data).save()
+        return FrpStatusUpdate(entry_no=self._next_entry_no(), **validated_data).save()
 
     def update(self, instance, validated_data):
-        for field in ('entry_date', 'staff', 'day', 'hatching_status', 'remarks'):
+        for field in ('entry_date', 'staff', 'day', 'hatching_status', 'remarks', 'image_path'):
             if field in validated_data:
                 setattr(instance, field, validated_data[field])
         instance.save()

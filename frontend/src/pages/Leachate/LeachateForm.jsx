@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import djangoClient from '../../api/djangoClient';
 import DateInput from '../../components/DateInput';
 import TextInput from '../../components/TextInput';
+import FileInput from '../../components/FileInput';
 import Button from '../../components/Button';
 import FormHeader from '../../components/FormHeader';
 
@@ -21,6 +22,8 @@ export default function LeachateForm() {
     remarks: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  // ponytail: file kept in UI state only — no backend field/multipart endpoint yet, wire up when added
+  const [imageFile, setImageFile] = useState(null);
 
   useEffect(() => {
     if (unique_id) fetchRecord();
@@ -114,6 +117,16 @@ export default function LeachateForm() {
                       value={formData.qty_leachate}
                       onChange={handleChange}
                       required
+                    />
+                  </div>
+
+                  <div className="col-12 col-md-3">
+                    <FileInput
+                      name="image_upload"
+                      label="Image Upload"
+                      onFilesChange={(files) => setImageFile(files?.[0] || null)}
+                      multiple={false}
+                      accept="image/*"
                     />
                   </div>
 

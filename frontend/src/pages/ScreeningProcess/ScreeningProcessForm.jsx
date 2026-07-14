@@ -215,12 +215,14 @@ export default function ScreeningProcessForm() {
                       required
                     />
                   </div>
-                  {unique_id && (
-                    <div className="col-12 col-md-3 mb-3">
-                      <span className="form-label app-form-label d-block">Pit Batch Id</span>
-                      <h5 className="mb-0">{formData.form_batch_id}</h5>
-                    </div>
-                  )}
+                  <div className="col-12 col-md-3">
+                    <TextInput
+                      label="Pit Batch Id"
+                      name="form_batch_id"
+                      value={formData.form_batch_id}
+                      readOnly
+                    />
+                  </div>
                 </div>
 
                 {/* ── Step 2: Measurements ── */}

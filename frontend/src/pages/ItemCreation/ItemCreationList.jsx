@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 
 import djangoClient from '../../api/djangoClient';
 import DataTable from '../../components/DataTable';
@@ -29,7 +30,17 @@ export default function ItemCreationList() {
   };
 
   const handleDelete = async (uniqueId) => {
-    if (!window.confirm('Are you sure you want to delete this item?')) return;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#25a96b',
+      cancelButtonColor: '#ef4444',
+      confirmButtonText: 'Yes, delete it!'
+    });
+    if (!result.isConfirmed) return;
+
     try {
       const res = await djangoClient.delete(`/items/${uniqueId}`);
       if (res.data?.msg === 'success_delete') {

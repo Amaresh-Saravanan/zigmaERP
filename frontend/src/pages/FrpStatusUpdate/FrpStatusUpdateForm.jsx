@@ -6,6 +6,7 @@ import TextInput from '../../components/TextInput';
 import Select from '../../components/Select';
 import Button from '../../components/Button';
 import FormHeader from '../../components/FormHeader';
+import FileInput from '../../components/FileInput';
 
 const TODAY = new Date().toISOString().split('T')[0];
 
@@ -23,6 +24,8 @@ export default function FrpStatusUpdateForm() {
   const [formData, setFormData] = useState({
     entry_date: TODAY,
     batch: '',
+    // ponytail: entry_no is UI-only — no backend field yet; needs model field + auto-generation logic
+    entry_no: '',
     starting_day: '',
     day: '',
     hatching_status: 'pending',
@@ -32,6 +35,8 @@ export default function FrpStatusUpdateForm() {
   const [staffId, setStaffId] = useState('');
   const [batchOptions, setBatchOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  // ponytail: imageFile is UI-only — no backend field/upload endpoint yet; needs multipart support
+  const [imageFile, setImageFile] = useState(null);
 
   useEffect(() => {
     fetchCurrentUser();
@@ -80,12 +85,14 @@ export default function FrpStatusUpdateForm() {
       setFormData({
         entry_date: fs.entry_date || TODAY,
         batch: fs.batch?.unique_id || '',
+        entry_no: '',
         starting_day: '',
         day: String(fs.day ?? ''),
         hatching_status: fs.hatching_status || 'pending',
         remarks: fs.remarks || '',
       });
       setStaffId(fs.staff?.unique_id || '');
+      setImageFile(null);
     } catch (err) {
       console.error(err);
     } finally {
@@ -175,6 +182,17 @@ export default function FrpStatusUpdateForm() {
                   </div>
 
                   <div className="col-12 col-md-4">
+                    <TextInput
+                      label="Entry No"
+                      name="entry_no"
+                      value={formData.entry_no}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+
+                <div className="row mt-2">
+                  <div className="col-12 col-md-4">
                     <DateInput
                       id="starting_day"
                       name="starting_day"
@@ -192,12 +210,7 @@ export default function FrpStatusUpdateForm() {
                       readOnly
                     />
                   </div>
-                </div>
 
-                <p className="form-section-title mt-2">
-                  <i className="ri-checkbox-circle-line me-1"></i> Hatching Status
-                </p>
-                <div className="row">
                   <div className="col-12 col-md-4">
                     <Select
                       label="FRP Hatching Status"
@@ -206,6 +219,21 @@ export default function FrpStatusUpdateForm() {
                       onChange={handleChange}
                       options={HATCHING_OPTIONS}
                       required
+                    />
+                  </div>
+                </div>
+
+                <p className="form-section-title mt-2">
+                  <i className="ri-image-line me-1"></i> Image &amp; Remarks
+                </p>
+                <div className="row">
+                  <div className="col-12 col-md-4">
+                    <FileInput
+                      name="egg_process_image"
+                      label="FRP egg process Image"
+                      onFilesChange={(files) => setImageFile(files?.[0] || null)}
+                      multiple={false}
+                      accept="image/*"
                     />
                   </div>
 

@@ -2,9 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import djangoClient from '../../api/djangoClient';
 import TextInput from '../../components/TextInput';
+import Textarea from '../../components/Textarea';
 import Select from '../../components/Select';
 import Button from '../../components/Button';
 import FormHeader from '../../components/FormHeader';
+
+const ACTION_KEYS = ['add', 'update', 'list', 'delete', 'view', 'print'];
 
 export default function UserScreenForm() {
   const [searchParams] = useSearchParams();
@@ -18,6 +21,8 @@ export default function UserScreenForm() {
     order_no: '',
     icon_name: '',
     active_status: '1',
+    description: '',
+    actions: { add: false, update: false, list: false, delete: false, view: false, print: false },
   });
 
   const [mainScreenOptions, setMainScreenOptions] = useState([]);
@@ -61,10 +66,26 @@ export default function UserScreenForm() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleActionChange = (e) => {
+    const { name, checked } = e.target;
+    setFormData((prev) => {
+      if (name === 'all') {
+        const actions = ACTION_KEYS.reduce((acc, key) => ({ ...acc, [key]: checked }), {});
+        return { ...prev, actions };
+      }
+      const actions = { ...prev.actions, [name]: checked };
+      return { ...prev, actions };
+    });
+  };
+
+  const allActionsChecked = ACTION_KEYS.every((key) => formData.actions[key]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
+    // ponytail: description and actions are UI-only for now — backend Screen
+    // model has no matching fields yet, so they stay out of the payload.
     const payload = {
       screen_name: formData.screen_name,
       folder_name: formData.folder_name,
@@ -178,6 +199,50 @@ export default function UserScreenForm() {
                       onChange={handleChange}
                       required
                     />
+                  </div>
+                </div>
+
+                <p className="form-section-title mt-2">
+                  <i className="ri-file-text-line me-1"></i> Additional Details
+                </p>
+                <div className="row">
+                  <div className="col-12 col-md-6">
+                    <Textarea
+                      label="Description"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                    />
+                  </div>
+
+                  <div className="col-12 col-md-6">
+                    <label className="form-label app-form-label">Actions</label>
+                    <div className="d-flex flex-wrap gap-3">
+                      <div className="form-check">
+                        <input
+                          type="checkbox"
+                          className="form-check-input"
+                          id="action_all"
+                          name="all"
+                          checked={allActionsChecked}
+                          onChange={handleActionChange}
+                        />
+                        <label className="form-check-label" htmlFor="action_all">All</label>
+                      </div>
+                      {ACTION_KEYS.map((key) => (
+                        <div className="form-check" key={key}>
+                          <input
+                            type="checkbox"
+                            className="form-check-input"
+                            id={`action_${key}`}
+                            name={key}
+                            checked={formData.actions[key]}
+                            onChange={handleActionChange}
+                          />
+                          <label className="form-check-label text-capitalize" htmlFor={`action_${key}`}>{key}</label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 

@@ -29,6 +29,9 @@ export default function UserPermissionForm() {
   const [checkedScreens, setCheckedScreens] = useState(new Set());
   const [checkedMainScreens, setCheckedMainScreens] = useState(new Set());
   const [isLoading, setIsLoading] = useState(false);
+  // ponytail: UI-only filter, not wired to Module Access table — main_screen.unique_id
+  // and permission-catalog screen ids are separate id spaces (see Sidebar_Menu_Migration_Tracker.md §3.1)
+  const [selectedMainScreen, setSelectedMainScreen] = useState('');
 
   useEffect(() => {
     fetchUserTypes();
@@ -148,7 +151,18 @@ export default function UserPermissionForm() {
                     value={userTypeId}
                     onChange={(e) => setUserTypeId(e.target.value)}
                     options={userTypeOptions}
+                    placeholder="Select User Type"
                     required
+                  />
+                </div>
+                <div className="col-12 col-md-4">
+                  <Select
+                    label="Main Screen"
+                    name="main_screen"
+                    value={selectedMainScreen}
+                    onChange={(e) => setSelectedMainScreen(e.target.value)}
+                    options={mainScreens.map((ms) => ({ value: ms.unique_id, label: ms.screen_main_name }))}
+                    placeholder="Select Main Screen"
                   />
                 </div>
               </div>

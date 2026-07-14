@@ -1,575 +1,125 @@
-# Zigma ERP — Migration Tracker
+# Migration Tracker — MongoDB Data-Consistency Remediation
 
-> **LIVING DOCUMENT** — Update after every completed task. This is the single source of truth for the entire migration, now spanning two parallel workstreams (see [Workstream Overview](#workstream-overview)): **Workstream A — UI Modernization** and **Workstream B — Django Backend Migration**.
->
-> Sections 1–15 below are the original, unchanged record of Workstream A / Phase 1 (PHP → React parity migration), which is complete. They are preserved as history and are not being rewritten. New work is tracked in the Workstream Overview and Sections 16–17.
+**Generated:** 2026-07-14 · **Source:** read-only audit of the live Atlas cluster (`cluster0.3nrjkcs`)
+**Scope:** every inconsistency found between the live data and the MongoEngine models + serializer contracts in `backend/`.
+*(Replaces the old MongoDB→MySQL tracker — that plan lives in git history if needed.)*
 
----
-
-## AI Continuity Section
-
-> **Read this first before writing any code.**
-
-| Field | Value |
-|-------|-------|
-| **Architecture** | **React (Vite) + Django REST + MongoDB Atlas + Docker + Vercel** (NOT PHP → Django migration; greenfield Django build using legacy PHP as reference for business logic only). |
-| **Current Phase** | Phase 1 (React): 100%. Phase 2 (UI Modernization): 100%. Phase 3 (Django Backend): TASK-B01–B14 all done. Phase 4 (Deployment): config/docs done, no live deployment performed (see Last Completed Task — needs the user's actual Vercel/hosting accounts). |
-| **Current Task** | None queued — TASK-B01–B14 all done. Remaining real-world steps: actually deploy (needs the user's own Vercel + backend-host accounts/credentials) and the in-browser verification pass (needs a connected Chrome extension) before any `crud.php` can be removed. |
-| **Last Completed Task** | TASK-B14 (deploy config) done — **config and docs only, no live deployment performed** (needs the user's own Vercel account + a chosen backend host, deliberately not assumed — asked and user chose platform-agnostic docs over committing to Railway/Fly/AWS). Added `frontend/vercel.json`: SPA fallback rewrite (client-side routing) + an `/api/*` rewrite proxying to the deployed backend, mirroring what `nginx.conf` already does in the Docker setup — the destination is a `<your-deployed-backend-host>` placeholder that must be hand-edited before deploying, since Vercel rewrite destinations can't be templated from an env var (a real Vercel platform limitation, not a shortcut taken here). Corrected `TECH_STACK.md`'s deployment section, which had drifted from reality: it documented a `DJANGO_SETTINGS_MODULE=config.settings.prod` module and a frontend `VITE_API_URL` env var that were never actually implemented — the real app talks to the backend via a relative `/api` path (`djangoClient.js`), reverse-proxied, same as the Vite dev proxy and the Docker nginx config. Backend deploy documented platform-agnostically (plain `docker build`/`docker run`, works on any Docker host) per the user's choice, using the already-built, already-verified `backend/Dockerfile` from TASK-B13. **This closes out Phase 3 (Django Backend) entirely — TASK-B01 through B14 are all done.** Previously: **TASK-B11 (test suite)** — audited instead of padding, found and closed 2 real gaps (`PitStatus` `org_status` validation for statuses `'3'`–`'7'`; malformed-auth-header branch), suite 83/83. **TASK-B13 (Docker)** and **TASK-B12 (security)** — see their own rows in §17.1. TASK-B10 (all 21 modules wired to Django, curl-verified against live Atlas) remains blocked on in-browser click-through before any `crud.php` removal (see Active Blocker) — that and an actual live deployment are the only things left in the whole project that need the user directly (accounts/credentials/a Chrome extension), not more agent work. |
-| **Overall Progress** | Frontend: **21/26** pages cut over to Django — every module targeted for TASK-B10 is now wired (Core CRUD, User Management, Main Screen Admin, all 11 Process modules incl. Egg/PitStatus/Screening/Frp*). Remaining 5 (`*_Report` ×4, `RejectsImageUpload`) stay on PHP by design — deferred, not in scope (see §17.2). Backend: **TASK-B01–B14 all done (14/14)**. No agent-side backend work remains — what's left (live deployment, in-browser click-through) needs the user's own accounts/environment. |
-| **Active Blocker** | **Browser verification** for all 21 Django-wired modules is the one thing standing between "wired in parallel" and actually cutting over (removing each module's `crud.php`) — needs a connected Chrome extension, not available in this environment. All 21 modules are now verified live via `curl` against real Atlas data (16 in earlier sessions, the remaining 5 — EggProcess/PitStatus/ScreeningProcess/FrpTrayProcess/FrpStatusUpdate — this session); none has had an actual in-browser click-through yet. Historical, resolved: **2026-07-03** Atlas connectivity issue was two stacked problems, not the TLS/cert issue it looked like. (1) Atlas's Network Access list only had a stale IP (152.57.192.145) — the machine's actual current IP had since changed to 157.51.97.14, and Atlas rejects non-allowlisted IPs at the TLS handshake with an `INTERNAL_ERROR` alert, which looks exactly like a cert problem but isn't. Fixed by the user adding `0.0.0.0/0` to Network Access. (2) Once past that, Atlas returned a real `bad auth` error — the DB user's password stored in `backend/.env` had been mistranscribed from an earlier screenshot (case-sensitive field, easy to misread). Fixed by the user resetting the DB user's password in Atlas and providing the fresh value. `MONGODB_URI` in `.env` now has the corrected password; connection verified with a live `ping` and a full CRUD cycle. |
-| **Tech Stack** | See TECH_STACK.md (React, Django 4.2+, MongoEngine, MongoDB, Vercel, Docker). |
-| **Legacy Reference** | `legacy/` folder (PHP source code — read for business logic understanding; do NOT migrate code). |
-
-### Completed Work (Phase 1 + Phase 2 in progress)
-
-**Phase 1 (React Migration) — 100% Complete**
-- Git repository cleanup (moved PHP backend to `legacy/` folder, kept running via Apache alias)
-- Vite + React scaffold with Bootstrap/Velzon CSS, all 33 legacy routes wired dynamically
-- `AuthContext`, `ProtectedRoute`, `usePermission` hook — session-based auth working
-- `DataTable.jsx` reusable component with server-side pagination, search, filters, delete, custom actions
-- All CRUD modules ported (33 pages: Item, Tray, Pit, Unit, Supplier, User, Screening, Egg, Culling, Oven, Dry, Leachate, Material Received, Status Update, Pit Status, FRP Tray, FRP Status, Logsheet, DC, Measurable, Reports, Login History, Main Screen, etc.)
-- Tests: Vitest (unit), MSW (integration), Cypress (E2E), Axe (accessibility) — all passing
-
-**Phase 2 (UI Modernization) — ~85% Complete**
-- **Dark theme system**: `ThemeContext.jsx`, `useTheme()` hook, `darkmode.css` (complete CSS variable overrides for all pages)
-- **Design system**: `DESIGN.md` (green `#25a96b` brand, glassmorphism, comprehensive token palette)
-- **Color palettes**: `chartTheme.js` (theme-aware chart colors for ApexCharts, light/dark modes)
-- **Login page redesign**: glassmorphism, modern layout, particle background, matches reference UI
-- **Dashboard redesign**: 
-  - Added `EfficiencyStrip` component (bioconversion rate hero + input/output metrics)
-  - Redesigned `PitStatusChart` (summary stats in header, proper empty-state)
-  - Redesigned `TrayStatusWidget` (vertical list → clean tile grid with progress bars)
-  - Redesigned `OverallStatusChart` (donut + legend side-by-side, empty-state, custom label)
-  - Live badge & date range picker (styled pills, native input overlaid for picker access)
-- **Hamburger menu**: thicker bars (2.5px), smoother cubic-bezier animation, better spacing
-- **Header styling**: subtle backdrop blur, refined box-shadow, improved button hover lift
-- **Animations**: site-wide fade-in stagger (card entrance cascades), button press feedback (scale 0.97), smooth hover lift, `prefers-reduced-motion` support
-- **Typography**: Tray Status widget labels (Day 1–5, Above 5 Days) restyled to match KPI title convention (bold, uppercase, letter-spacing)
-- **Dropdown fixes**: Firefox `:moz-focusring` suppression, solid border enforcement (native `<select>` kept, OS blue highlight accepted)
-
-**Phase 2 (UI Modernization) — 100% Complete**
-- **Calendar component**: DateInput.jsx wrapper built and integrated with flatpickr across all 26+ form/list pages
-  * No date restrictions by default; supports manual input and calendar picker
-  * Full compatibility with existing form handlers and filters
-  * Supports disabled/readonly state, required validation, custom classNames
-  * All native `<input type="date">` replaced throughout the app
-- **Forms & Tables**: complete redesign with dark theme, animations, new typography, improved spacing
-- **Reports pages**: full styling overhaul including filter labels, badges, table headers
-- **Responsive design**: mobile-first breakpoints added to all pages
-
-### Next Recommended Action
-Workstream A: continue the theme rollout past Login/Dashboard to Sidebar, Header, Tables, Forms (§16). Workstream B: scaffold the Django project structure per TDD_Blueprint.md §15 (§17, TASK-B01).
-
-### Key Constraints (never forget)
-- **2026-07-01 repo cleanup**: the legacy PHP backend (`index.php`, `body.php`, `logout.php`, `inc/`, `config/`, `folders/`, `vendors/`, `db_setup/`, `assets/`, `uploads/`, `generate_logsheet.py`) was moved into `legacy/` to keep the repo root focused on the React frontend + docs. **The PHP app still runs from there** — this was a move, not a deletion, since Django doesn't exist yet. If PHP stops responding at `http://localhost`, repoint the Apache/XAMPP docroot (or vhost/alias) to `legacy/` — that's outside this repo and wasn't changed by this cleanup.
-- Workstream A (UI): still talks to the existing PHP `crud.php` endpoints — this is a visual/UX-only workstream, no new backend calls.
-- Workstream B (Django): PHP backend is being replaced module-by-module, NOT changed in place. A module's PHP `crud.php` is only removed after its Django equivalent is verified end-to-end (see §17 rules).
-- Auth today = PHP sessions (NOT JWT, NOT localStorage). Django backend may keep session auth or move to token auth — decide at Phase 4 per deployment topology (see PRD §12.3/12.4), not before.
-- POST format to existing PHP endpoints = application/x-www-form-urlencoded with withCredentials: true. Django endpoints will be JSON REST (see TDD_Blueprint.md §15.4).
-- Velzon/Bootstrap CSS already imported in main.jsx — do NOT re-import per component. New dark-theme tokens live in `DESIGN.md` / `darkmode.css` — do NOT hardcode colors in components.
-- No TypeScript — plain .jsx / .js on the frontend. Backend is Python/Django.
-- Ponytail FULL mode: YAGNI, no unnecessary abstractions — applies to both workstreams.
-- Extract unique ID dynamically from backend HTML columns in the DataTable to avoid changing PHP (still applies until a module's DataTable is repointed to its Django endpoint).
+**Audit result: 34 issues** (31 data-level from the automated scan + 3 config/architecture-level).
+Severity: 🔴 4 Critical · 🟠 12 High · 🟡 15 Medium · ⚪ 3 Low
 
 ---
 
-## Workstream Overview
+## Phase 0 — Configuration & Security (do first, everything else depends on it)
 
-> Added 2026-07-01. High-level status for the two active workstreams. Detail and task queues are in §16 (Workstream A) and §17 (Workstream B).
+| # | Sev | Issue | Evidence | Fix |
+|---|-----|-------|----------|-----|
+| 0.1 | 🔴 | **All app data lives in Mongo's default `test` database.** `MONGODB_URI` in `backend/.env` has no database path, so MongoEngine fell back to `test`. `.env.example` documents `zigma_erp_dev`. | Cluster databases: `['sample_mflix', 'test', 'admin', 'local']` — no `zigma_erp_dev` exists. | Add the db name to the URI (`...mongodb.net/zigma_erp_dev?...`), then migrate: `mongodump --db test` → `mongorestore --nsFrom 'test.*' --nsTo 'zigma_erp_dev.*'`. Verify counts, then drop `test`. |
+| 0.2 | 🟠 | **Atlas credentials are plaintext in `backend/.env`.** The URI embeds the db user and password. | `backend/.env` line 4. | Rotate the Atlas database-user password (Atlas → Database Access). Keep `.env` untracked. Never paste the URI into docs/READMEs. |
+| 0.3 | ⚪ | `must_change_password` field exists on 1 user doc but not on the `User` model — silent schema drift from the signup work. | `users` UNKNOWN-FIELDS finding. | Either add `must_change_password = BooleanField(default=False)` to `accounts/models.py`, or `$unset` it from the doc. Pick one; don't leave it ghost. |
 
-### Workstream A — UI Modernization
-
-| Item | Status | Progress | Notes |
-|------|--------|----------|-------|
-| Design system (`DESIGN.md`, tokens) | Done | 100% | Green #25a96b, glassmorphism, light/dark palettes |
-| Dark mode (`ThemeContext`, `darkmode.css`) | Done | 100% | All pages theme-aware, reduced-motion support |
-| Color palettes (`chartTheme.js`) | Done | 100% | Theme-aware chart colors for ApexCharts |
-| Login page redesign | Done | 100% | Glassmorphism, modern layout, particle background |
-| Dashboard redesign (Pit, Tray, Overall charts) | Done | 100% | EfficiencyStrip added, charts redesigned, empty-states |
-| Hamburger menu styling | Done | 100% | Smoother animation, better proportions |
-| Header / Navbar styling | Done | 100% | Backdrop blur, refined shadows, hover lift |
-| Animations (site-wide) | Done | 100% | Staggered card entrance, button press, fade-in, respects prefers-reduced-motion |
-| Dropdown styling | Done | 100% | Firefox fix (:-moz-focusring), solid borders enforced |
-| Date range picker (Dashboard) | Done | 100% | Styled pill, native input overlay |
-| Calendar component (`DateInput.jsx` + flatpickr rollout) | Done | 100% | DateInput.jsx built, all 26+ form/list pages migrated, fully integrated and tested |
-| Forms / Table full redesign pass | Done | 100% | `datatable.css`, `forms.css`, `ux.css`, `DataTable.jsx` rewritten; all pages covered |
-| Reports pages styling | Done | 100% | Filter labels, timeline (LoginHistory), badge colors, table headers — all covered via CSS |
-| Responsive improvements (redesign-specific) | Done | 100% | Mobile breakpoints in `ux.css` §19, `datatable.css`, `forms.css` |
-
-### Workstream B — Django Backend Migration
-
-| Item | Status | Progress | Dependencies |
-|------|--------|----------|---------------|
-| Django + MongoEngine scaffold (TASK-B01) | Done | 100% | `backend/` created, verified booting |
-| Auth (login endpoint, token gen, login endpoint parity with legacy) | Done | 100% | TASK-B01 done |
-| Item module (reference impl: Item, Unit CRUD) | Done | 100% | Auth working |
-| Core CRUD modules (Tray, Pit, Supplier, clone from Item pattern) | Done | 100% | Item reference complete |
-| User management (User, UserType, Permissions, Screens) | Done | 100% | Core CRUD done |
-| Process modules (Screening, Egg, Culling, Oven, Dry, Leachate, etc.) | Done | 100% | User mgmt done |
-| Reports modules (Logsheet, DC, Measurable) | Done | 100% | Process modules done. `*_Report` aggregates deferred to TASK-B10 — see B09 notes above |
-| Frontend `client.js` repointed to Django API | Done | 100% | All 21 targeted modules wired in parallel (`mode="django"`); `crud.php` removal per module still pending browser verification |
-| pytest-django test suite | Done | 100% | 83 tests passing (81 via mongomock + 2 settings/subprocess tests in TASK-B12) — see TASK-B11 |
-| Docker (Dockerfile, docker-compose.yml, production config) | Done | 100% | Backend + frontend Dockerfiles, root `docker-compose.yml`; built, ran, and curl-verified both containers live against Atlas |
-| Deployment (Vercel frontend + containerized backend to cloud) | Config done | 100% | `vercel.json` + platform-agnostic backend deploy docs written; no live deployment performed — needs the user's own accounts |
-| Production hardening (env vars, MongoDB Atlas, secrets, logging) | Not Started | 0% | Deployment live |
+- [ ] 0.1 done
+- [ ] 0.2 done
+- [ ] 0.3 done
 
 ---
 
-## 1. Project Overview
+## Phase 1 — Auth & Permissions (largest root-cause cluster)
 
-| Field | Value |
-|-------|-------|
-| **Project Name** | Zigma ERP — React SPA Migration |
-| **Repository** | c:\Users\DELL\House work\Internship\erp\erp |
-| **React Workspace** | frontend/src/ |
-| **PHP Reference** | folders/*/crud.php (read-only) |
-| **Version** | v0.1.0-alpha |
-| **Start Date** | 2026-06-25 |
-| **Current Sprint** | Sprint 1 — Foundation |
-| **Current Milestone** | Phase 1: Setup and Assets |
-| **Target Completion** | ~16 weeks from start |
-| **Overall Progress** | 100% |
+**Root cause:** soft-delete has no PROTECT semantics — parents get soft-deleted while children still point at them — and permissions are stored in **two places** (`User.screens` and `UserType.screens`) that have fully diverged.
 
----
+| # | Sev | Issue | Evidence | Fix |
+|---|-----|-------|----------|-----|
+| 1.1 | 🔴 | **The `Admin` role is soft-deleted, but `admin`, `demo`, and `testuser` still reference it.** 5 users total point at soft-deleted roles. | `user_types`: `Admin` `deleted=True`; users list shows `role_deleted=True` for admin/demo/testuser + 2 livetest users. | Un-delete the Admin role (`is_deleted=False`) **or** create a proper new role and re-point the 3 live users. Blocked by 1.2 (unique index holds the name). |
+| 1.2 | 🟠 | **Soft-delete vs unique-index conflict (design flaw).** Unique index on `type_name` means a soft-deleted `Admin` blocks recreating `Admin` — which is why a junk lowercase `admin` role (0 screens) now exists. Same landmine on `user_name`, `unit_name`, `pit_name`, `item_code`, `batch_id`, `dc_number`, `ticket_no`. | `type_name='Admin'` (deleted) + `type_name='admin'` (live, 0 screens) coexist. | Decision needed: either purge soft-deleted docs that hold unique values, or switch to partial unique indexes (`partialFilterExpression: {is_deleted: false}`) — MongoEngine can't declare those, so create via `pymongo` in an app-ready hook. |
+| 1.3 | 🟠 | **`User.screens` diverges from role screens — two sources of truth.** `admin` has 60 screens, `demo` 88, while their role `Admin` has **0** screens. Permission checks (`has_screen`) read only `User.screens`, so the role's `screens` field is dead weight that misleads. | PERMS-DIVERGE-ROLE findings. | Decide the model: role-based (copy role → user at assignment, keep in sync) or user-based (drop `UserType.screens`). Backfill `Admin` role screens from the `demo` user's 88-screen set either way. |
+| 1.4 | 🟠 | **`users.main_screens` ids don't exist in the `main_screens` collection.** `demo` has `msm_admin,msm_settings,...` but the collection only contains test junk (`MS-105225`, etc.) with UUID ids. The sidebar works only because `Sidebar.jsx` hardcodes `DEMO_MENU`. | MAIN-SCREEN-ID-MISSING finding; `main_screens` dump. | Seed the real 6 `MainScreen` docs with `unique_id` = `msm_admin`…`msm_report` (+ their `Screen` children), or drop the DB-driven menu entirely and delete the two collections. One source of truth. |
+| 1.5 | 🟡 | **Orphan + stale auth tokens.** 1 token → hard-deleted user (missing doc), 1 token → soft-deleted `warehouse_test_user`. | auth_tokens dump. | Delete both token docs. Code fix: revoke tokens on user delete (add to the user destroy path). |
+| 1.6 | 🟡 | **Test-junk identity data polluting the live db:** roles `Type-105225`, `Type-145835`, `Type-150132`, `hell mar`, `developer`, lowercase `admin` (all 0 screens); users `test-105225`, `test-145835`, `test-150132`, `admin1`, `testuser123`; `MS-*`/`Scr-*` screen rows. Cypress/live-test leftovers. | user_types/users/screens dumps. | Purge (hard-delete) all `*-LiveTest`, `Type-*`, `MS-*`, `Scr-*`, `test-*` docs. Long-term: point e2e runs at a separate database (pairs with 0.1). |
 
-## 2. Development Status Dashboard
-
-| Area | Status | Progress |
-|------|--------|----------|
-| Project Setup | Done | 100% |
-| Auth and Session | Done | 100% |
-| Core Components | Done | 100% |
-| Page Migrations | Done | 100% |
-| API Integration | Done | 100% |
-| Unit Tests | Done | 100% |
-| Integration Tests | Done | 100% |
-| E2E Tests | Done | 100% |
-| Accessibility | Done | 100% |
-| Deployment | Done | 100% |
+- [ ] 1.1 done
+- [ ] 1.2 decision + done
+- [ ] 1.3 decision + done
+- [ ] 1.4 done
+- [ ] 1.5 done
+- [ ] 1.6 done
 
 ---
 
-## 3. Milestone Tracker
+## Phase 2 — Referential Integrity
 
-| Phase | Milestone | Status | Completion Date | Notes |
-|-------|-----------|--------|-----------------|-------|
-| Phase 1 | Vite scaffold + dependencies | Done | 2026-06-25 | react 19, react-router-dom v7, axios, swal2 |
-| Phase 1 | Velzon/Bootstrap CSS imports | Done | 2026-06-25 | In main.jsx |
-| Phase 1 | Vite proxy config | Done | 2026-06-25 | /folders + /uploads to localhost |
-| Phase 1 | Base src/ directory structure | Done | 2026-06-25 | folders created |
-| Phase 1 | api/client.js — Axios instance | Done | 2026-06-25 | mapped SweetAlert2 messages |
-| Phase 1 | utils/ helpers | Done | 2026-06-25 | disname + confirmDelete ready |
-| Phase 2 | AuthContext.jsx | Done | 2026-06-25 | session-check + logout support |
-| Phase 2 | Login.jsx page | Done | 2026-06-25 | matches legacy UI |
-| Phase 2 | MainLayout.jsx + Sidebar | Done | 2026-06-25 | dynamic menu rendering via PHP endpoint |
-| Phase 2 | Header.jsx + logout | Done | 2026-06-25 | |
-| Phase 2 | ProtectedRoute.jsx | Done | 2026-06-25 | gates authenticated routes |
-| Phase 2 | routes.jsx — all 33 module routes | Done | 2026-06-25 | dynamically mapped via PlaceholderPage |
-| Phase 3 | DataTable.jsx component | Done | 2026-06-25 | reusable component supporting legacy params |
-| Phase 3 | Item Creation module | Done | 2026-06-25 | Reference implementation |
-| Phase 3 | Tray Creation module | Done | 2026-06-25 | |
-| Phase 3 | Pit Creation module | Done | 2026-06-25 | |
-| Phase 3 | Unit Creation module | Done | 2026-06-25 | |
-| Phase 3 | Supplier Creation module | Not Started | — | |
-| Phase 3 | User Management | Not Started | — | User, Type, Permission, Screen |
-| Phase 4 | All Process modules | Not Started | — | Screening, Egg, Culling, Oven, Dry, etc. |
-| Phase 5 | Dashboard + Reports | Not Started | — | |
-| Phase 6 | Testing + QA | Not Started | — | Vitest, MSW, Cypress, a11y |
+**Root cause:** delete endpoints soft-delete parents without checking for children (no `PROTECT`), and one user was hard-deleted bypassing soft-delete entirely.
+
+| # | Sev | Issue | Evidence (sample `unique_id`s) | Fix |
+|---|-----|-------|-------------------------------|-----|
+| 2.1 | 🔴 | 1 `egg_process` doc's `staff` points at a **hard-deleted** user (doc gone from `users`). Same missing user broke an auth token (1.5) and 1 `frp_status_update.staff`. | `f3bd2ceb…` (entry EPC-00001, itself soft-deleted), `304f7a50…` | Re-point `staff` to the `demo` user (or a placeholder "deleted user" account). Code fix: forbid hard deletes; users are soft-delete only. |
+| 2.2 | 🟡 | **28 `pit_status` docs → soft-deleted pits.** Reports that filter pits by `is_deleted=False` silently drop these rows from aggregations. | `0ddc7f10…`, `1f147923…`, +26 | Decision: restore the pits, or accept and make reports resolve refs without the `is_deleted` filter. Code fix (root): block deleting a parent with live children — see 4.2. |
+| 2.3 | 🟡 | 3 `items` → soft-deleted units; 3 `material_received` → soft-deleted supplier+item+unit; 1 `status_update`, 1 `pit_status`, 1 `frp_tray_process` → soft-deleted batches; 1 `egg_process` → soft-deleted supplier+batch; 1 `screens` → soft-deleted main_screen. | samples in audit output | Same guard as 2.2. For existing rows: restore parents deleted by mistake; otherwise leave (history) once reports handle deleted parents gracefully. |
+
+- [ ] 2.1 done
+- [ ] 2.2 decision + done
+- [ ] 2.3 done
 
 ---
 
-## 4. Module Tracker
+## Phase 3 — Business-Rule Violations (demo seeders bypassed the serializers)
 
-| Module | Status | Progress | Priority | Complexity | Dependencies | Components | Tests | Notes |
-|--------|--------|----------|----------|------------|--------------|------------|-------|-------|
-| Authentication | Done | 100% | Critical | Medium | None | Login.jsx, AuthContext, ProtectedRoute | No | PHP session, no JWT |
-| Dashboard | Done | 100% | High | Medium | Auth | Dashboard.jsx, Charts | No | Hidden for worker role 6213273aa04b228161 |
-| Item Creation | Done | 100% | High | Low | Auth, DataTable, Units | ItemCreationList, ItemCreationForm | No | Reference impl; IT- prefix auto-code |
-| Tray Creation | Done | 100% | High | Low | Auth, DataTable | TrayCreationList, TrayCreationForm | No | |
-| Pit Creation | Done | 100% | Medium | Low | Auth, DataTable | PitCreationList, PitCreationForm | No | |
-| Unit Creation | Done | 100% | Medium | Low | Auth, DataTable | UnitCreationList | No | FK dep for Item Creation |
-| Supplier Creation | Done | 100% | Medium | Low | Auth, DataTable | SupplierCreationList, SupplierCreationForm | No | |
-| User Management | Done | 100% | High | High | Auth | UserList, UserTypeList, UserPermissionList, UserScreenList | No | 4 sub-modules |
-| Screening Process | Done | 100% | Medium | High | Items, Trays | ScreeningProcessList, ScreeningProcessForm | No | |
-| Egg Process | Done | 100% | Medium | High | Screening | EggProcessList, EggProcessForm | No | |
-| Culling Process | Done | 100% | Medium | High | Egg | CullingProcessList | No | |
-| Oven Process | Done | 100% | Medium | High | Items, Trays | OvenProcessList | No | |
-| Dry Process | Done | 100% | Medium | High | Oven | DryProcessList | No | |
-| Leachate | Done | 100% | Medium | Medium | Pits | LeachateList | No | |
-| Material Received | Done | 100% | Medium | Medium | Supplier | MaterialReceivedList | No | |
-| Status Update | Done | 100% | Medium | Medium | Pits, Trays | StatusUpdateForm | No | Form-only, no list |
-| Pit Status | Done | 100% | Medium | Medium | Pits | PitStatusList | No | |
-| FRP Tray Process | Done | 100% | Low | Medium | Trays | FrpTrayProcessList | No | |
-| FRP Status Update | Done | 100% | Low | Medium | FRP Tray | FrpStatusUpdateList | No | |
-| Logsheet | Done | 100% | Medium | Medium | Process modules | LogsheetList | No | |
-| DC | Done | 100% | Low | Medium | Supplier | DcList | No | |
-| Measurable | Done | 100% | Low | Low | None | MeasurableList | No | |
-| Login History | Done | 100% | Low | Low | Auth | LoginHistoryList | No | Read-only report |
-| Measurable Report | Done | 100% | Low | Low | Measurable | MeasurableReportList | No | |
-| Egg Process Report | Done | 100% | Low | Low | Egg | EggProcessReportList | No | |
-| Pit Status Report | Done | 100% | Low | Low | Pit Status | PitStatusReportList | No | |
-| Rejects Report | Done | 100% | Low | Low | Culling | RejectsReportList | No | |
-| Rejects Image Upload | Done | 100% | Low | Medium | Rejects | RejectsImageUploadList | No | File upload handling |
-| Main Screen Admin | Done | 100% | Low | Low | Auth | MainScreenList | No | Admin-only |
+**Root cause:** `create_demo_data.py` / `create_more_demo_data.py` call `.save()` directly, skipping every serializer rule. The data violates contracts the API enforces for real users.
+
+| # | Sev | Issue | Evidence | Fix |
+|---|-----|-------|----------|-----|
+| 3.1 | 🟠 | **11 `egg_process` docs: `len(trays) != tray_utilized`** (seeder set `tray_utilized=randint(1,5)` but always 1 tray). | `df9421cc…` (1 vs 4), `f74a3cd7…` (1 vs 2)… | Set `tray_utilized = len(trays)` on the 11 docs. |
+| 3.2 | 🟠 | **15 `pit_status` org_status=2 docs missing `batch` and `trays`** — serializer requires both (plus `larvae_qty_in`, which is present) for "Baby Larvae Added". | `cad56eaa…` +14 | Backfill `batch` (BAT-DEMO-001) + a tray, or delete these seeded rows and reseed through the API. |
+| 3.3 | 🟠 | **7 `pit_status` org_status=5 (Harvest) docs missing `qty_manure_3` and `harvest_comp`** — seeder generated '5' rows with '6'-shaped fields. | `7f52c8d9…` +6 | Flip these rows to org_status='6' (they match the Vibro Screen shape exactly) — truer than backfilling zeros. |
+| 3.4 | 🟠 | **Batch `BAT-DEMO-001` is consumed by 16 egg processes but `batch_status='pending'`** (serializer flips to `used` on create; seeder didn't). Also exposes a code gap: nothing stops N egg processes consuming one batch. | `4611ab7f…`; batch_status counts `{pending: 11, used: 3}` | Set the batch to `used`. Code fix: `EggProcessSerializer.validate_batch` should reject a batch whose `batch_status != 'pending'`. |
+| 3.5 | 🟠 | **2 items with `ITM-DEMO-001/002` codes** violating the `IT-###` contract. `_next_item_code` already tolerates them, but they break code-pattern assumptions everywhere else (and any future ETL). | `c3453688…`, `e69e775d…` | Renumber to the next free `IT-###` codes (unique index verifies), or delete + reseed via API. |
+| 3.6 | 🟡 | **16 `egg_process.entry_no` = `EGG-DEMO-*`** vs auto-gen contract `EPC-#####`; **47 `pit_status.form_batch_id` = `FORM-DEMO-*`** vs `PIT-*-#####`. | CODE-PATTERN findings | Renumber during cleanup (same pass as 3.5), or explicitly document demo prefixes as allowed. Don't leave it ambiguous. |
+| 3.7 | 🟡 | **All 3 `dc` docs have line-item `amount=0.0` while `qty*rate=5000`.** `grand_total` (5900) is computed correctly server-side, but `DCItem.amount` is stored as whatever the client sent (0). | dc dump: `amounts=[0.0]`, `subtotal=5000` | Backfill `amount = qty*rate` on the 3 docs. Code fix: compute `amount` server-side in `DCSerializer` like `grand_total` — never trust the client copy. |
+
+- [ ] 3.1 done
+- [ ] 3.2 done
+- [ ] 3.3 done
+- [ ] 3.4 done + serializer guard
+- [ ] 3.5 done
+- [ ] 3.6 done
+- [ ] 3.7 done + serializer fix
 
 ---
 
-## 5. Current Task
+## Phase 4 — Model/Code Hardening (prevent recurrence)
 
-`
-TASK-016
-Objective:     Migrate User Management (4 sub-modules) to React
-Files:         frontend/src/pages/User/UserList.jsx [NEW]
-               frontend/src/pages/User/UserTypeList.jsx [NEW]
-               frontend/src/pages/User/UserPermissionList.jsx [NEW]
-               frontend/src/pages/User/UserScreenList.jsx [NEW]
-Expected:      User, User Type, User Permission, User Screen modules listed using DataTable.
-Estimated:     2 hours
-`
+Not data corruption yet, but each is a hole the above issues crawled through.
 
----
+| # | Sev | Issue | Fix |
+|---|-----|-------|-----|
+| 4.1 | 🟡 | `Tray.bin_name` treated as an identifier everywhere (seeders look up by it) but has **no unique index**. | Add `unique=True` (currently no duplicates — safe to add). |
+| 4.2 | 🟡 | No child-guard on destroy: Units, Pits, Suppliers, Items, Batches, UserTypes, MainScreens can be soft-deleted while referenced (caused all of Phase 2). | Add a pre-destroy reference check once, in the shared `MongoModelViewSet.destroy` — one guard in the shared path, not per-view. |
+| 4.3 | 🟡 | Time stored as strings with **no format validation**: `LoginHistory.entry_time` ('HH:MM:SS'), `OvenProcess.starting_time/closing_time` ('HH:MM') — a malformed value breaks `running_hours` math and the worked-hours report. | Add regex validation in serializers (`^\d{2}:\d{2}(:\d{2})?$`). Keep strings (matches legacy) — validation is the fix, not a type change. |
+| 4.4 | ⚪ | `MainScreen`/`Screen` lack `created_at` — every other model has it. | Add for consistency. |
+| 4.5 | ⚪ | Demo seeders bypass serializers, are non-idempotent (`create_more_demo_data.py` inserts 15 rows per run; random ids can collide), and caused all of Phase 3. | Rewrite seeders to go through the API/serializers and make them idempotent — or delete `create_more_demo_data.py`; it has served its purpose. |
 
-## 6. Next Task Queue
-
-| Task | Title | Priority | Depends On | Complexity |
-|------|-------|----------|------------|------------|
-| TASK-003 | Base src/ structure + api/client.js | Done | TASK-002 done | Low |
-| TASK-004 | Login.jsx page + auth POST | Done | TASK-003 | Low |
-| TASK-005 | AuthContext.jsx full implementation | Done | TASK-004 | Done |
-| TASK-006 | ProtectedRoute.jsx | Done | TASK-005 | Low |
-| TASK-007 | MainLayout.jsx + Sidebar.jsx | Done | TASK-005 | Done |
-| TASK-008 | Header.jsx + logout | Done | TASK-007 | Low |
-| TASK-009 | routes.jsx — all 33 routes wired | Done | TASK-007 | Low |
-| TASK-010 | DataTable.jsx reusable component | Done | TASK-003 | Done |
-| TASK-011 | Unit Creation module | Done | TASK-010 | Low |
-| TASK-012 | Item Creation module (reference impl) | Done | TASK-011 | Low |
-| TASK-013 | Tray Creation module | Done | TASK-012 | Low |
-| TASK-014 | Pit Creation module | Done | TASK-010 | Low |
-| TASK-015 | Supplier Creation module | Done | TASK-010 | Low |
-| TASK-016 | User Management (4 sub-modules) | High | TASK-010 | High |
-| TASK-017 | Screening Process | Done | TASK-012, TASK-013 | High |
-| TASK-018 | Egg Process | Done | TASK-017 | High |
-| TASK-019 | Culling Process | Done | TASK-018 | High |
-| TASK-020 | Oven Process | Done | TASK-012, TASK-013 | High |
-| TASK-021 | Dry Process | Done | TASK-020 | High |
-| TASK-022 | Leachate | Done | TASK-014 | Done |
-| TASK-023 | Material Received | Done | TASK-015 | Done |
-| TASK-024 | Status Update | Done | TASK-014, TASK-013 | Done |
-| TASK-025 | Pit Status | Done | TASK-014 | Done |
-| TASK-026 | FRP Tray Process | Done | TASK-013 | Done |
-| TASK-027 | FRP Status Update | Done | TASK-026 | Done |
-| TASK-028 | Logsheet | Done | TASK-017 | Done |
-| TASK-029 | DC | Done | TASK-015 | Done |
-| TASK-030 | Measurable | Done | TASK-010 | Low |
-| TASK-030-BONUS | Measurable Report | Done | TASK-030 | Low |
-| TASK-031 | Dashboard + Charts | Done | TASK-005 | Done |
-| TASK-032 | Login History | Done | TASK-005 | Low |
-| TASK-033 | All Report modules (5x) | Done | TASK-019..TASK-025 | Low |
-| TASK-034 | Rejects Image Upload | Done | TASK-019 | Done |
-| TASK-035 | Main Screen Admin | Done | TASK-005 | Low |
-| TASK-036 | Vitest setup + unit tests | Done | TASK-012 | Medium |
-| TASK-037 | MSW setup + integration tests | Done | TASK-036 | Medium |
-| TASK-038 | Cypress E2E setup + test suites | Done | TASK-035 | High |
-| TASK-039 | Accessibility audit + fixes | Done | TASK-038 | Done |
-| TASK-040 | Responsive QA + polish | Done | TASK-039 | Done |
+- [ ] 4.1 done
+- [ ] 4.2 done
+- [ ] 4.3 done
+- [ ] 4.4 done
+- [ ] 4.5 done
 
 ---
 
-## 7. Component Progress
+## 5. Checked and found CLEAN ✅
 
-| Component | File | Status |
-|-----------|------|--------|
-| api/client.js | src/api/client.js | Completed |
-| AuthContext | src/context/AuthContext.jsx | Completed |
-| useAuth hook | src/hooks/useAuth.js | Completed |
-| usePermission hook | src/hooks/usePermission.js | Completed |
-| disname util | src/utils/disname.js | Completed |
-| confirmDelete util | src/utils/confirmDelete.js | Completed |
-| permissionChecker util | src/utils/permissionChecker.js | Not Started |
-| ProtectedRoute | src/components/ProtectedRoute.jsx | Completed |
-| MainLayout | src/components/Layout/MainLayout.jsx | Completed |
-| Sidebar | src/components/Layout/Sidebar.jsx | Completed |
-| Header | src/components/Layout/Header.jsx | Completed |
-| DataTable | src/components/DataTable.jsx | Completed |
-| Modal | src/components/Modal.jsx | Not Started |
-| StatusBadge | src/components/StatusBadge.jsx | Not Started |
-| Login page | src/pages/Login.jsx | Completed |
-| Dashboard page | src/pages/Dashboard.jsx | Not Started |
-| routes.jsx | src/routes.jsx | Completed |
-| NotFound page | src/pages/NotFound.jsx | Not Started |
+- **Unique constraints:** zero duplicates in any unique field; all 26 declared unique indexes exist in Atlas and are enforced (incl. compound `culling_process(entry_date,shift,cylinder)` and `oven_process(entry_date,starting_time)`).
+- **Choice fields:** all values valid (`tray_type`, `org_status`, `batch_status`, `shift_type`, `log_type`, …).
+- **Computed fields:** `pits.volume`, `culling.fuel_consumption`, `dc.grand_total` all mathematically consistent (only `DCItem.amount` fails — 3.7).
+- **Required scalar fields:** none missing/null in any collection.
+- **Date types:** all date fields stored as proper BSON datetimes — no string dates. No numeric type drift.
+- **`reject`/`reject_image`:** empty — no string-ref orphans possible yet.
 
----
+## 6. Collection inventory (live `test` db, 2026-07-14)
 
-## 8. Page Migration Status
+users 10 · user_types 9 · auth_tokens 3 · user_login_details 50 · units 7 · items 8 · trays 8 · pits 6 · suppliers 7 · material_received 14 · egg_process 20 · status_update 4 · pit_status 58 · frp_tray_process 5 · frp_status_update 5 · culling_process 4 · oven_process 3 · dry_process 4 · leachate 4 · measurable 4 · logsheet 3 · dc 3 · reject 0 · main_screens 4 · screens 4
 
-| Legacy PHP File | React Component | Status | API Connected | UI Verified | Tests Done |
-|-----------------|-----------------|--------|---------------|-------------|------------|
-| folders/login/login.php | src/pages/Login.jsx | Completed | Yes | Yes | Yes |
-| folders/dashboard/form.php | src/pages/Dashboard.jsx | Completed | Yes | Yes | Yes |
-| folders/item_creation/list.php | src/pages/ItemCreation/ItemCreationList.jsx | Completed | Yes | Yes | Yes |
-| folders/item_creation/form.php | src/pages/ItemCreation/ItemCreationForm.jsx | Completed | Yes | Yes | Yes |
-| folders/tray_creation/list.php | src/pages/TrayCreation/TrayCreationList.jsx | Completed | Yes | Yes | Yes |
-| folders/tray_creation/form.php | src/pages/TrayCreation/TrayCreationForm.jsx | Completed | Yes | Yes | Yes |
-| folders/unit_creation/list.php | src/pages/UnitCreation/UnitCreationList.jsx | Completed | Yes | Yes | Yes |
-| folders/unit_creation/form.php | src/pages/UnitCreation/UnitCreationForm.jsx | Completed | Yes | Yes | Yes |
-| folders/supplier_creation/list.php | src/pages/SupplierCreation/SupplierCreationList.jsx | Completed | Yes | Yes | Yes |
-| folders/supplier_creation/form.php | src/pages/SupplierCreation/SupplierCreationForm.jsx | Completed | Yes | Yes | Yes |
-| folders/pit_creation/list.php | src/pages/PitCreation/PitCreationList.jsx | Completed | Yes | Yes | Yes |
-| folders/pit_creation/form.php | src/pages/PitCreation/PitCreationForm.jsx | Completed | Yes | Yes | Yes |
-| folders/user/list.php | src/pages/User/UserList.jsx | Completed | Yes | Yes | Yes |
-| folders/user_type/list.php | src/pages/User/UserTypeList.jsx | Completed | Yes | Yes | Yes |
-| folders/user_permission/list.php | src/pages/User/UserPermissionList.jsx | Completed | Yes | Yes | Yes |
-| folders/user_screen/list.php | src/pages/User/UserScreenList.jsx | Completed | Yes | Yes | Yes |
-| folders/screening_process/list.php | src/pages/ScreeningProcess/ScreeningProcessList.jsx | Completed | Yes | Yes | Yes |
-| folders/egg_process/list.php | src/pages/EggProcess/EggProcessList.jsx | Completed | Yes | Yes | Yes |
-| folders/culling_process/list.php | src/pages/CullingProcess/CullingProcessList.jsx | Completed | Yes | Yes | Yes |
-| folders/oven_process/list.php | src/pages/OvenProcess/OvenProcessList.jsx | Completed | Yes | Yes | Yes |
-| folders/dry_process/list.php | src/pages/DryProcess/DryProcessList.jsx | Completed | Yes | Yes | Yes |
-| folders/leachate/list.php | src/pages/Leachate/LeachateList.jsx | Completed | Yes | Yes | Yes |
-| folders/material_received/list.php | src/pages/MaterialReceived/MaterialReceivedList.jsx | Completed | Yes | Yes | Yes |
-| folders/status_update/form.php | src/pages/StatusUpdate/StatusUpdateForm.jsx | Completed | Yes | Yes | Yes |
-| folders/pit_status/list.php | src/pages/PitStatus/PitStatusList.jsx | Completed | Yes | Yes | Yes |
-| folders/frp_tray_process/list.php | src/pages/FrpTrayProcess/FrpTrayProcessList.jsx | Completed | Yes | Yes | Yes |
-| folders/frp_status_update/list.php | src/pages/FrpStatusUpdate/FrpStatusUpdateList.jsx | Completed | Yes | Yes | Yes |
-| folders/logsheet/list.php | src/pages/Logsheet/LogsheetList.jsx | Completed | Yes | Yes | Yes |
-| folders/login_history/list.php | src/pages/LoginHistory/LoginHistoryList.jsx | Completed | Yes | Yes | Yes |
-| folders/dc/list.php | src/pages/Dc/DcList.jsx | Completed | Yes | Yes | Yes |
-| folders/measurable/list.php | src/pages/Measurable/MeasurableList.jsx | Completed | Yes | Yes | Yes |
-| folders/measurable_report/list.php | src/pages/MeasurableReport/MeasurableReportList.jsx | Completed | Yes | Yes | Yes |
-| folders/egg_process_report/list.php | src/pages/EggProcessReport/EggProcessReportList.jsx | Completed | Yes | Yes | Yes |
-| folders/pit_status_report/list.php | src/pages/PitStatusReport/PitStatusReportList.jsx | Completed | Yes | Yes | Yes |
-| folders/rejects_report/list.php | src/pages/RejectsReport/RejectsReportList.jsx | Completed | Yes | Yes | Yes |
-| folders/rejects_image_upload/list.php | src/pages/RejectsImageUpload/RejectsImageUploadList.jsx | Completed | Yes | Yes | Yes |
-| folders/main_screen/list.php | src/pages/MainScreen/MainScreenList.jsx | Completed | Yes | Yes | Yes |
+## 7. Re-verification
 
----
+The audit is a standalone read-only script (checks: unique dups, orphan/soft-deleted refs, missing required fields, invalid choices, computed-field math, serializer contracts, type drift, schema drift, index drift). Re-run it after each phase.
 
-## 9. API Integration Status
-
-| Endpoint | Mock Ready | Connected | Response Tested | Verified in UI |
-|----------|-----------|-----------|-----------------|----------------|
-| POST folders/login/crud.php (login) | No | No | No | No |
-| POST folders/login/crud.php (get_profile) | No | No | No | No |
-| POST folders/menu/crud.php (get_menu) | No | No | No | No |
-| POST folders/item_creation/crud.php (datatable) | No | No | No | No |
-| POST folders/item_creation/crud.php (createupdate) | No | No | No | No |
-| POST folders/item_creation/crud.php (delete) | No | No | No | No |
-| POST folders/tray_creation/crud.php (datatable) | No | No | No | No |
-| POST folders/tray_creation/crud.php (createupdate) | No | No | No | No |
-| POST folders/unit_creation/crud.php (datatable) | No | No | No | No |
-| POST folders/supplier_creation/crud.php (datatable) | No | Yes | Yes | Yes |
-| POST folders/supplier_creation/crud.php (createupdate) | No | Yes | Yes | Yes |
-| POST folders/supplier_creation/crud.php (delete) | No | Yes | Yes | Yes |
-| POST folders/pit_creation/crud.php (datatable) | No | No | No | No |
-| POST folders/user/crud.php (datatable) | No | No | No | No |
-| POST folders/screening_process/crud.php | No | Yes | Yes | Yes |
-| POST folders/egg_process/crud.php | No | Yes | Yes | Yes |
-| POST folders/culling_process/crud.php | No | No | No | No |
-| POST folders/oven_process/crud.php | No | No | No | No |
-| POST folders/dry_process/crud.php | No | No | No | No |
-| POST folders/leachate/crud.php | No | No | No | No |
-| POST folders/status_update/crud.php | No | No | No | No |
-| POST folders/measurable/crud.php | No | No | No | No |
-
----
-
-## 10. Testing Status
-
-| Test Type | Status | Coverage | Notes | Blueprint Reference |
-|-----------|--------|----------|-------|---------------------|
-| Unit Tests | Completed | 100% | Target: 80%+ | TDD_Blueprint.md section 3 |
-| Integration Tests | Completed | 100% | Target: 90%+ critical | TDD_Blueprint.md section 4 |
-| Component Tests | Done | 100% | Per-component | TDD_Blueprint.md section 5 |
-| E2E Tests | Completed | 100% | All user journeys | TDD_Blueprint.md section 6 |
-| Accessibility | Completed | 100% | 0 blocking violations | TDD_Blueprint.md section 7 |
-| Regression | Done | 100% | — | TDD_Blueprint.md section 8 |
-| Performance (Lighthouse) | Not Started | — | Target: 85+ score | PRD section 1.2 |
-
----
-
-## 11. Known Issues
-
-| ID | Issue | Severity | Module | Status | Workaround |
-|----|-------|----------|--------|--------|------------|
-| KI-001 | crud.php datatable returns pre-rendered HTML in data[] arrays (status badges, action buttons) | High | All list views | Open | Request raw data; render buttons client-side in DataTable component |
-| KI-002 | Login endpoint does NOT return user profile data inline | Medium | Auth | Open | Add action=get_profile to login/crud.php OR call as second request post-login |
-| KI-003 | Sidebar menu not exposed as a standalone API endpoint | Medium | Layout | Open | Create folders/menu/crud.php with action=get_menu |
-| KI-004 | Default password must redirect to /password/update (login.js line 114) | Medium | Auth/Login | Open | Handle in Login.jsx after login response |
-
----
-
-## 12. Blockers
-
-| ID | Blocker | Blocks | Action Required |
-|----|---------|--------|-----------------|
-| — | No blockers currently | — | — |
-
----
-
-## 13. Completed Commits
-
-| Hash | Message | Date | Modules |
-|------|---------|------|---------|
-| 935a8dd | feat(setup): initialize base folder structure, client, utils, and auth context | 2026-06-25 | Setup |
-| (pending) | Add Velzon/Bootstrap CSS imports to main.jsx | 2026-06-25 | Setup |
-| (pending) | Configure Vite proxy for /folders and /uploads | 2026-06-25 | Setup |
-
----
-
-## 14. Daily Development Log
-
-### 2026-06-26
-| Field | Detail |
-|-------|--------|
-| Tasks Completed | TASK-038: Cypress E2E Setup, TASK-039: Accessibility Audit & Fixes, TASK-040: Responsive QA + Polish |
-| Files Changed | DataTable.jsx, Header.jsx, Sidebar.jsx, Login.jsx, useResponsive.js, responsive.css, main.jsx, RESPONSIVE_CHECKLIST.md |
-| Problems Encountered | Cypress tests require PHP backend to be online (502 Bad Gateway observed when backend is offline). |
-| Next Action | Handover / Final user verification. |
-
-
-### 2026-06-25
-| Field | Detail |
-|-------|--------|
-| Tasks Completed | Git cleanup, Vite scaffold, PRD, TDD Blueprint, Vite proxy, Auth (Login, Session, ProtectedRoute, MainLayout, Sidebar, Header), all 33 routes wired dynamically, reusable DataTable component created. |
-| Files Changed | vite.config.js, main.jsx, routes.jsx, PlaceholderPage.jsx, DataTable.jsx, AuthContext.jsx, Login.jsx, MainLayout.jsx, Sidebar.jsx, Header.jsx, client.js |
-| Problems Encountered | None |
-| Next Action | Implement Unit Creation module page (TASK-011) |
-
-### 2026-06-25 (Auth Fixes)
-| Field | Detail |
-|-------|--------|
-| Tasks Completed | Auth page visual/functional parity review. Fixed Login.jsx footer to match PHP (centered, "Crafted with... by Zigma"), removed mock fallback, removed double-alert bug on login failure, matched PHP error messages exactly (with emoji images), removed `text-start` from form wrapper. Fixed client.js toastMap to match PHP's `log_sweetalert` (added `approve`, `convert`; removed login-specific `incorrect`/`empty`). Fixed confirmDelete.js syntax error. |
-| Files Changed | Login.jsx, client.js, confirmDelete.js |
-
-### 2026-06-25 (Supplier Creation)
-| Field | Detail |
-|-------|--------|
-| Tasks Completed | TASK-015: Supplier Creation module — list and form pages implemented using DataTable and form patterns matching PHP supplier_creation form fields (supplier_name, label, address, contact_no, email, gst_no, active_status). Includes client-side validation (label uppercase/alpha-only, contact number numeric, GST auto-uppercase). |
-| Files Changed | SupplierCreationList.jsx (new), SupplierCreationForm.jsx (new), routes.jsx |
-
----
-
-## 15. Weekly Summary
-
-### Week 1 (2026-06-25)
-
-| Field | Value |
-|-------|-------|
-| Completed Modules | 1 (Auth, Dynamic Menu, Routing infrastructure) |
-| New Components | 7 (MainLayout, Header, Sidebar, ProtectedRoute, DataTable, Login, PlaceholderPage) |
-| Bugs Fixed | 0 |
-| Test Coverage | 0% |
-| Overall Progress | 18% |
-| Key Accomplishments | Project setup, dynamic menu & authentication flow, all 33 routes wired, reusable DataTable component completed. |
-
----
-
-## 16. Workstream A — UI Modernization (Detail)
-
-> Tracks PRD_React_Migration.md §12.2 and TDD_Blueprint.md §14. Runs in parallel with Workstream B; both consume the React codebase from Phase 1 (§1–15 above).
-
-### 16.1 Task Queue
-
-| Task | Title | Status | Depends On | Notes |
-|------|-------|--------|------------|-------|
-| TASK-A01 | Design tokens + `DESIGN.md` | Done | None | Green dark glassmorphism palette defined |
-| TASK-A02 | `ThemeContext.jsx` / `useTheme.js` scaffold | Done | TASK-A01 | Toggle + persistence |
-| TASK-A03 | `darkmode.css` variable overrides | In Progress | TASK-A02 | |
-| TASK-A04 | `chartTheme.js` shared chart palette | Done | TASK-A01 | |
-| TASK-A05 | Login page redesign (glassmorphism) | Done | TASK-A01 | Landed per current `git status` diff |
-| TASK-A06 | Dashboard charts theme-aware (`OverallStatusChart`, `PitStatusChart`) | In Progress | TASK-A04 | |
-| TASK-A07 | Header/Navbar redesign + theme toggle control | In Progress | TASK-A02 | |
-| TASK-A08 | Sidebar redesign | Not Started | TASK-A02 | |
-| TASK-A09 | Forms redesign (`FormInput`, `FormSelect`) | Not Started | TASK-A01 | |
-| TASK-A10 | Tables redesign (`DataTable.jsx`) | Not Started | TASK-A01 | |
-| TASK-A11 | Reports pages redesign | Not Started | TASK-A10 | |
-| TASK-A12 | Responsive pass on redesigned pages | Not Started | TASK-A08–A11 | |
-| TASK-A13 | Accessibility re-audit (dark theme contrast) | Not Started | TASK-A12 | Per TDD_Blueprint.md §14.6 |
-
-### 16.2 Module Coverage
-
-| Module Group | Redesigned | Notes |
-|---------------|-----------|-------|
-| Auth (Login) | Yes | |
-| Dashboard | Partial | Charts done, layout cards pending |
-| Layout (Sidebar/Header/Footer) | Partial | Header in progress |
-| Core CRUD (Item/Tray/Pit/Unit/Supplier) | No | |
-| User Management | No | |
-| Process modules | No | |
-| Reports | No | |
-
----
-
-## 17. Workstream B — Django Backend Migration (Detail)
-
-> Tracks PRD_React_Migration.md §12.3 and TDD_Blueprint.md §15. Nothing in this workstream has started; PHP backend is untouched and still serving Workstream A.
-
-### 17.1 Task Queue
-
-| Task | Title | Status | Depends On | Notes |
-|------|-------|--------|------------|-------|
-| TASK-B01 | Django + MongoEngine scaffold, MongoDB Atlas cluster (`backend/`, apps, settings) | **Done** | None | `backend/` scaffolded: 5 apps (accounts, inventory, process, reports, core), `config/settings.py` wired to MongoEngine via `.env`, `requirements.txt`, `.gitignore`. Verified `manage.py check` and `runserver` boot cleanly, `/api/health` returns 200. Real MongoDB Atlas cluster connected 2026-07-03 (`backend/.env`'s `MONGODB_URI` now points at a live `mongodb+srv://` cluster, not the local placeholder). |
-| TASK-B02 | MongoEngine `Document` models (per-entity, `is_deleted`/`unique_id` handling) | **Done** | TASK-B01 (done) | `accounts/models.py`: `UserType`, `User` (unique_id, is_deleted, is_active). 3 pytest tests vs mongomock passing (`accounts/tests.py`). Other entities' models arrive with their own tasks (Item/Unit in B06, process/report entities in B08/B09). |
-| TASK-B03 | Auth (token-based) + login endpoint returning full profile in one response | **Done** | TASK-B02 (done) | `accounts/models.AuthToken` (MongoEngine, not DRF's relational `authtoken`), `accounts/authentication.MongoTokenAuthentication`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`. Also removed `django.contrib.auth`/`contenttypes` from `INSTALLED_APPS` (dead weight, no relational DB) and set `REST_FRAMEWORK.UNAUTHENTICATED_USER = None` to stop DRF importing Django's `AnonymousUser` (which needs contenttypes). 9 pytest tests passing (mongomock + DRF `APIClient`). |
-| TASK-B04 | Permission enforcement (server-side `screens` check) | **Done** | TASK-B03 (done) | `accounts/permissions.HasScreenPermission` + `User.has_screen()`. Infrastructure only — first real consumer is TASK-B06's Item/Unit ViewSets. |
-| TASK-B05 | Menu endpoint (`main_screens`/`screens` tree, returned from login or a dedicated endpoint) | **Done** | TASK-B02 (done) | `core.models.MainScreen`/`Screen`, `GET /api/menu` (dedicated endpoint, not folded into login). Filters to the user's permitted `main_screens`/`screens` — legacy's equivalent was unfiltered. 5 tests, all passing. |
-| TASK-B06 | Core CRUD APIs (Item, Tray, Pit, Unit, Supplier) | **Done** | TASK-B04 (done) | All 5 in `inventory` app on `core.mongo_viewset.MongoModelViewSet`. Routes: `/api/units`, `/api/items`, `/api/trays`, `/api/pits`, `/api/suppliers`. 15 tests for Tray/Pit/Supplier + 9 for Item/Unit, all passing. |
-| TASK-B07 | User management APIs (User, Type, Permission, Screen) | **Done** | TASK-B06 (done) | "Permission" = per-User `screens`/`main_screens` (decision confirmed with user, deviates from legacy's per-role model — see AI Continuity notes). Routes: `/api/user-types`, `/api/users`, `/api/main-screens`, `/api/screens`. 10 tests, all passing. |
-| TASK-B08 | Process module APIs (Screening, Egg, Culling, Oven, Dry, Leachate, Material Received, Status Update, Pit Status, FRP*) | **Done** | TASK-B06 (done) | All 10 in `process` app on `MongoModelViewSet`. Screening folds into a unified `PitStatus` model (`org_status='6'`) rather than a separate collection — legacy backs both with the same table. Routes: `/api/material-received`, `/api/culling-process`, `/api/oven-process`, `/api/dry-process`, `/api/leachate`, `/api/egg-process`, `/api/status-update`, `/api/pit-status`, `/api/frp-tray-process`, `/api/frp-status-update`. 20 tests, all passing. Deferred: deep cross-module cascades (Pit Status ↔ Frp Tray Process batch_status sync), file upload fields — see AI Continuity notes. |
-| TASK-B09 | Reports APIs (Logsheet, DC, Measurable) | **Done** | TASK-B08 | All 3 in `reports` app on `MongoModelViewSet`, same pattern as B06/B08. `DC` corrected mid-task from a guessed "Daily Concentration" shape to the real Delivery Challan shape (line items, GST, tax rate) after checking `DCForm.jsx`. Routes: `/api/measurable`, `/api/logsheet`, `/api/dc`. 6 tests, all passing. **`*_Report` aggregate endpoints (MeasurableReport, EggProcessReport, PitStatusReport, RejectsReport) deferred** — their frontend pages call legacy PHP directly, not a Django contract, so building them now would be speculative; revisit per-report as each is repointed in TASK-B10. |
-| TASK-B10 | Frontend `client.js` repointed per module (module-by-module cutover) | **Done** | Each module's API task | Built the shared plumbing (djangoClient.js, DataTable.jsx `mode="django"`, token auth alongside PHP session auth) and repointed **all 21 modules**: Core CRUD (5) + User Management (4) + Main Screen Admin (1) + Process (11: MaterialReceived, CullingProcess, OvenProcess, DryProcess, Leachate, StatusUpdate, EggProcess, PitStatus, ScreeningProcess, FrpTrayProcess, FrpStatusUpdate). Old `crud.php` **not yet removed** for any module — needs real browser click-through first, which needs a connected Chrome extension (not available in this environment), so "Done" here means wired-in-parallel, not cut-over (see §17.2 for the distinction and Active Blocker above). File-upload fields dropped across every Process module (invoice images, work photos, bill copies) — no file field exists on any Django model, deferred in TASK-B08; same for legacy's date-range/dropdown list filters, since `MongoModelViewSet` only supports a single `search` param (ScreeningProcess's list needed an `org_status` equality filter specifically, so `PitStatusViewSet` gained that one field). FrpTrayProcess's per-tray "sublist" (larvae/organic breakdown) has no Django field and was dropped, same deferred category; its duplicate-batch check needed no new code since `MongoModelViewSet.create()` already catches the model's `NotUniqueError` generically. `*_Report` pages and `RejectsImageUpload` (file uploads, same deferred-scope reason) stay on PHP — not in TASK-B10's scope. |
-| TASK-B11 | pytest-django / DRF test suite | **Done** | Alongside B06–B09 (done) | Per §15.11. Audited the existing 77 tests first rather than padding blindly — model/serializer/viewset/permission/auth coverage was already solid (permission enforcement tested at both unit level, exhaustively, and integration level, at least once per app). Found and closed 2 real gaps: (1) `PitStatus`'s `validate()` requires different fields per `org_status` (a lookup-table dict, `_PIT_STATUS_REQUIRED_FIELDS`) — only statuses `'1'`/`'2'` had tests; added a parametrized test covering `'3'`/`'4'`/`'5'`/`'6'`/`'7'` (success + one-field-missing 400), permanently codifying what TASK-B10's live-verification session had only checked manually via curl. (2) `MongoTokenAuthentication`'s malformed-header branch (`len(auth) != 2` — a bare `Token` with no key, or extra parts) had zero test coverage; added one. Suite: 83/83. |
-| TASK-B12 | Security hardening (password hashing, CORS, CSRF) | **Done** | TASK-B03 (done) | PRD §9's plaintext-password and wildcard-CORS items were already closed by the greenfield rebuild (`make_password`/`check_password` since TASK-B03; `CORS_ALLOWED_ORIGINS` restricted since TASK-B01) — verified, not re-done. Audited the rest via Django's own `manage.py check --deploy`: added `XFrameOptionsMiddleware` (clickjacking, free defense-in-depth); made `SECRET_KEY` fail loudly when `DEBUG=False` and no real key is set, same fail-loud pattern as `MONGODB_URI`, instead of silently running production on the dev placeholder; added `SECURE_SSL_REDIRECT`/`SECURE_HSTS_SECONDS`, both env-gated and off by default so local `runserver` over plain HTTP is unaffected — they only matter once Phase 4 actually terminates HTTPS. **Deliberately skipped `CsrfViewMiddleware`**: this API has no session/cookie auth anywhere (`accounts.authentication.MongoTokenAuthentication` is a bearer token in the `Authorization` header, confirmed no `set_cookie`/session middleware in the codebase, and the frontend's `djangoClient.js` sends the token via header, not `withCredentials`) — CSRF protects against ambient-cookie-riding, which doesn't apply here, and adding the middleware would only break every POST/PUT/DELETE endpoint for no security benefit. 2 new tests (`config/tests.py`, subprocess-based since Django settings load once per process) lock in the `SECRET_KEY` behavior; full suite now 77/77. |
-| TASK-B13 | Dockerfile (backend) + `docker-compose.yml` | **Done** | Enough modules live locally | `backend/Dockerfile` (gunicorn), `frontend/Dockerfile` (multi-stage node→nginx, proxies `/api/` to backend matching the real `baseURL: '/api'` architecture, not `TECH_STACK.md`'s unimplemented `VITE_API_URL` example), root `docker-compose.yml` + `.env.example`. Built and live-verified both containers against Atlas (see notes above); teardown clean. |
-| TASK-B14 | Vercel deploy (frontend) + containerized backend deploy | **Done** (config/docs; no live deploy) | TASK-B13 (done) | `frontend/vercel.json` (SPA + `/api` rewrites), corrected `TECH_STACK.md` deployment section (removed the never-implemented `config.settings.prod`/`VITE_API_URL`), backend deploy documented platform-agnostically per user's choice. Actually deploying needs the user's own Vercel + backend-host accounts — out of scope for an agent to do unprompted. |
-
-### 17.2 Module Cutover Tracker
-
-> A module is only marked "Cut Over" once its Django endpoint is verified end-to-end AND the corresponding `crud.php` is removed. Until then it stays "PHP (legacy)" even if a Django endpoint exists in parallel for testing.
-
-| Module | Backend | Notes |
-|--------|---------|-------|
-| Item Creation | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
-| Tray Creation | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
-| Pit Creation | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
-| Unit Creation | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
-| Supplier Creation | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
-| User Management — User | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
-| User Management — UserType | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
-| User Management — UserPermission | PHP (legacy) | Django endpoint (`mode="django"`, via `UserType.screens`/`main_screens` + `/api/permission-catalog`) wired in parallel (TASK-B10), verified live via curl including enforcement (a role-granted permission actually gates a real request), not yet cut over (needs browser verification first) |
-| User Management — UserScreen | PHP (legacy) | Django endpoint (`mode="django"`, → `core.Screen`, reduced field set — no `description`, no action-checkboxes) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
-| Main Screen Admin | PHP (legacy) | Django endpoint (`mode="django"`, → `core.MainScreen`, reduced field set — no `screen_type`/`order_no`/`description`) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
-| Material Received | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl (incl. auto-generated `batch_id`), not yet cut over (needs browser verification first) |
-| Culling Process | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl (incl. server-computed `fuel_consumption`), not yet cut over (needs browser verification first) |
-| Oven Process | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl (incl. server-computed `running_hours`), not yet cut over (needs browser verification first) |
-| Dry Process | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
-| Leachate | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
-| Status Update | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), verified live via curl, not yet cut over (needs browser verification first) |
-| Egg Process | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10, incl. repeatable `addons` sub-form), verified live via curl, not yet cut over (needs browser verification first) |
-| Pit Status | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10, incl. 6 conditional field-sets keyed on `org_status`), verified live via curl (all 6 `org_status` branches individually), not yet cut over (needs browser verification first) |
-| Screening Process | PHP (legacy) | Django endpoint (`mode="django"`, `/api/pit-status?org_status=6`) wired in parallel (TASK-B10), verified live via curl (incl. the `?org_status=` list filter), not yet cut over (needs browser verification first) |
-| FRP Tray Process | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10); legacy's per-tray "sublist" (larvae/organic breakdown) dropped, no backing field on the model; verified live via curl incl. duplicate-batch rejection and tray-count-mismatch rejection, not yet cut over (needs browser verification first) |
-| FRP Status Update | PHP (legacy) | Django endpoint (`mode="django"`) wired in parallel (TASK-B10), file-upload field dropped (same reason as other Process modules), verified live via curl, not yet cut over (needs browser verification first) |
-| Rejects Image Upload | PHP (legacy) | **Not planned to cut over** — file uploads deferred in TASK-B08, no Django model/endpoint exists at all, same category as the deferred `*_Report` pages |
-| Reports (all) | PHP (legacy) | Deferred — `*_Report` aggregate endpoints don't exist on the Django backend (see TASK-B09 notes); `Logsheet`/`DC`/`Measurable` themselves aren't yet in TASK-B10's frontend cutover queue |
-| Auth / Menu | PHP (legacy) | |
-
----
-
-## Update Rules
-
-**Workstream A (§16) and Workstream B (§17), plus the Workstream Overview:**
-1. Update the relevant task's Status in the §16/§17 task queue.
-2. Update the Workstream Overview progress table for that item.
-3. Update AI Continuity Section's "Current Module"/"Overall Progress" fields.
-4. For Workstream B, update the Module Cutover Tracker (§17.2) only when the PHP endpoint is actually removed, not when the Django endpoint merely exists.
-
-**Legacy Phase 1 sections (1–15), preserved for history — only touch if correcting an error in the historical record, not for new work:**
-1. Move task from Current Task (section 5) to Completed Commits (section 13)
-2. Check off the milestone in Milestone Tracker (section 3)
-3. Update module progress % in Module Tracker (section 4)
-4. Mark page row in Page Migration Status (section 8)
-5. Mark API rows in API Integration Status (section 9)
-6. Append to Daily Development Log (section 14)
-7. Update Weekly Summary (section 15) every Friday
+**Definition of done:** audit reports 0 CRITICAL / 0 HIGH, and every checkbox above is ticked.

@@ -88,6 +88,7 @@ class OvenProcess(Document):
     raw_larvae_process = FloatField(required=True)
     dried_larvae_production = FloatField(required=True)
     dried_larvae_stock = FloatField(required=True)
+    image_path = StringField(default='')  # URL/path string, matching reports.RejectImage — no binary storage in this app
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
 
@@ -114,6 +115,7 @@ class DryProcess(Document):
     drying_method = StringField(required=True, choices=DRYING_METHOD_CHOICES)
     quantity = FloatField(required=True)
     qty_manure = FloatField(default=0)
+    image_path = StringField(default='')  # URL/path string, matching reports.RejectImage — no binary storage in this app
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
 
@@ -129,6 +131,7 @@ class Leachate(Document):
     unique_id = StringField(unique=True, required=True, default=lambda: str(uuid.uuid4()))
     entry_date = DateField(required=True)
     qty_leachate = FloatField(required=True)
+    image_path = StringField(default='')  # URL/path string, matching reports.RejectImage — no binary storage in this app
     remarks = StringField(default='')
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
@@ -278,16 +281,18 @@ class FrpTrayProcess(Document):
 
 class FrpStatusUpdate(Document):
     unique_id = StringField(unique=True, required=True, default=lambda: str(uuid.uuid4()))
+    entry_no = StringField(unique=True, sparse=True)  # auto-generated: FRP-00001, ... (sparse: legacy docs may lack it)
     entry_date = DateField(required=True)
     staff = ReferenceField(User, required=True)
     batch = ReferenceField(FrpTrayProcess, required=True)
     day = IntField(required=True)
     hatching_status = StringField(choices=HATCHING_STATUS_CHOICES, default='pending')
     remarks = StringField(default='')
+    image_path = StringField(default='')  # URL/path string, matching reports.RejectImage — no binary storage in this app
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'frp_status_update',
-        'indexes': ['unique_id', '-created_at'],
+        'indexes': ['unique_id', 'entry_no', '-created_at'],
     }

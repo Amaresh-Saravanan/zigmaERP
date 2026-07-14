@@ -7,7 +7,7 @@ describe('E2E: Item Creation', () => {
   });
 
   it('creates a new item end-to-end', () => {
-    cy.contains('button', 'New').click();
+    cy.contains('button', 'Create New Item').click();
     cy.get('#item_name').type('New Test Item');
     cy.get('#unit').select(1); // select first unit option
     cy.get('#active_status').select('Active');
@@ -17,14 +17,20 @@ describe('E2E: Item Creation', () => {
   });
 
   it('shows Already Exist warning on duplicate item name', () => {
-    cy.contains('button', 'New').click();
+    cy.intercept('POST', '**/api/items', {
+      statusCode: 200,
+      body: { status: 0, msg: 'already' }
+    }).as('duplicateItem');
+    
+    cy.contains('button', 'Create New Item').click();
     cy.get('#item_name').type('Item A');
     cy.contains('button', 'Save').click();
+    cy.wait('@duplicateItem');
     cy.get('.swal2-title').should('contain', 'Already Exist');
   });
 
   it('does not save when required fields are empty', () => {
-    cy.contains('button', 'New').click();
+    cy.contains('button', 'Create New Item').click();
     cy.contains('button', 'Save').click();
     // Browser validation prevents submit — no swal with "Successfully Saved"
     cy.get('.swal2-title').should('not.contain', 'Successfully Saved');

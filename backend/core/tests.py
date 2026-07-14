@@ -132,8 +132,14 @@ def test_main_screen_create_denied_without_screen():
 
 def test_main_screen_create_and_list():
     client = authed_client(manager_user('main_screen_create,main_screen_view'), 'pw')
-    res = client.post('/api/main-screens', {'screen_main_name': 'Reports', 'icon_name': 'ri-file-line'}, format='json')
+    res = client.post('/api/main-screens', {
+        'screen_main_name': 'Reports', 'icon_name': 'ri-file-line',
+        'screen_type': 'report', 'order_no': 5, 'description': 'All reports',
+    }, format='json')
     assert res.status_code == 201
+    assert res.data['data']['screen_type'] == 'report'
+    assert res.data['data']['order_no'] == 5
+    assert res.data['data']['description'] == 'All reports'
 
     list_res = client.get('/api/main-screens')
     assert list_res.data['count'] == 1
@@ -158,8 +164,13 @@ def test_screen_create_and_update():
         'folder_name': 'sales_report',
         'main_screen': {'unique_id': main['unique_id']},
         'order_no': 1,
+        'description': 'Sales figures',
+        'actions': {'add': True, 'update': False, 'list': True, 'delete': False, 'view': True, 'print': False},
     }, format='json')
     assert created.status_code == 201
+    assert created.data['data']['description'] == 'Sales figures'
+    assert created.data['data']['actions']['add'] is True
+    assert created.data['data']['actions']['delete'] is False
     screen_id = created.data['data']['unique_id']
 
     update_res = client.put(f'/api/screens/{screen_id}', {

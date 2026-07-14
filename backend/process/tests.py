@@ -185,9 +185,11 @@ def test_oven_process_auto_calculates_running_hours():
     res = client.post('/api/oven-process', {
         'entry_date': '2026-07-01', 'starting_time': '08:00', 'closing_time': '14:30',
         'diesel_topup': 5, 'raw_larvae_process': 10, 'dried_larvae_production': 3, 'dried_larvae_stock': 3,
+        'image_path': 'http://x/oven.jpg',
     }, format='json')
     assert res.status_code == 201
     assert res.data['data']['running_hours'] == 6.5
+    assert res.data['data']['image_path'] == 'http://x/oven.jpg'
 
 
 def test_oven_process_running_hours_handles_overnight_shift():
@@ -206,15 +208,20 @@ def test_dry_process_create_and_list():
     client = authed_client(make_user(screens=ALL_SCREENS))
     res = client.post('/api/dry-process', {
         'date': '2026-07-01', 'type': '1', 'drying_method': '1', 'quantity': 10,
+        'image_path': 'http://x/dry.jpg',
     }, format='json')
     assert res.status_code == 201
+    assert res.data['data']['image_path'] == 'http://x/dry.jpg'
     assert client.get('/api/dry-process').data['count'] == 1
 
 
 def test_leachate_create_and_list():
     client = authed_client(make_user(screens=ALL_SCREENS))
-    res = client.post('/api/leachate', {'entry_date': '2026-07-01', 'qty_leachate': 3.5}, format='json')
+    res = client.post('/api/leachate', {
+        'entry_date': '2026-07-01', 'qty_leachate': 3.5, 'image_path': 'http://x/lea.jpg',
+    }, format='json')
     assert res.status_code == 201
+    assert res.data['data']['image_path'] == 'http://x/lea.jpg'
     assert client.get('/api/leachate').data['count'] == 1
 
 
@@ -395,6 +402,19 @@ def test_frp_status_update_create_and_list(batch, tray):
         'batch': {'unique_id': frp.unique_id},
         'day': 1,
         'hatching_status': 'progressing',
+        'image_path': 'http://x/frp.jpg',
     }, format='json')
     assert res.status_code == 201
-    assert client.get('/api/frp-status-update').data['count'] == 1
+    assert res.data['data']['entry_no'] == 'FRP-00001'
+    assert res.data['data']['image_path'] == 'http://x/frp.jpg'
+
+    # second create must increment, not repeat/reset — the one bit of novel logic here
+    res2 = client.post('/api/frp-status-update', {
+        'entry_date': '2026-07-03',
+        'staff': {'unique_id': staff.unique_id},
+        'batch': {'unique_id': frp.unique_id},
+        'day': 2,
+    }, format='json')
+    assert res2.status_code == 201
+    assert res2.data['data']['entry_no'] == 'FRP-00002'
+    assert client.get('/api/frp-status-update').data['count'] == 2

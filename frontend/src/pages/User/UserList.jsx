@@ -7,11 +7,12 @@ export default function UserList() {
   const navigate = useNavigate();
 
   const columns = [
-    { label: 'S.No', sno: true },
-    { label: 'Employee ID', key: 'emp_id' },
-    { label: 'User Name', key: 'user_name' },
-    { label: 'Name', render: (_val, row) => `${row.first_name || ''} ${row.last_name || ''}`.trim() },
+    { label: '#', sno: true },
     { label: 'User Type', key: 'user_type.type_name' },
+    { label: 'User Name', key: 'user_name' },
+    { label: 'Password', render: () => '••••••••' }, // ponytail: password_hash is write-only on the backend and never returned by the API — masked placeholder is the only correct display
+    { label: 'First Name', key: 'first_name' },
+    { label: 'Emp Id', key: 'emp_id' },
     {
       label: 'Status',
       key: 'is_active',

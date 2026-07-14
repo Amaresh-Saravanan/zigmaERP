@@ -78,3 +78,4 @@ REST_FRAMEWORK = {
 USE_TZ = True
 TIME_ZONE = 'UTC'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+##vangaa nambargalee elarum onna polam....mujarchi thiruvenai aakum muyandral sathikaa mudiummm enaaa 
