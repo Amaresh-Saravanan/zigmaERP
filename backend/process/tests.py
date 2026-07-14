@@ -156,6 +156,19 @@ def test_culling_process_auto_calculates_fuel_consumption():
     assert res.data['data']['fuel_consumption'] == 6.0
 
 
+def test_culling_process_compute_fuel():
+    """Test that explicit 0.0 fuel_consumption is persisted, not overwritten by auto-calc."""
+    client = authed_client(make_user(screens=ALL_SCREENS))
+    res = client.post('/api/culling-process', {
+        'entry_date': '2026-07-01', 'shift_type': '1', 'cylinder_type': '1', 'cylinder_no': 'C-1',
+        'starting_weight': 10, 'ending_weight': 4, 'fuel_consumption': 0.0,
+        'raw_material_weight': 20, 'final_larvae_weight': 15,
+        'work_done': '1',
+    }, format='json')
+    assert res.status_code == 201
+    assert res.data['data']['fuel_consumption'] == 0.0
+
+
 def test_culling_process_others_remarks_required_when_work_done_others():
     client = authed_client(make_user(screens=ALL_SCREENS))
     res = client.post('/api/culling-process', {
@@ -200,6 +213,18 @@ def test_oven_process_running_hours_handles_overnight_shift():
     }, format='json')
     assert res.status_code == 201
     assert res.data['data']['running_hours'] == 4.0
+
+
+def test_oven_process_auto_calculates():
+    """Test that explicit 0.0 running_hours is persisted, not overwritten by auto-calc."""
+    client = authed_client(make_user(screens=ALL_SCREENS))
+    res = client.post('/api/oven-process', {
+        'entry_date': '2026-07-01', 'starting_time': '08:00', 'closing_time': '14:30',
+        'running_hours': 0.0,
+        'diesel_topup': 5, 'raw_larvae_process': 10, 'dried_larvae_production': 3, 'dried_larvae_stock': 3,
+    }, format='json')
+    assert res.status_code == 201
+    assert res.data['data']['running_hours'] == 0.0
 
 
 # ── Dry Process / Leachate (simple CRUD) ──

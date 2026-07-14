@@ -138,7 +138,7 @@ class CullingProcessSerializer(serializers.Serializer):
     others_remarks = serializers.CharField(required=False, allow_blank=True)
 
     def validate(self, attrs):
-        if not attrs.get('fuel_consumption'):
+        if attrs.get('fuel_consumption') is None:
             attrs['fuel_consumption'] = round(attrs['starting_weight'] - attrs['ending_weight'], 2)
         if attrs.get('work_done') == '3' and not attrs.get('others_remarks'):
             raise serializers.ValidationError({'others_remarks': 'Required when work done is Others.'})
@@ -179,7 +179,7 @@ class OvenProcessSerializer(serializers.Serializer):
         return hours * 60 + minutes
 
     def validate(self, attrs):
-        if not attrs.get('running_hours'):
+        if attrs.get('running_hours') is None:
             start = self._to_minutes(attrs['starting_time'])
             end = self._to_minutes(attrs['closing_time'])
             if end < start:

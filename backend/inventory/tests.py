@@ -1,6 +1,7 @@
 """
 Item/Unit CRUD tests — run against mongomock, not the real Atlas cluster in .env.
 """
+import time
 import mongoengine as me
 import mongomock
 import pytest
@@ -139,6 +140,29 @@ def test_item_search_filters_by_name(unit):
     assert res.data['results'][0]['item_name'] == 'Widget'
 
 
+def test_item_update():
+    """Test that updated_at is set on every item update."""
+    client = authed_client(make_user(screens='item_create,item_view,item_edit'))
+    unit = Unit(unit_name='Kilogram').save()
+
+    created = client.post('/api/items', {'item_name': 'Widget', 'unit': {'unique_id': unit.unique_id}}, format='json')
+    item_id = created.data['data']['unique_id']
+
+    before = Item.objects.get(unique_id=item_id).updated_at
+
+    # Sleep to ensure time delta is measurable
+    time.sleep(0.01)
+
+    client.put(
+        f'/api/items/{item_id}',
+        {'item_name': 'Widget V2', 'unit': {'unique_id': unit.unique_id}},
+        format='json',
+    )
+
+    after = Item.objects.get(unique_id=item_id).updated_at
+    assert after > before, 'updated_at should be set to current time on update'
+
+
 # ── Tray ──
 
 def test_tray_create_rejects_invalid_type():
@@ -174,6 +198,23 @@ def test_pit_name_must_be_unique():
     client = authed_client(make_user(screens='pit_create'))
     client.post('/api/pits', {'pit_name': 'Pit 1', 'length': 1, 'width': 1, 'height': 1}, format='json')
     res = client.post('/api/pits', {'pit_name': 'Pit 1', 'length': 1, 'width': 1, 'height': 1}, format='json')
+    assert res.status_code == 400
+
+
+def test_pit_dimensions_reject_negative_values():
+    """Test that negative pit dimensions are rejected with 400 validation error."""
+    client = authed_client(make_user(screens='pit_create'))
+
+    # Negative length
+    res = client.post('/api/pits', {'pit_name': 'Bad Pit 1', 'length': -1, 'width': 1, 'height': 1}, format='json')
+    assert res.status_code == 400
+
+    # Negative width
+    res = client.post('/api/pits', {'pit_name': 'Bad Pit 2', 'length': 1, 'width': -1, 'height': 1}, format='json')
+    assert res.status_code == 400
+
+    # Negative height
+    res = client.post('/api/pits', {'pit_name': 'Bad Pit 3', 'length': 1, 'width': 1, 'height': -1}, format='json')
     assert res.status_code == 400
 
 

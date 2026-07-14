@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 
 from inventory.models import TRAY_TYPE_CHOICES, Item, Pit, Supplier, Tray, Unit
@@ -63,6 +64,7 @@ class ItemSerializer(serializers.Serializer):
         instance.item_name = validated_data['item_name']
         instance.unit = validated_data['unit']
         instance.is_active = validated_data.get('is_active', instance.is_active)
+        instance.updated_at = timezone.now()
         instance.save()
         return instance
 
@@ -88,9 +90,9 @@ class PitSerializer(serializers.Serializer):
     unique_id = serializers.CharField(read_only=True)
     pit_name = serializers.CharField()
     location = serializers.CharField(required=False, allow_blank=True)
-    length = serializers.FloatField(default=0)
-    width = serializers.FloatField(default=0)
-    height = serializers.FloatField(default=0)
+    length = serializers.FloatField(default=0, min_value=0)
+    width = serializers.FloatField(default=0, min_value=0)
+    height = serializers.FloatField(default=0, min_value=0)
     volume = serializers.FloatField(read_only=True)  # server-computed, see Pit.save()
     description = serializers.CharField(required=False, allow_blank=True)
     is_active = serializers.BooleanField(default=True)
