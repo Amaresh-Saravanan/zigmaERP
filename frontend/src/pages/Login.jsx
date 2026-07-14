@@ -257,7 +257,7 @@ export default function Login() {
 
             <p className="lp-footer-text">
               Don't have an account?{' '}
-              <a href="#" className="lp-link" onClick={(e) => e.preventDefault()}>Sign up</a>
+              <Link to="/signup" className="lp-link">Sign up</Link>
             </p>
           </div>
         </div>
