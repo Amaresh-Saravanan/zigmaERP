@@ -155,7 +155,12 @@ def login_history_report(request):
     page = max(int(p.get('page', 1) or 1), 1)
     size = int(p.get('page_size', 10) or 10)
     start = (page - 1) * size
-    return Response({'count': len(rows), 'results': rows[start:start + size]})
+    return Response({
+        'status': 1,
+        'msg': 'success',
+        'data': {'count': len(rows), 'results': rows[start:start + size]},
+        'error': '',
+    })
 
 
 @api_view(['GET'])
@@ -165,7 +170,12 @@ def login_history_detail(request):
     user_id, entry_date = request.query_params.get('unique_id'), request.query_params.get('entry_date')
     user = User.objects(unique_id=user_id).first()
     if not user or not entry_date:
-        return Response({'status': 0, 'user': {}, 'sessions': [], 'total_worked_hours': ''})
+        return Response({
+            'status': 0,
+            'msg': 'error',
+            'data': {'user': {}, 'sessions': [], 'total_worked_hours': ''},
+            'error': 'User or date not found.',
+        })
 
     events = [e for e in LoginHistory.objects(user=user, is_deleted=False)
               if e.entry_date and e.entry_date.isoformat() == entry_date]
@@ -189,13 +199,17 @@ def login_history_detail(request):
 
     return Response({
         'status': 1,
-        'user': {
-            'name': user.user_name,
-            'type': _type_name(user.user_type.unique_id if user.user_type else ''),
-            'date': entry_date,
+        'msg': 'success',
+        'data': {
+            'user': {
+                'name': user.user_name,
+                'type': _type_name(user.user_type.unique_id if user.user_type else ''),
+                'date': entry_date,
+            },
+            'sessions': sessions,
+            'total_worked_hours': _worked_hms([(e.entry_time, e.log_type) for e in events]),
         },
-        'sessions': sessions,
-        'total_worked_hours': _worked_hms([(e.entry_time, e.log_type) for e in events]),
+        'error': '',
     })
 
 
