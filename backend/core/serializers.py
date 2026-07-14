@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 
 from core.models import MainScreen, Screen
@@ -20,6 +21,7 @@ class MainScreenSerializer(serializers.Serializer):
             if field in validated_data:
                 setattr(instance, field, validated_data[field])
         instance.is_active = validated_data.get('is_active', instance.is_active)
+        instance.updated_at = timezone.now()
         instance.save()
         return instance
 
@@ -54,5 +56,6 @@ class ScreenSerializer(serializers.Serializer):
             if field in validated_data:
                 setattr(instance, field, validated_data[field])
         instance.is_active = validated_data.get('is_active', instance.is_active)
+        instance.updated_at = timezone.now()
         instance.save()
         return instance

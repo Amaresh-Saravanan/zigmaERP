@@ -1,6 +1,7 @@
 import re
 
 from django.contrib.auth.hashers import check_password, make_password
+from django.utils import timezone
 from rest_framework import serializers
 
 from accounts.models import User, UserType
@@ -119,6 +120,7 @@ class UserTypeManageSerializer(serializers.Serializer):
         instance.main_screens = validated_data.get('main_screens', instance.main_screens)
         instance.screens = validated_data.get('screens', instance.screens)
         instance.is_active = validated_data.get('is_active', instance.is_active)
+        instance.updated_at = timezone.now()
         instance.save()
         return instance
 
@@ -178,5 +180,6 @@ class UserManageSerializer(serializers.Serializer):
         instance.is_active = validated_data.get('is_active', instance.is_active)
         if validated_data.get('password'):
             instance.password_hash = make_password(validated_data['password'])
+        instance.updated_at = timezone.now()
         instance.save()
         return instance
