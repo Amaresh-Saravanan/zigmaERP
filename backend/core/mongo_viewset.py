@@ -62,7 +62,11 @@ class MongoModelViewSet(ViewSetMixin, APIView):
 
     def create(self, request):
         serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            return Response(
+                {'status': 0, 'msg': 'validation_error', 'data': serializer.errors, 'error': 'Validation failed.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         try:
             instance = serializer.save()
         except NotUniqueError:
@@ -86,7 +90,11 @@ class MongoModelViewSet(ViewSetMixin, APIView):
         if obj is None:
             return Response({'status': 0, 'msg': 'not_found', 'data': None, 'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.serializer_class(instance=obj, data=request.data)
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            return Response(
+                {'status': 0, 'msg': 'validation_error', 'data': serializer.errors, 'error': 'Validation failed.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         instance = serializer.save()
         return Response({'status': 1, 'msg': 'update', 'data': self.serializer_class(instance).data, 'error': ''})
 

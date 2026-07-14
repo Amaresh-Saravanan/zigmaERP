@@ -134,10 +134,13 @@ def dashboard(request):
 
     return Response({
         'status': 1,
-        'msg': '',
-        'kpi': _kpi_from(pit_month, egg_month),
-        'overall': _kpi_from(pit_all, egg_all),
-        'pit_chart': pit_chart,
-        'tray_status': buckets,
-        'unutilized_trays': unutilized,
+        'msg': 'success',
+        'data': {
+            'kpi': _kpi_from(pit_month, egg_month),
+            'overall': _kpi_from(pit_all, egg_all),
+            'pit_chart': pit_chart,
+            'tray_status': buckets,
+            'unutilized_trays': unutilized,
+        },
+        'error': '',
     })

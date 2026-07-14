@@ -25,7 +25,7 @@ def menu(request):
     allowed_screens = _ids(user.screens)
 
     if not allowed_main:
-        return Response({'status': 1, 'msg': '', 'data': []})
+        return Response({'status': 1, 'msg': 'success', 'data': [], 'error': ''})
 
     mains = MainScreen.objects(
         is_active=True, is_deleted=False, unique_id__in=allowed_main
@@ -53,7 +53,7 @@ def menu(request):
             ],
         })
 
-    return Response({'status': 1, 'msg': '', 'data': tree})
+    return Response({'status': 1, 'msg': 'success', 'data': tree, 'error': ''})
 
 
 class MainScreenViewSet(MongoModelViewSet):
