@@ -607,4 +607,10 @@
   .lp-live-dot { animation: none; }
   .lp-submit { transition: none; }
 }
+
+.lp-field-error {
+  color: #ef4444;
+  font-size: 0.78rem;
+  margin-top: 4px;
+}
       
