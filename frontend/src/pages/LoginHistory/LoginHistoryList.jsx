@@ -62,7 +62,7 @@ export default function LoginHistoryList() {
             </div>
 
             {/* Filters */}
-            <div className="row mt-2 g-2">
+            <div className="row mt-2 g-3">
               <div className="col-md-2">
                 <label className="form-label mb-1" style={{ fontSize: '0.72rem', color: 'var(--vz-secondary-color)' }}>From Date</label>
                 <DateInput name="from_date" className="form-control form-control-sm"
