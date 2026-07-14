@@ -10,6 +10,7 @@ class Unit(Document):
     is_active = BooleanField(default=True)
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
+    updated_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'units',
@@ -43,6 +44,7 @@ class Tray(Document):
     is_active = BooleanField(default=True)
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
+    updated_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'trays',
@@ -62,6 +64,7 @@ class Pit(Document):
     is_active = BooleanField(default=True)
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
+    updated_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'pits',
@@ -84,6 +87,7 @@ class Supplier(Document):
     is_active = BooleanField(default=True)
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
+    updated_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'suppliers',

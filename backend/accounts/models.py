@@ -22,6 +22,7 @@ class UserType(Document):
     is_active = BooleanField(default=True)
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
+    updated_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'user_types',
@@ -82,6 +83,7 @@ class AuthToken(Document):
     key = StringField(unique=True, required=True, default=lambda: secrets.token_hex(32))
     user = ReferenceField(User, required=True, unique=True)
     created_at = DateTimeField(default=timezone.now)
+    updated_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'auth_tokens',
@@ -106,6 +108,7 @@ class LoginHistory(Document):
     log_type = IntField(required=True)        # 1 = login, 2 = logout
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
+    updated_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'user_login_details',

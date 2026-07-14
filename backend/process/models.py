@@ -36,6 +36,7 @@ class MaterialReceived(Document):
     batch_status = StringField(choices=BATCH_STATUS_CHOICES, default='pending')
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
+    updated_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'material_received',
@@ -65,6 +66,7 @@ class CullingProcess(Document):
     others_remarks = StringField(default='')  # required only when work_done == '3'
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
+    updated_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'culling_process',
@@ -91,6 +93,7 @@ class OvenProcess(Document):
     image_path = StringField(default='')  # URL/path string, matching reports.RejectImage — no binary storage in this app
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
+    updated_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'oven_process',
@@ -118,6 +121,7 @@ class DryProcess(Document):
     image_path = StringField(default='')  # URL/path string, matching reports.RejectImage — no binary storage in this app
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
+    updated_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'dry_process',
@@ -135,6 +139,7 @@ class Leachate(Document):
     remarks = StringField(default='')
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
+    updated_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'leachate',
@@ -163,6 +168,7 @@ class EggProcess(Document):
     addons = EmbeddedDocumentListField(EggProcessAddon, default=list)
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
+    updated_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'egg_process',
@@ -185,6 +191,7 @@ class StatusUpdate(Document):
     remarks = StringField(default='')
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
+    updated_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'status_update',
@@ -249,6 +256,7 @@ class PitStatus(Document):
 
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
+    updated_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'pit_status',
@@ -270,6 +278,7 @@ class FrpTrayProcess(Document):
     batch_status = StringField(choices=FRP_BATCH_STATUS_CHOICES, default='pending')
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
+    updated_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'frp_tray_process',
@@ -291,6 +300,7 @@ class FrpStatusUpdate(Document):
     image_path = StringField(default='')  # URL/path string, matching reports.RejectImage — no binary storage in this app
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
+    updated_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'frp_status_update',

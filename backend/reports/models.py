@@ -25,6 +25,7 @@ class Measurable(Document):
     remarks = StringField(default='')
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
+    updated_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'measurable',
@@ -43,6 +44,7 @@ class Logsheet(Document):
     remarks = StringField(default='')
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
+    updated_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'logsheet',
@@ -79,6 +81,7 @@ class DC(Document):
     grand_total = FloatField(default=0)  # server-computed, see serializer
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
+    updated_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'dc',
@@ -100,6 +103,7 @@ class Reject(Document):
     net_weight = FloatField(default=0)  # server-computed if omitted
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
+    updated_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'reject',
@@ -119,6 +123,7 @@ class RejectImage(Document):
     net_weight = FloatField(default=0)
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
+    updated_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'reject_image',
