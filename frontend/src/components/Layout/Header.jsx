@@ -68,28 +68,6 @@ export default function Header() {
             </button>
           </div>
 
-          {/* ── Centre: search bar (U-08) ── */}
-          <div className="search-bar flex-grow-1 d-none d-md-flex align-items-center mx-3" style={{ maxWidth: 380 }}>
-            <div className="position-relative w-100">
-              <i
-                className="ri-search-line"
-                style={{
-                  position: 'absolute', left: 12, top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--vz-secondary-color)',
-                  fontSize: '1rem', pointerEvents: 'none'
-                }}
-              ></i>
-              <input
-                type="search"
-                className="form-control"
-                placeholder="Search screens, reports…"
-                aria-label="Search"
-                style={{ paddingLeft: 36, borderRadius: 8 }}
-              />
-            </div>
-          </div>
-
           {/* ── Right: theme toggle, bell, user ── */}
           <div className="d-flex align-items-center gap-1">
 
