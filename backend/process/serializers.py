@@ -357,6 +357,17 @@ _PIT_STATUS_REQUIRED_FIELDS = {
     '7': ('tippi_qty',),
 }
 
+# Editable fields per org_status on PATCH (never allow org_status/entry_date/pit/form_batch_id changes)
+_PIT_STATUS_EDITABLE_FIELDS = {
+    '1': ('feed_qty', 'feed_count', 'notes'),
+    '2': ('batch', 'trays', 'larvae_qty_in', 'notes'),
+    '3': ('method', 'notes'),
+    '4': ('measure_time', 'temp_start', 'temp_mid', 'temp_end', 'humi_start', 'humi_mid', 'humi_end', 'notes'),
+    '5': ('larvae_qty', 'qty_manure_1', 'qty_manure_2', 'qty_manure_3', 'qty_rejets', 'harvest_comp', 'notes'),
+    '6': ('larvae_qty', 'qty_manure_1', 'qty_manure_2', 'qty_rejets', 'notes'),
+    '7': ('tippi_qty', 'notes'),
+}
+
 
 class PitStatusSerializer(serializers.Serializer):
     unique_id = serializers.CharField(read_only=True)
@@ -429,8 +440,12 @@ class PitStatusSerializer(serializers.Serializer):
         ).save()
 
     def update(self, instance, validated_data):
-        for field in validated_data:
-            setattr(instance, field, validated_data[field])
+        # ponytail: explicit field whitelist per org_status closes mass-assignment hole.
+        # org_status, entry_date, pit, form_batch_id are never updated (immutable identity fields).
+        editable = _PIT_STATUS_EDITABLE_FIELDS.get(instance.org_status, ())
+        for field in editable:
+            if field in validated_data:
+                setattr(instance, field, validated_data[field])
         instance.save()
         return instance
 

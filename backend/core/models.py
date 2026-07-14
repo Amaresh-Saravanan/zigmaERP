@@ -1,6 +1,7 @@
 import uuid
 
-from mongoengine import BooleanField, DictField, Document, IntField, ReferenceField, StringField
+from django.utils import timezone
+from mongoengine import BooleanField, DateTimeField, DictField, Document, IntField, ReferenceField, StringField
 
 
 class MainScreen(Document):
@@ -13,10 +14,11 @@ class MainScreen(Document):
     description = StringField(default='')
     is_active = BooleanField(default=True)
     is_deleted = BooleanField(default=False)
+    created_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'main_screens',
-        'indexes': ['unique_id'],
+        'indexes': ['unique_id', '-created_at'],
     }
 
 
@@ -34,8 +36,9 @@ class Screen(Document):
     actions = DictField(default=dict)
     is_active = BooleanField(default=True)
     is_deleted = BooleanField(default=False)
+    created_at = DateTimeField(default=timezone.now)
 
     meta = {
         'collection': 'screens',
-        'indexes': ['unique_id', 'main_screen', 'order_no'],
+        'indexes': ['unique_id', 'main_screen', 'order_no', '-created_at'],
     }
