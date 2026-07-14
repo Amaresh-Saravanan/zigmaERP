@@ -141,38 +141,10 @@
   transition: transform var(--anim-duration-normal) var(--anim-ease-out);
 }
 
-.sidebar {
-  transition: transform var(--anim-duration-normal) var(--anim-ease-out),
-              opacity var(--anim-duration-normal) var(--anim-ease-out);
-}
-
 /* Menu item hover */
 .nav-link {
   transition: color var(--anim-duration-fast) var(--anim-ease-out),
-              background-color var(--anim-duration-fast) var(--anim-ease-out),
-              padding-left var(--anim-duration-fast) var(--anim-ease-out);
-}
-
-.nav-link:hover {
-  padding-left: calc(1.5rem + 2px);
-}
-
-.nav-link.active {
-  background-color: rgba(37, 169, 107, 0.15);
-  color: #25a96b;
-  border-left: 1px solid #25a96b;
-  padding-left: calc(1.5rem - 1px);
-}
-
-/* Collapse/expand arrow rotation */
-.nav-link[aria-expanded] .fas,
-.nav-link[aria-expanded] .ri {
-  transition: transform var(--anim-duration-normal) var(--anim-ease-out);
-}
-
-.nav-link[aria-expanded="true"] .fas,
-.nav-link[aria-expanded="true"] .ri {
-  transform: rotate(180deg);
+              background-color var(--anim-duration-fast) var(--anim-ease-out);
 }
 
 /* Submenu collapse animation — Bootstrap handles height, we animate opacity only */
@@ -250,14 +222,9 @@ tbody tr:hover {
   box-shadow: 0 0 0 3px rgba(37, 169, 107, 0.2);
 }
 
-/* Status indicator pulse */
+/* Status indicator pulse — keyframes defined once in section 11 */
 .status-dot {
   animation: statusPulse 2s ease-in-out infinite;
-}
-
-@keyframes statusPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(37, 169, 107, 0.4); }
-  50% { box-shadow: 0 0 0 6px rgba(37, 169, 107, 0); }
 }
 
 /* ────────────────────────────────────────────────────────────────
@@ -416,10 +383,6 @@ tbody tr:hover {
   .card {
     animation: none;
     opacity: 1;
-  }
-
-  .sidebar {
-    transition: none;
   }
 
   .nav-link {

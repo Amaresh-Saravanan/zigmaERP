@@ -19,7 +19,7 @@ export default function PitStatusChart({ data }) {
   // tick between 0 and 1 (looks broken/empty) and a 1-day batch renders as a
   // full-width bar, which reads as "mature" when it's actually brand new.
   const realMaxAge = Math.max(1, ...data.data);
-  const axisMax = Math.max(realMaxAge, 5);
+  const axisMax = Math.max(realMaxAge, 20);
   const days = (n) => `${n} Day${n === 1 ? '' : 's'}`;
 
   const options = {

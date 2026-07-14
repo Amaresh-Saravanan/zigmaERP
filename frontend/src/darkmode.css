@@ -190,8 +190,7 @@ body,
   background-color: rgba(0, 0, 0, 0.04);
 }
 
-[data-bs-theme='light'] .navbar-nav .nav-link.menu-link.active,
-[data-bs-theme='light'] .navbar-nav .nav-link.menu-link[aria-expanded='true'] {
+[data-bs-theme='light'] .navbar-nav .nav-link.menu-link.active {
   color: var(--primary-green);
   background-color: rgba(37, 169, 107, 0.08);
 }
@@ -224,8 +223,7 @@ body,
   background-color: rgba(255, 255, 255, 0.06);
 }
 
-[data-bs-theme='dark'] .navbar-nav .nav-link.menu-link.active,
-[data-bs-theme='dark'] .navbar-nav .nav-link.menu-link[aria-expanded='true'] {
+[data-bs-theme='dark'] .navbar-nav .nav-link.menu-link.active {
   color: var(--primary-green);
   background-color: rgba(37, 169, 107, 0.12);
 }
@@ -626,11 +624,6 @@ body,
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
-/* Improve menu hover visibility in dark mode */
-[data-bs-theme='dark'] .navbar-nav .nav-link.menu-link:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
 /* Improve read-only field stripe visibility */
 [data-bs-theme='dark'] .form-control:read-only,
 [data-bs-theme='dark'] .form-select:read-only {
@@ -685,42 +678,8 @@ body,
 }
 
 /* ------------------------------------------------------------------
-   19. Hamburger icon — clean animated 3-bar → X (U-11)
+   19. Arrow rotation for user dropdown chevron
    ------------------------------------------------------------------ */
-.hamburger-icon {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 3px;
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
-}
-
-.hamburger-icon span {
-  display: block;
-  width: 18px;
-  height: 2.5px;
-  background: var(--vz-header-item-color, #c9d1d9);
-  border-radius: 1.5px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  transform-origin: center;
-}
-
-/* Open state → X */
-.hamburger-icon[data-open='true'] span:nth-child(1) {
-  transform: translateY(8px) rotate(45deg);
-}
-.hamburger-icon[data-open='true'] span:nth-child(2) {
-  opacity: 0;
-  width: 0;
-}
-.hamburger-icon[data-open='true'] span:nth-child(3) {
-  transform: translateY(-8px) rotate(-45deg);
-}
-
-/* Arrow rotation for user dropdown chevron */
 .rotate-180 {
   transform: rotate(180deg);
 }

@@ -53,7 +53,7 @@
 
 /* Print styles */
 @media print {
-  .sidebar, .header, .btn, .pagination {
+  .app-menu, #page-topbar, .btn, .pagination {
     display: none !important;
   }
   

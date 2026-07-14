@@ -522,6 +522,54 @@ input[type='month'].form-control {
   transform: none;
 }
 
+/* Sidebar width transition — canonical owner; must stay in sync with the
+   .main-content override below so the content pane and sidebar animate
+   in lockstep at the token duration. */
+.app-menu {
+  transition: width var(--anim-duration-normal) var(--anim-ease-out);
+}
+
+/* Overrides vendor's `.main-content { transition: all .1s ease-out }`
+   (assets/css/app.min.css) so the content pane's margin-left animates
+   at the same duration/easing as the sidebar width above. */
+.main-content {
+  transition: margin-left var(--anim-duration-normal) var(--anim-ease-out);
+}
+
+/* Header hamburger open/close animation (moved from darkmode.css — not theme-specific) */
+.hamburger-icon {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 3px;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.hamburger-icon span {
+  display: block;
+  width: 18px;
+  height: 2.5px;
+  background: var(--vz-header-item-color, #c9d1d9);
+  border-radius: 1.5px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+}
+
+/* Open state → X */
+.hamburger-icon[data-open='true'] span:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
+}
+.hamburger-icon[data-open='true'] span:nth-child(2) {
+  opacity: 0;
+  width: 0;
+}
+.hamburger-icon[data-open='true'] span:nth-child(3) {
+  transform: translateY(-8px) rotate(-45deg);
+}
+
 /* ── 13. Responsive tweaks ── */
 
 @media (max-width: 768px) {

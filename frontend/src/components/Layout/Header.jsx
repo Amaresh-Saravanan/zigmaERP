@@ -32,12 +32,22 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  // ponytail: sidebarOpen only drives the mobile overlay + hamburger icon animation.
+  // On desktop the Sidebar can flip data-sidebar-size back to 'lg' on its own (icon
+  // click expand), so this state can drift from the actual attribute there — harmless,
+  // since desktop rendering reads the attribute, not this state.
   const toggleSidebar = () => {
     const next = !sidebarOpen;
     setSidebarOpen(next);
-    document.body.classList.toggle('vertical-sidebar-enable', next);
-    const size = document.documentElement.getAttribute('data-sidebar-size');
-    document.documentElement.setAttribute('data-sidebar-size', size === 'sm' ? 'lg' : 'sm');
+    if (window.innerWidth < 992) {
+      // mobile: overlay show/hide only — always full-width menu, never icon rail
+      document.body.classList.toggle('vertical-sidebar-enable', next);
+      document.documentElement.setAttribute('data-sidebar-size', 'lg');
+    } else {
+      // desktop: collapse/expand the fixed rail
+      const size = document.documentElement.getAttribute('data-sidebar-size');
+      document.documentElement.setAttribute('data-sidebar-size', size === 'sm' ? 'lg' : 'sm');
+    }
   };
 
   const initials = getInitials(user?.userName);

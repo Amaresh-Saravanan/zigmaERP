@@ -99,15 +99,15 @@ export default function Sidebar() {
 
   const activeMenu = menu.length ? menu : DEMO_MENU;
 
+  // Auto-open the section containing the current route (e.g. deep link, back/forward nav).
   useEffect(() => {
-    if (!openId) {
-      const active = activeMenu.find(m =>
-        m.sub_screens?.some(s => location.pathname.startsWith(`/${s.folder_name}`))
-      );
-      if (active) setOpenId(active.unique_id);
-    }
+    const active = activeMenu.find(m =>
+      m.sub_screens?.some(s => location.pathname.startsWith(`/${s.folder_name}`))
+    );
+    if (active && active.unique_id !== openId) setOpenId(active.unique_id);
+    // ponytail: paths outside any section (e.g. dashboard "/") leave openId as-is.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeMenu]);
+  }, [location.pathname, activeMenu]);
 
   const hasScreen = (id) => {
     if (!user?.screens) return false;
@@ -123,36 +123,34 @@ export default function Sidebar() {
   const isWorker = user?.userType === '6213273aa04b228161';
   const toggle = (id) => setOpenId(prev => (prev === id ? null : id));
 
-  // ponytail: collapsed mode is icons-only (no sub-menu popout) — a click there is a
-  // no-op; expand the sidebar via the header toggle to navigate sub-screens.
+  // ponytail: collapsed mode has no sub-menu popout, so a click on a category icon
+  // expands the sidebar (back to 'lg') and opens that section, instead of doing nothing.
   const handleIconClick = (e, main) => {
     e.preventDefault();
-    if (!isCollapsed) toggle(main.unique_id);
+    if (isCollapsed) {
+      document.documentElement.setAttribute('data-sidebar-size', 'lg');
+      setOpenId(main.unique_id);
+    } else {
+      toggle(main.unique_id);
+    }
   };
 
   return (
     <>
       <div className="app-menu navbar-menu">
         <div className="navbar-brand-box mt-2 pb-2">
-          <a href="/" className="logo logo-dark" onClick={(e) => { e.preventDefault(); window.location.reload(); }}>
+          {/* ponytail: vendor CSS toggles .logo-dark/.logo-light visibility off
+              [data-sidebar] (see app.min.css), so a bare "logo" class (no dark/light
+              suffix, no display:none in either theme) shows in both instead of
+              duplicating the same anchor twice. */}
+          <Link to="/" className="logo">
             <span className="logo-sm">
               <img src={faviIcon} alt="Zigfly Logo Small" height="32" />
             </span>
             <span className="logo-lg">
               <img src={zigFlyLogo} alt="Zigfly Logo" height="64" />
             </span>
-          </a>
-          <a href="/" className="logo logo-light" onClick={(e) => { e.preventDefault(); window.location.reload(); }}>
-            <span className="logo-sm">
-              <img src={faviIcon} alt="Zigfly Logo Small" height="32" />
-            </span>
-            <span className="logo-lg">
-              <img src={zigFlyLogo} alt="Zigfly Logo" height="64" />
-            </span>
-          </a>
-          <button type="button" className="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover" id="vertical-hover" aria-label="Toggle sidebar size">
-            <i className="ri-record-circle-line" aria-hidden="true"></i>
-          </button>
+          </Link>
         </div>
 
         <div id="scrollbar">
@@ -187,6 +185,7 @@ export default function Sidebar() {
                       href="#"
                       onClick={e => handleIconClick(e, main)}
                       aria-expanded={isOpen}
+                      title={main.screen_main_name}
                     >
                       {main.icon_name && <i className={main.icon_name}></i>}
                       <span>{main.screen_main_name}</span>
@@ -224,19 +223,12 @@ export default function Sidebar() {
       </div>
 
       <style>{`
-        /* Sidebar collapse width transition. MUST match the vendor rule
-           .main-content { transition: all .1s ease-out } — otherwise the sidebar and
-           the content beside it animate at different speeds and visibly tear/desync. */
-        .app-menu {
-          transition: width 0.1s ease-out;
-        }
-
         /* Accordion submenu open/close — grid-rows animates height without knowing the
            content height upfront (0fr → 1fr). */
         .menu-dropdown-grid {
           display: grid;
           grid-template-rows: 0fr;
-          transition: grid-template-rows 0.28s ease;
+          transition: grid-template-rows var(--anim-duration-normal) var(--anim-ease-out);
         }
         .menu-dropdown-grid.is-open {
           grid-template-rows: 1fr;
@@ -251,7 +243,7 @@ export default function Sidebar() {
 
         /* Smooth the vendor dropdown-arrow rotation to match the panel animation. */
         .menu-link:after {
-          transition: transform 0.25s ease;
+          transition: transform var(--anim-duration-normal) var(--anim-ease-out);
         }
 
         /* Center the favicon when sidebar is in sm (collapsed) mode */
