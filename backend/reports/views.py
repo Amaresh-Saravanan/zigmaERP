@@ -29,23 +29,28 @@ def measurable_report(request):
     """Replaces legacy measurable_report/crud.php: PitStatus (org_status='4',
     Measurement) LEFT JOIN Measurable on entry_date. Filters: from_date, to_date,
     location, pit_id."""
+    from datetime import date
+
     p = request.query_params
     from_date, to_date = p.get('from_date'), p.get('to_date')
     location, pit_id = p.get('location'), p.get('pit_id')
+
+    # Build DB filter for PitStatus — date range at query time
+    ps_filter = {'is_deleted': False, 'org_status': '4'}
+    if from_date:
+        ps_filter['entry_date__gte'] = date.fromisoformat(from_date)
+    if to_date:
+        ps_filter['entry_date__lte'] = date.fromisoformat(to_date)
 
     by_date = defaultdict(list)
     for m in Measurable.objects(is_deleted=False):
         by_date[m.entry_date].append(m)
 
     rows = []
-    for ps in PitStatus.objects(is_deleted=False, org_status='4').order_by('entry_date'):
-        d = ps.entry_date.isoformat() if ps.entry_date else ''
-        if from_date and d < from_date:
-            continue
-        if to_date and d > to_date:
-            continue
+    for ps in PitStatus.objects(**ps_filter).order_by('entry_date'):
         if pit_id and (not ps.pit or ps.pit.unique_id != pit_id):
             continue
+        d = ps.entry_date.isoformat() if ps.entry_date else ''
         # LEFT JOIN: emit one row per matching Measurable, or one null-filled row.
         for m in by_date.get(ps.entry_date, [None]):
             if location and (m is None or m.location != location):
@@ -69,9 +74,18 @@ def egg_process_report(request):
     """Replaces legacy egg_process_report/crud.php: EggProcess joined with
     StatusUpdate (latest hatching status) and PitStatus (baby larvae added).
     Filters: from_date, to_date, batch_id, supplier_name."""
+    from datetime import date, timedelta
+
     p = request.query_params
     from_date, to_date = p.get('from_date'), p.get('to_date')
     batch_id, supplier_name = p.get('batch_id'), p.get('supplier_name')
+
+    # Build DB filter for EggProcess — date range at query time
+    ep_filter = {'is_deleted': False}
+    if from_date:
+        ep_filter['entry_date__gte'] = date.fromisoformat(from_date)
+    if to_date:
+        ep_filter['entry_date__lte'] = date.fromisoformat(to_date)
 
     # ponytail: load all status updates once, index by batch unique_id
     status_by_batch = defaultdict(list)
@@ -86,13 +100,7 @@ def egg_process_report(request):
             pit_by_batch[ps.batch.unique_id].append(ps)
 
     rows = []
-    for ep in EggProcess.objects(is_deleted=False).order_by('-entry_date'):
-        d = ep.entry_date.isoformat() if ep.entry_date else ''
-        if from_date and d < from_date:
-            continue
-        if to_date and d > to_date:
-            continue
-
+    for ep in EggProcess.objects(**ep_filter).order_by('-entry_date'):
         batch_uid = ep.batch.unique_id if ep.batch else ''
         if batch_id and batch_uid != batch_id:
             continue
@@ -100,6 +108,8 @@ def egg_process_report(request):
         sup_name = ep.supplier.supplier_name if ep.supplier else ''
         if supplier_name and sup_name != supplier_name:
             continue
+
+        d = ep.entry_date.isoformat() if ep.entry_date else ''
 
         # Latest status update for this batch
         statuses = status_by_batch.get(batch_uid, [])
@@ -110,7 +120,6 @@ def egg_process_report(request):
         # End date = entry_date + cycle days
         end_date = ''
         if ep.entry_date and egg_cycle:
-            from datetime import timedelta
             end_date = (ep.entry_date + timedelta(days=egg_cycle)).isoformat()
 
         # Pit info where baby larvae were added from this batch
@@ -143,20 +152,24 @@ def egg_process_report(request):
 def pit_status_report(request):
     """Replaces legacy pit_status_report/crud.php: aggregates PitStatus records
     per pit+batch. Filters: from_date, to_date, pit_id, harvest_comp."""
+    from datetime import date
+
     p = request.query_params
     from_date, to_date = p.get('from_date'), p.get('to_date')
     pit_id, harvest_comp = p.get('pit_id'), p.get('harvest_comp')
 
-    all_ps = PitStatus.objects(is_deleted=False).order_by('entry_date')
+    # Build DB filter for PitStatus — date range at query time
+    ps_filter = {'is_deleted': False}
+    if from_date:
+        ps_filter['entry_date__gte'] = date.fromisoformat(from_date)
+    if to_date:
+        ps_filter['entry_date__lte'] = date.fromisoformat(to_date)
+
+    all_ps = PitStatus.objects(**ps_filter).order_by('entry_date')
 
     # Group by pit + form_batch_id prefix (PIT-<suffix>)
     batches = defaultdict(list)
     for ps in all_ps:
-        d = ps.entry_date.isoformat() if ps.entry_date else ''
-        if from_date and d < from_date:
-            continue
-        if to_date and d > to_date:
-            continue
         if pit_id and (not ps.pit or ps.pit.unique_id != pit_id):
             continue
         # Group key = pit unique_id + batch prefix
@@ -269,18 +282,25 @@ class RejectViewSet(MongoModelViewSet):
 @permission_classes([IsAuthenticated])
 def rejects_report(request):
     """Paginated rejects list with date filtering for the report page."""
+    from datetime import date
+
     p = request.query_params
     from_date, to_date = p.get('from_date'), p.get('to_date')
 
+    # Build DB filter for Reject — date range at query time
+    r_filter = {'is_deleted': False}
+    if from_date:
+        r_filter['date__gte'] = date.fromisoformat(from_date)
+    if to_date:
+        r_filter['date__lte'] = date.fromisoformat(to_date)
+
+    # ponytail: pre-fetch all images once, indexed by ticket_no (eliminates N+1)
+    img_tickets = set(RejectImage.objects(is_deleted=False).distinct('ticket_no'))
+
     rows = []
-    for r in Reject.objects(is_deleted=False).order_by('-date'):
+    for r in Reject.objects(**r_filter).order_by('-date'):
         d = r.date.isoformat() if r.date else ''
-        if from_date and d < from_date:
-            continue
-        if to_date and d > to_date:
-            continue
-        # Check if image uploaded for this ticket
-        has_image = RejectImage.objects(ticket_no=r.ticket_no, is_deleted=False).count() > 0
+        has_image = r.ticket_no in img_tickets
         rows.append({
             'ticket_no': r.ticket_no,
             'vehicle_no': r.vehicle_no,

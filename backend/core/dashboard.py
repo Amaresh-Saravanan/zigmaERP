@@ -47,14 +47,46 @@ def _kpi_from(pit_rows, egg_rows):
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def dashboard(request):
+    from datetime import timedelta
+
     month = (request.data.get('month') if request.method == 'POST' else request.query_params.get('month')) \
         or date.today().strftime('%Y-%m')
 
-    pit_all = list(PitStatus.objects(is_deleted=False))
-    egg_all = list(EggProcess.objects(is_deleted=False))
+    # Parse month into (year, month_no) for date range query
+    y, m = map(int, month.split('-'))
+    month_start = date(y, m, 1)
+    # Calculate first day of next month (or handle Dec→Jan edge)
+    if m == 12:
+        month_end = date(y + 1, 1, 1)
+    else:
+        month_end = date(y, m + 1, 1)
 
-    pit_month = [p for p in pit_all if _ym(p.entry_date) == month]
-    egg_month = [e for e in egg_all if _ym(e.entry_date) == month]
+    # ponytail: overall loads all records (inherent without aggregation pipeline).
+    # Upgrade path: use MongoDB aggregation for _kpi_from sums.
+    pit_all = list(PitStatus.objects(is_deleted=False).only(
+        'entry_date', 'pit', 'org_status', 'form_batch_id',
+        'feed_qty', 'larvae_qty', 'larvae_qty_in', 'qty_rejets', 'qty_manure_1', 'qty_manure_2'
+    ))
+    egg_all = list(EggProcess.objects(is_deleted=False).only(
+        'entry_date', 'tot_qty', 'tray_utilized'
+    ))
+
+    # Month-filtered rows: query at DB, not Python
+    pit_month = list(PitStatus.objects(
+        is_deleted=False,
+        entry_date__gte=month_start,
+        entry_date__lt=month_end
+    ).only(
+        'entry_date', 'pit', 'org_status', 'form_batch_id',
+        'feed_qty', 'larvae_qty', 'larvae_qty_in', 'qty_rejets', 'qty_manure_1', 'qty_manure_2'
+    ))
+    egg_month = list(EggProcess.objects(
+        is_deleted=False,
+        entry_date__gte=month_start,
+        entry_date__lt=month_end
+    ).only(
+        'entry_date', 'tot_qty', 'tray_utilized'
+    ))
 
     # ── pit_chart: per pit, most-recent batch → batch age + total feed ──
     # ponytail: batch age = days since first feed entry of the batch; skips the

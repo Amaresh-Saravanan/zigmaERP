@@ -8,7 +8,9 @@ from django.contrib.auth.hashers import make_password
 from rest_framework.test import APIClient
 
 from accounts.models import AuthToken, User, UserType
-from reports.models import DC, Logsheet, Measurable
+from inventory.models import Pit, Supplier, Unit, Item
+from process.models import EggProcess, PitStatus, MaterialReceived, StatusUpdate
+from reports.models import DC, Logsheet, Measurable, Reject, RejectImage
 
 
 @pytest.fixture(autouse=True)
@@ -22,6 +24,16 @@ def mongomock_connection():
     Measurable.drop_collection()
     Logsheet.drop_collection()
     DC.drop_collection()
+    Reject.drop_collection()
+    RejectImage.drop_collection()
+    PitStatus.drop_collection()
+    EggProcess.drop_collection()
+    MaterialReceived.drop_collection()
+    StatusUpdate.drop_collection()
+    Pit.drop_collection()
+    Supplier.drop_collection()
+    Unit.drop_collection()
+    Item.drop_collection()
     me.disconnect()
 
 
@@ -120,3 +132,53 @@ def test_dc_duplicate_dc_number_returns_400():
     client.post('/api/dc', payload, format='json')
     res = client.post('/api/dc', payload, format='json')
     assert res.status_code == 400
+
+
+# ── Performance tests: DB-level filtering (Agent 3) ──
+
+def test_pit_status_report_filters_by_date_at_db_level():
+    """Verify pit_status_report filters date range at DB, not Python."""
+    client = authed_client(make_user(screens='pit_status_report_view'))
+
+    pit = Pit(pit_name='Pit-01').save()
+
+    # Create PitStatus records for different dates
+    PitStatus(
+        entry_date='2026-06-01', pit=pit, org_status='1',
+        form_batch_id='PIT-01-001', feed_qty=10
+    ).save()
+    PitStatus(
+        entry_date='2026-07-15', pit=pit, org_status='1',
+        form_batch_id='PIT-01-002', feed_qty=20
+    ).save()
+    PitStatus(
+        entry_date='2026-08-01', pit=pit, org_status='1',
+        form_batch_id='PIT-01-003', feed_qty=30
+    ).save()
+
+    # Query with date range that should only match July record
+    res = client.get('/api/pit-status-report?from_date=2026-07-01&to_date=2026-07-31')
+    assert res.status_code == 200
+    assert res.data['count'] == 1
+    assert res.data['results'][0]['batch_id'] == 'PIT-01-002'
+
+
+def test_rejects_report_eliminates_n_plus_one():
+    """Verify rejects_report pre-fetches images, no N+1 query per ticket."""
+    client = authed_client(make_user(screens='rejects_report_view'))
+
+    # Create reject records
+    r1 = Reject(ticket_no='TK001', vehicle_no='VH001', vendor='Vendor A', date='2026-07-10').save()
+    r2 = Reject(ticket_no='TK002', vehicle_no='VH002', vendor='Vendor B', date='2026-07-11').save()
+
+    # Add image only for r1
+    RejectImage(ticket_no='TK001', image_path='/path/to/img1.jpg', upload_date='2026-07-10').save()
+
+    res = client.get('/api/rejects-report')
+    assert res.status_code == 200
+    assert res.data['count'] == 2
+
+    # Find results by ticket_no
+    results = {r['ticket_no']: r for r in res.data['results']}
+    assert results['TK001']['has_image'] is True
+    assert results['TK002']['has_image'] is False
