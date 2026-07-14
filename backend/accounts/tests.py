@@ -431,6 +431,41 @@ def test_user_inherits_screens_from_user_type_when_not_specified():
     assert new_user.main_screens == 'main1'
 
 
+def test_signup_endpoint_creates_pending_account(client):
+    res = client.post('/api/auth/signup', {
+        'user_name': 'newendpointuser',
+        'user_email': 'endpoint@example.com',
+        'password': 'Str0ng!Pass',
+        'confirm_password': 'Str0ng!Pass',
+        'first_name': 'End',
+        'last_name': 'Point',
+    }, format='json')
+
+    assert res.status_code == 201
+    assert res.data['status'] == 1
+    assert res.data['msg'] == 'signup_pending'
+    assert res.data['data']['user_name'] == 'newendpointuser'
+
+    created = User.objects.get(user_name='newendpointuser')
+    assert created.is_active is False
+    assert created.user_type.type_name == 'Pending Signup'
+
+
+def test_signup_endpoint_rejects_duplicate_username(client, active_user):
+    res = client.post('/api/auth/signup', {
+        'user_name': 'admin1',
+        'user_email': 'someoneelse@example.com',
+        'password': 'Str0ng!Pass',
+        'confirm_password': 'Str0ng!Pass',
+        'first_name': 'Some',
+        'last_name': 'One',
+    }, format='json')
+
+    assert res.status_code == 400
+    assert res.data['status'] == 0
+    assert res.data['error']
+
+
 def test_user_explicit_screens_override_user_type_defaults():
     manager = manager_user('user_create,user_type_create')
     client = authed_client(manager)

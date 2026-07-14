@@ -13,6 +13,7 @@ from accounts.views import (
     login_history_report,
     logout,
     me,
+    signup,
 )
 from core.dashboard import dashboard
 from core.views import MainScreenViewSet, ScreenViewSet, menu
@@ -91,6 +92,7 @@ def permission_catalog(request):
 urlpatterns = [
     path('api/health', health, name='health'),
     path('api/auth/login', login, name='login'),
+    path('api/auth/signup', signup, name='signup'),
     path('api/auth/logout', logout, name='logout'),
     path('api/auth/me', me, name='me'),
     path('api/menu', menu, name='menu'),

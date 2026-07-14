@@ -6,8 +6,10 @@ from rest_framework import status
 from collections import defaultdict
 from datetime import datetime
 
+from mongoengine.errors import NotUniqueError
+
 from accounts.models import AuthToken, LoginHistory, User, UserType
-from accounts.serializers import LoginSerializer, UserManageSerializer, UserSerializer, UserTypeManageSerializer
+from accounts.serializers import LoginSerializer, SignupSerializer, UserManageSerializer, UserSerializer, UserTypeManageSerializer
 from core.mongo_viewset import MongoModelViewSet
 
 
@@ -42,6 +44,48 @@ def login(request):
         },
         'error': '',
     }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def signup(request):
+    """
+    Request: { "user_name", "user_email", "password", "confirm_password", "first_name", "last_name" }
+    Response (success): { "status": 1, "msg": "signup_pending", "data": { "user_name": "..." } }
+    Response (fail): { "status": 0, "msg": "error", "data": None, "error": "..." }
+
+    New accounts start inactive under a zero-permission role; an admin must
+    activate and assign a real UserType via the existing User management
+    screen before the account can see any screens.
+    """
+    serializer = SignupSerializer(data=request.data)
+    if not serializer.is_valid():
+        errors = serializer.errors
+        first_error = next(iter(errors.values()))
+        message = first_error[0] if isinstance(first_error, list) else str(first_error)
+        return Response({
+            'status': 0,
+            'msg': 'error',
+            'data': None,
+            'error': str(message),
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        user = serializer.save()
+    except NotUniqueError:
+        return Response({
+            'status': 0,
+            'msg': 'error',
+            'data': None,
+            'error': 'This username is already taken.',
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response({
+        'status': 1,
+        'msg': 'signup_pending',
+        'data': {'user_name': user.user_name},
+        'error': '',
+    }, status=status.HTTP_201_CREATED)
 
 
 @api_view(['POST'])
