@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 
 from .models import DC, Logsheet, Measurable, Reject, RejectImage
@@ -18,6 +19,7 @@ class MeasurableSerializer(serializers.Serializer):
         for field in ('entry_date', 'location', 'temp', 'humi'):
             setattr(instance, field, validated_data[field])
         instance.remarks = validated_data.get('remarks', instance.remarks)
+        instance.updated_at = timezone.now()
         instance.save()
         return instance
 
@@ -33,6 +35,7 @@ class LogsheetSerializer(serializers.Serializer):
     def update(self, instance, validated_data):
         instance.entry_date = validated_data['entry_date']
         instance.remarks = validated_data.get('remarks', instance.remarks)
+        instance.updated_at = timezone.now()
         instance.save()
         return instance
 
@@ -81,6 +84,7 @@ class DCSerializer(serializers.Serializer):
                 setattr(instance, field, validated_data[field])
         instance.items = items
         instance.grand_total = self._compute_grand_total(items, instance.tax_rate)
+        instance.updated_at = timezone.now()
         instance.save()
         return instance
 
@@ -106,6 +110,7 @@ class RejectSerializer(serializers.Serializer):
             if field in validated_data:
                 setattr(instance, field, validated_data[field])
         instance.net_weight = instance.loaded_weight - instance.empty_weight
+        instance.updated_at = timezone.now()
         instance.save()
         return instance
 
@@ -126,6 +131,7 @@ class RejectImageSerializer(serializers.Serializer):
         for field in ('ticket_no', 'image_path', 'upload_date', 'weigh_date', 'vehicle_no', 'net_weight'):
             if field in validated_data:
                 setattr(instance, field, validated_data[field])
+        instance.updated_at = timezone.now()
         instance.save()
         return instance
 

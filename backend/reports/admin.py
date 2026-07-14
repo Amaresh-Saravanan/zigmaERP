@@ -1,3 +1,1 @@
-from django.contrib import admin
-
-# Register your models here.
+# MongoEngine models not registered here — Django admin not used with MongoDB backend.
