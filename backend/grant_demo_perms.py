@@ -33,6 +33,8 @@ SCREENS = ','.join([
     'measurable_view,measurable_create,measurable_edit,measurable_delete',
     'logsheet_view,logsheet_create,logsheet_edit,logsheet_delete',
     'dc_view,dc_create,dc_edit,dc_delete',
+    'rejects_report_view,rejects_report_create,rejects_report_edit,rejects_report_delete',
+    'rejects_image_upload_view,rejects_image_upload_create,rejects_image_upload_edit,rejects_image_upload_delete',
 ])
 
 # Sidebar category ids (match DEMO_MENU in Sidebar.jsx).
