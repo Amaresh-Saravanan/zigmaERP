@@ -5,6 +5,12 @@ import djangoClient from '../../api/djangoClient';
 import zigFlyLogo from '../../assets/images/zig-fly-logo.png';
 import faviIcon from '../../assets/images/favi-icon.png';
 
+// startsWith alone matches on any prefix, not just a full path segment — e.g.
+// '/pit_status_report/list' also starts with '/pit_status', wrongly matching the
+// unrelated 'pit_status' folder too. Require an exact match or a '/' boundary after it.
+const matchesFolder = (pathname, folder) =>
+  pathname === `/${folder}` || pathname.startsWith(`/${folder}/`);
+
 // ponytail: static fallback shown when /api/menu is unavailable (backend offline / demo mode)
 // unique_ids here match db_setup/menu_setup.sql so permissions work when DB is live.
 // Grouping matches the official ZigmaERP sidebar spec (screen_name labels + section
@@ -60,7 +66,6 @@ const DEMO_MENU = [
       { unique_id: 'us_meas_rpt', screen_name: 'Measurable Report', folder_name: 'measurable_report' },
       { unique_id: 'us_rejects_rpt', screen_name: 'Rejects Report', folder_name: 'rejects_report' },
       { unique_id: 'us_login_history', screen_name: 'Login History', folder_name: 'login_history' },
-      { unique_id: 'us_logsheet', screen_name: 'Logsheet', folder_name: 'logsheet' },
       { unique_id: 'us_dc', screen_name: 'DC', folder_name: 'dc' },
     ]
   },
@@ -102,7 +107,7 @@ export default function Sidebar() {
   // Auto-open the section containing the current route (e.g. deep link, back/forward nav).
   useEffect(() => {
     const active = activeMenu.find(m =>
-      m.sub_screens?.some(s => location.pathname.startsWith(`/${s.folder_name}`))
+      m.sub_screens?.some(s => matchesFolder(location.pathname, s.folder_name))
     );
     if (active && active.unique_id !== openId) setOpenId(active.unique_id);
     // ponytail: paths outside any section (e.g. dashboard "/") leave openId as-is.
@@ -176,7 +181,7 @@ export default function Sidebar() {
               {activeMenu.map(main => {
                 const subs = visibleSubs(main);
                 const isOpen = openId === main.unique_id;
-                const isActive = subs.some(s => location.pathname.startsWith(`/${s.folder_name}`));
+                const isActive = subs.some(s => matchesFolder(location.pathname, s.folder_name));
 
                 return (
                   <li className="nav-item" key={main.unique_id}>
@@ -200,7 +205,7 @@ export default function Sidebar() {
                           <ul className="nav nav-sm flex-column">
                             {subs.map(sub => {
                               const path = `/${sub.folder_name}/list`;
-                              const isSubActive = location.pathname.startsWith(`/${sub.folder_name}`);
+                              const isSubActive = matchesFolder(location.pathname, sub.folder_name);
                               return (
                                 <li className={`nav-item ${isSubActive ? 'active' : ''}`} key={sub.unique_id}>
                                   <Link to={path} className={`nav-link ${isSubActive ? 'active' : ''}`}>
