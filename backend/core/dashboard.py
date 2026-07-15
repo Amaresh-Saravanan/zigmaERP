@@ -53,8 +53,14 @@ def dashboard(request):
         or date.today().strftime('%Y-%m')
 
     # Parse month into (year, month_no) for date range query
-    y, m = map(int, month.split('-'))
-    month_start = date(y, m, 1)
+    try:
+        y, m = map(int, month.split('-'))
+        month_start = date(y, m, 1)
+    except (ValueError, TypeError):
+        return Response(
+            {'status': 0, 'msg': 'validation_error', 'data': None, 'error': f"Invalid month: '{month}' is not a valid YYYY-MM value."},
+            status=400,
+        )
     # Calculate first day of next month (or handle Dec→Jan edge)
     if m == 12:
         month_end = date(y + 1, 1, 1)
