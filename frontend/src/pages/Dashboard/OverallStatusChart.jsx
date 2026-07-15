@@ -1,7 +1,19 @@
 import React from 'react';
 import Chart from 'react-apexcharts';
 import useTheme from '../../hooks/useTheme';
-import { getChartPalette, getChartColors } from '../../utils/chartTheme';
+import { getChartPalette, getChartColors, getChartAnimations } from '../../utils/chartTheme';
+
+// Metrics carry their own unit explicitly — no fragile "(mt)" string-splitting.
+const METRICS = [
+  { key: 'inward', label: 'Inward', unit: 'mt' },
+  { key: 'inward_rejects', label: 'Inward Rejects', unit: 'mt' },
+  { key: 'organic_waste', label: 'Organic Waste', unit: 'mt' },
+  { key: 'egg_purchasing', label: 'Egg Purchasing', unit: 'kg' },
+  { key: 'egg_hatching', label: 'Egg Hatching', unit: 'kg' },
+  { key: 'larvae_harvested', label: 'Larvae Harvested', unit: 'mt' },
+  { key: 'manure', label: 'Manure', unit: 'mt' },
+  { key: 'processing_rejects', label: 'Rejects', unit: 'mt' },
+];
 
 export default function OverallStatusChart({ data }) {
   const { theme } = useTheme();
@@ -10,32 +22,24 @@ export default function OverallStatusChart({ data }) {
 
   if (!data) return null;
 
-  const labels = [
-    'Inward (mt)',
-    'Inward Rejects (mt)',
-    'Organic Waste (mt)',
-    'Egg Purchasing (kg)',
-    'Egg Hatching (kg)',
-    'Larvae Harvested (mt)',
-    'Manure (mt)',
-    'Rejects (mt)'
-  ];
+  const labels = METRICS.map(m => `${m.label} (${m.unit})`);
+  const series = METRICS.map(m => data[m.key] || 0);
 
-  const series = [
-    data.inward || 0,
-    data.inward_rejects || 0,
-    data.organic_waste || 0,
-    data.egg_purchasing || 0,
-    data.egg_hatching || 0,
-    data.larvae_harvested || 0,
-    data.manure || 0,
-    data.processing_rejects || 0
-  ];
-
+  // mt and kg are different units of different materials — summing them into
+  // one "Total" is meaningless. Keep `total` for the empty-state check only;
+  // show per-unit subtotals in the donut center instead.
   const total = series.reduce((sum, v) => sum + v, 0);
+  const subtotals = METRICS.reduce((acc, m, i) => {
+    acc[m.unit] = (acc[m.unit] || 0) + series[i];
+    return acc;
+  }, {});
+  const subtotalText = Object.entries(subtotals)
+    .filter(([, v]) => v > 0)
+    .map(([unit, v]) => `${v.toFixed(1)} ${unit}`)
+    .join(' · ');
 
   const options = {
-    chart: { type: 'donut', foreColor: palette.foreColor, background: 'transparent' },
+    chart: { type: 'donut', foreColor: palette.foreColor, background: 'transparent', animations: getChartAnimations(), fontFamily: 'Segoe UI, system-ui, sans-serif' },
     theme: { mode: theme === 'dark' ? 'dark' : 'light' },
     labels: labels,
     colors: colors,
@@ -50,16 +54,17 @@ export default function OverallStatusChart({ data }) {
           labels: {
             show: true,
             total: {
-              show: true,
+              show: false,
               label: 'Total',
-              fontSize: '0.78rem',
-              color: theme === 'light' ? '#000000' : palette.foreColor,
-              formatter: () => total.toFixed(1),
+              fontSize: '0.7rem',
+              color: palette.foreColor,
+              // mt and kg can't be summed into one number — show per-unit subtotals instead.
+              formatter: () => subtotalText || '0',
             },
             value: {
               fontSize: '1.4rem',
               fontWeight: 700,
-              color: theme === 'light' ? '#000000' : palette.dataLabel,
+              color: palette.dataLabel,
             },
           },
         },
@@ -85,17 +90,18 @@ export default function OverallStatusChart({ data }) {
             </div>
             <div className="col-md-7">
               <div className="row row-cols-1 row-cols-sm-2 g-2">
-                {labels.map((label, i) => (
-                  <div className="col" key={i}>
+                {METRICS.map((m, i) => (
+                  <div className="col" key={m.key}>
                     <div
                       className="h-100 p-2 px-3 rounded d-flex align-items-center justify-content-between"
-                      style={{ background: 'var(--vz-secondary-bg)', borderLeft: `3px solid ${colors[i]}` }}
+                      style={{ background: 'var(--vz-secondary-bg)', border: '1px solid var(--vz-border-color)' }}
                     >
-                      <span style={{ fontSize: '0.8rem', color: 'var(--vz-emphasis-color)' }}>
-                        {label.split(' (')[0]}
+                      <span className="d-flex align-items-center gap-2" style={{ fontSize: '0.8rem', color: 'var(--vz-emphasis-color)' }}>
+                        <span style={{ width: 8, height: 8, borderRadius: '50%', background: colors[i], flexShrink: 0 }}></span>
+                        {m.label}
                       </span>
-                      <span className="fw-semibold" style={{ fontSize: '0.8rem', color: colors[i] }}>
-                        {series[i]} {label.split(' ')[label.split(' ').length - 1]}
+                      <span className="fw-semibold" style={{ fontSize: '0.8rem', color: 'var(--vz-emphasis-color)' }}>
+                        {series[i]} {m.unit}
                       </span>
                     </div>
                   </div>

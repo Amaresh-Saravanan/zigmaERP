@@ -6,19 +6,38 @@ export default function MonthYearPicker({ value, onChange }) {
   const [isOpen, setIsOpen] = useState(false);
   const [year, setYear] = useState(() => parseInt(value?.split('-')[0]) || new Date().getFullYear());
   const ref = useRef(null);
+  const triggerRef = useRef(null);
+  const dropdownRef = useRef(null);
 
   const selectedMonth = value ? parseInt(value.split('-')[1]) - 1 : new Date().getMonth();
 
   useEffect(() => {
     if (!isOpen) return;
     const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setIsOpen(false); };
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        setIsOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
     document.addEventListener('mousedown', close);
-    return () => document.removeEventListener('mousedown', close);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isOpen]);
+
+  // Move focus into the dropdown when it opens so keyboard users land somewhere useful.
+  useEffect(() => {
+    if (isOpen) dropdownRef.current?.querySelector('button')?.focus();
   }, [isOpen]);
 
   const pick = (m) => {
     onChange(`${year}-${String(m + 1).padStart(2, '0')}`);
     setIsOpen(false);
+    triggerRef.current?.focus();
   };
 
   const pillStyle = {
@@ -38,18 +57,21 @@ export default function MonthYearPicker({ value, onChange }) {
   const monthBtn = (active) => ({
     padding: '10px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 500,
     fontSize: '0.82rem', transition: 'all 0.15s',
-    background: active ? '#25a96b' : 'transparent',
+    background: active ? 'var(--primary-green)' : 'transparent',
     color: active ? '#fff' : 'var(--vz-emphasis-color)',
   });
 
   return (
     <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
       <div
+        ref={triggerRef}
         style={pillStyle}
         onClick={() => setIsOpen(!isOpen)}
         role="button"
         tabIndex={0}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setIsOpen(!isOpen); }}
+        aria-haspopup="true"
+        aria-expanded={isOpen}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsOpen(!isOpen); } }}
       >
         <i className="ri-calendar-line" style={{ fontSize: '0.9rem', color: 'var(--vz-secondary-color)' }} />
         <span style={{ fontSize: '0.82rem', fontWeight: 500, color: 'var(--vz-emphasis-color)' }}>
@@ -59,15 +81,21 @@ export default function MonthYearPicker({ value, onChange }) {
       </div>
 
       {isOpen && (
-        <div style={dropdownStyle}>
+        <div ref={dropdownRef} style={dropdownStyle}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <button style={yearBtn} onClick={() => setYear(y => y - 1)}>&#9664;</button>
+            <button type="button" aria-label="Previous year" style={yearBtn} onClick={() => setYear(y => y - 1)}>&#9664;</button>
             <span style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--vz-emphasis-color)' }}>{year}</span>
-            <button style={yearBtn} onClick={() => setYear(y => y + 1)}>&#9654;</button>
+            <button type="button" aria-label="Next year" style={yearBtn} onClick={() => setYear(y => y + 1)}>&#9654;</button>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
             {MONTHS.map((name, i) => (
-              <button key={i} onClick={() => pick(i)} style={monthBtn(i === selectedMonth)}>
+              <button
+                key={i}
+                type="button"
+                onClick={() => pick(i)}
+                style={monthBtn(i === selectedMonth)}
+                aria-current={i === selectedMonth ? 'true' : undefined}
+              >
                 {name}
               </button>
             ))}

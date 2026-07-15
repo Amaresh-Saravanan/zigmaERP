@@ -1,7 +1,7 @@
 import React from 'react';
 import Chart from 'react-apexcharts';
 import useTheme from '../../hooks/useTheme';
-import { getChartPalette, getChartColors } from '../../utils/chartTheme';
+import { getChartPalette, getChartColors, getChartAnimations } from '../../utils/chartTheme';
 
 export default function PitStatusChart({ data }) {
   const { theme } = useTheme();
@@ -31,7 +31,7 @@ export default function PitStatusChart({ data }) {
       fontFamily: 'inherit',
       // Glanceable dashboard widget — the per-chart export toolbar just adds clutter.
       toolbar: { show: false },
-      animations: { easing: 'easeinout', speed: 500 }
+      animations: getChartAnimations(500)
     },
     theme: { mode: theme === 'dark' ? 'dark' : 'light' },
     grid: {

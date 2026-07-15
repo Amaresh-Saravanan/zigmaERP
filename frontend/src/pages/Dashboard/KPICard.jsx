@@ -1,32 +1,34 @@
 import React from 'react';
 import useCountUp from '../../hooks/useCountUp';
 
-// accent map — matches the icon coloring in Dashboard.jsx
+// Tiles are neutral by default — the One Signal Rule reserves green for
+// active/correct/primary (the bioconversion hero), not per-topic tinting.
+// Only the danger tile (rejects) keeps a semantic color, since coral is
+// reserved for errors/negative states, which "Processing Rejects" is.
 const ACCENT = {
-  'text-muted':    { bg: 'rgba(139,148,158,0.12)', color: '#8b949e', border: '#8b949e' },
-  'text-success':  { bg: 'rgba(37,169,107,0.12)',  color: '#25a96b', border: '#25a96b' },
-  'text-primary':  { bg: 'rgba(37,169,107,0.12)',  color: '#25a96b', border: '#25a96b' },
-  'text-info':     { bg: 'rgba(41,182,246,0.12)',  color: '#29b6f6', border: '#29b6f6' },
-  'text-warning':  { bg: 'rgba(247,184,75,0.12)',  color: '#f7b84b', border: '#f7b84b' },
-  'text-danger':   { bg: 'rgba(240,101,72,0.12)',  color: '#f06548', border: '#f06548' },
+  inward:      { bg: 'rgba(70,130,180,0.12)',  color: '#4682B4' },
+  'inward-rejects': { bg: 'rgba(204,85,0,0.12)',   color: '#CC5500' },
+  organic:     { bg: 'rgba(34,139,34,0.12)',   color: '#228B22' },
+  purchasing:  { bg: 'rgba(218,165,32,0.12)',  color: '#DAA520' },
+  hatching:    { bg: 'rgba(255,191,0,0.12)',   color: '#FFBF00' },
+  larvae:      { bg: 'rgba(0,128,128,0.12)',   color: '#008080' },
+  manure:      { bg: 'rgba(128,128,0,0.12)',   color: '#808000' },
+  rejects:     { bg: 'rgba(220,20,60,0.12)',   color: '#DC143C' },
 };
+const NEUTRAL_ACCENT = { bg: 'var(--vz-tertiary-bg, rgba(139,148,158,0.12))', color: 'var(--vz-secondary-color)' };
 
-export default function KPICard({ title, value, unit, icon, colorClass, onClick }) {
-  const accent = ACCENT[colorClass] ?? ACCENT['text-muted'];
+export default function KPICard({ title, value, unit, icon, colorClass }) {
+  const accent = ACCENT[colorClass] ?? NEUTRAL_ACCENT;
   const animatedValue = useCountUp(value || 0, 1500);
 
   // Format value to 1 decimal place if it's not an integer
-  const displayValue = Number.isInteger(parseFloat(value)) 
-    ? Math.round(animatedValue) 
+  const displayValue = Number.isInteger(parseFloat(value))
+    ? Math.round(animatedValue)
     : animatedValue.toFixed(1);
 
   return (
     <div className="col">
-      <div
-        className="py-3 px-3 h-100 border-end kpi-card"
-        style={{ cursor: onClick ? 'pointer' : 'default', borderLeft: `3px solid ${accent.border}` }}
-        onClick={onClick}
-      >
+      <div className="py-3 px-3 h-100 border-end kpi-card">
         <div className="d-flex align-items-start justify-content-between mb-2">
           <h6
             className="text-uppercase mb-0 fw-semibold"

@@ -18,10 +18,15 @@ const PALETTES = {
   },
 };
 
-// Consistent color palettes aligned with Zigfly green theme
+// Sequential ramp off the brand green + neutrals — the One Signal Rule means
+// green stays the only saturated hue; other series step through neutral tints
+// rather than introducing a second accent (no purple, no second green).
+// ponytail: Apex needs literal color values, not CSS custom properties, so these
+// stay as hex — chartTheme.js is the sanctioned exception to the "consume var(),
+// don't hardcode hex" rule elsewhere in the dashboard.
 const COLOR_PALETTES = {
-  light: ['#25a96b', '#29b6f6', '#f7b84b', '#f06548', '#8b949e', '#e6edf3', '#66bb6a', '#ab47bc'],
-  dark: ['#25a96b', '#29b6f6', '#f7b84b', '#f06548', '#6e7681', '#c9d1d9', '#66bb6a', '#ab47bc'],
+  light: ['#3CB371', '#CC5500', '#50C878', '#DAA520', '#FFBF00', '#008080', '#808000', '#DC143C'],
+  dark:  ['#3CB371', '#CC5500', '#50C878', '#DAA520', '#FFBF00', '#008080', '#808000', '#DC143C'],
 };
 
 export function getChartPalette(mode) {
@@ -32,6 +37,20 @@ export function getChartColors(mode) {
   return COLOR_PALETTES[mode === 'dark' ? 'dark' : 'light'];
 }
 
+// Respect OS-level reduced-motion preference for chart transitions/animations.
+export function prefersReducedMotion() {
+  return typeof window !== 'undefined'
+    && window.matchMedia
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+// Chart-level animation config — spread into `chart: {...}` on every chart.
+export function getChartAnimations(speed = 500) {
+  return prefersReducedMotion()
+    ? { enabled: false }
+    : { enabled: true, easing: 'easeinout', speed };
+}
+
 /**
  * Base option fragment shared by all charts. Merge first, then layer
  * chart-specific options on top.
@@ -39,7 +58,7 @@ export function getChartColors(mode) {
 export function baseChartOptions(mode) {
   const p = getChartPalette(mode);
   return {
-    chart: { foreColor: p.foreColor },
+    chart: { foreColor: p.foreColor, animations: getChartAnimations() },
     theme: { mode: mode === 'dark' ? 'dark' : 'light' },
     grid: { borderColor: p.gridBorder },
     tooltip: { theme: p.tooltip },

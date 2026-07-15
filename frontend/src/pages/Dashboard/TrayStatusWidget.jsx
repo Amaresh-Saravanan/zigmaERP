@@ -1,7 +1,7 @@
 import React from 'react';
 
 // Age gradient: fresh (green) → aging (amber) → stale (red) — reads as urgency at a glance
-const AGE_COLORS = ['#25a96b', '#25a96b', '#f7b84b', '#f7b84b', '#f06548', '#e5484d'];
+const AGE_COLORS = ['var(--primary-green)', 'var(--primary-green)', '#f7b84b', '#f7b84b', '#f06548', '#e5484d'];
 
 export default function TrayStatusWidget({ data, unutilizedTrays }) {
   const getDayItems = () => {
@@ -24,16 +24,6 @@ export default function TrayStatusWidget({ data, unutilizedTrays }) {
     <div className="card card-height-100">
       <div className="card-header align-items-center d-flex">
         <h4 className="card-title mb-0 flex-grow-1">Age Wise Tray Status</h4>
-        <span
-          className="d-inline-flex align-items-center gap-1"
-          style={{
-            fontSize: '0.65rem', fontFamily: "'IBM Plex Mono', monospace",
-            letterSpacing: '0.08em', color: 'var(--vz-secondary-color)',
-          }}
-        >
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#25a96b', boxShadow: '0 0 0 3px rgba(37,169,107,0.18)' }}></span>
-          LIVE
-        </span>
       </div>
       <div className="card-body">
         <ul className="list-unstyled mb-3">
@@ -62,7 +52,7 @@ export default function TrayStatusWidget({ data, unutilizedTrays }) {
               </span>
               <span
                 className="fw-bold"
-                style={{ fontSize: '1rem', fontFamily: "'IBM Plex Mono', monospace", color: 'var(--vz-emphasis-color)' }}
+                style={{ fontSize: '1rem', fontVariantNumeric: 'tabular-nums', color: 'var(--vz-emphasis-color)' }}
               >
                 {row.value}
               </span>
@@ -83,7 +73,7 @@ export default function TrayStatusWidget({ data, unutilizedTrays }) {
             </div>
             <div
               className="fw-bold"
-              style={{ fontSize: '2.2rem', lineHeight: 1, fontFamily: "'IBM Plex Mono', monospace", color: '#25a96b', textShadow: '0 0 16px rgba(37,169,107,0.4)' }}
+              style={{ fontSize: '2.2rem', lineHeight: 1, fontVariantNumeric: 'tabular-nums', color: 'var(--primary-green)' }}
             >
               {unutilizedTrays || 0}
             </div>
