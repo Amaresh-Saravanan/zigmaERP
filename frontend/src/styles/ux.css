@@ -47,7 +47,7 @@
   border-color: var(--primary-green);
   color: #fff;
   white-space: nowrap;
-  transition: background 0.2s ease-out, box-shadow 0.2s ease-out, transform 0.2s ease-out;
+  transition: background var(--anim-duration-normal) var(--anim-ease-out), box-shadow var(--anim-duration-normal) var(--anim-ease-out), transform var(--anim-duration-normal) var(--anim-ease-out);
   min-height: 44px;
   align-items: center;
   justify-content: center;
@@ -99,7 +99,7 @@
   font-size: 0.8rem;
   height: 34px;
   border-color: var(--vz-border-color);
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color var(--anim-duration-fast) var(--anim-ease-out), box-shadow var(--anim-duration-fast) var(--anim-ease-out);
 }
 
 .card-header .form-control-sm:focus,
@@ -247,7 +247,7 @@ input[type='file'].form-control::-webkit-file-upload-button {
   font-weight: 500;
   cursor: pointer;
   margin-right: 8px;
-  transition: background 0.15s;
+  transition: background var(--anim-duration-fast) var(--anim-ease-out);
 }
 
 input[type='file'].form-control::-webkit-file-upload-button:hover {
@@ -360,7 +360,7 @@ input[type='month'].form-control {
   display: flex;
   align-items: center;
   gap: 4px;
-  transition: color 0.15s;
+  transition: color var(--anim-duration-fast) var(--anim-ease-out);
 }
 
 .breadcrumb-trail a:hover {
@@ -475,7 +475,7 @@ input[type='month'].form-control {
   height: 5px;
   border-radius: 50%;
   background: var(--vz-border-color);
-  transition: background-color 0.15s ease-out;
+  transition: background-color var(--anim-duration-fast) var(--anim-ease-out);
 }
 
 [data-bs-theme='dark'] .navbar-menu .nav-sm .nav-link::before {
@@ -536,38 +536,51 @@ input[type='month'].form-control {
   transition: margin-left var(--anim-duration-normal) var(--anim-ease-out);
 }
 
-/* Header hamburger open/close animation (moved from darkmode.css — not theme-specific) */
+/* Header hamburger open/close animation — legacy 3-bar style */
 .hamburger-icon {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 3px;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 14px;
+  position: relative;
   cursor: pointer;
+  display: inline-block;
 }
 
 .hamburger-icon span {
+  background-color: var(--vz-header-item-color, #c9d1d9);
+  position: absolute;
+  border-radius: 2px;
+  transition: .3s cubic-bezier(.8, .5, .2, 1.4);
+  width: 100%;
+  height: 2px;
   display: block;
-  width: 18px;
-  height: 2.5px;
-  background: var(--vz-header-item-color, #c9d1d9);
-  border-radius: 1.5px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  transform-origin: center;
+  left: 0;
 }
 
+.hamburger-icon span:nth-child(1) { top: 0; width: 80%; }
+.hamburger-icon span:nth-child(2) { top: 6px; }
+.hamburger-icon span:nth-child(3) { bottom: 0; width: 60%; }
+
+.vertical-menu-btn:hover .hamburger-icon:not(.open) span:nth-child(1) { top: -1px; }
+.vertical-menu-btn:hover .hamburger-icon:not(.open) span:nth-child(3) { bottom: -1px; }
+
 /* Open state → X */
-.hamburger-icon[data-open='true'] span:nth-child(1) {
-  transform: translateY(8px) rotate(45deg);
+.hamburger-icon.open {
+  transform: rotate(-90deg);
 }
-.hamburger-icon[data-open='true'] span:nth-child(2) {
-  opacity: 0;
-  width: 0;
+.hamburger-icon.open span:nth-child(1) {
+  left: 1px; top: 5px; width: 20px;
+  transform: rotate(90deg);
+  transition-delay: 150ms;
 }
-.hamburger-icon[data-open='true'] span:nth-child(3) {
-  transform: translateY(-8px) rotate(-45deg);
+.hamburger-icon.open span:nth-child(2) {
+  left: 3px; top: 13px; width: 10px;
+  transform: rotate(45deg);
+  transition-delay: 50ms;
+}
+.hamburger-icon.open span:nth-child(3) {
+  left: 9px; top: 13px; width: 10px;
+  transform: rotate(-45deg);
+  transition-delay: .1s;
 }
 
 /* ── 13. Responsive tweaks ── */
@@ -635,7 +648,8 @@ select:-moz-focusring {
 }
 
 .pipeline-stage {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
   font-size: 0.65rem;
   font-weight: 500;
   letter-spacing: 0.04em;
@@ -691,12 +705,13 @@ select:-moz-focusring {
   color: var(--vz-secondary-color);
   font-size: 0.72rem;
   font-weight: 600;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: all 0.2s ease;
+  transition: all var(--anim-duration-normal) var(--anim-ease-out);
 }
 
 .form-step__label {
@@ -704,7 +719,7 @@ select:-moz-focusring {
   font-weight: 500;
   color: var(--vz-secondary-color);
   white-space: nowrap;
-  transition: color 0.2s;
+  transition: color var(--anim-duration-normal) var(--anim-ease-out);
 }
 
 .form-step__connector {
@@ -713,7 +728,7 @@ select:-moz-focusring {
   background: var(--vz-border-color);
   margin: 0 8px;
   min-width: 24px;
-  transition: background 0.3s ease;
+  transition: background var(--anim-duration-slow) var(--anim-ease-out);
 }
 
 .form-step__connector--done {
@@ -895,7 +910,8 @@ select:-moz-focusring {
 }
 
 .lh-session__time-val {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
   font-size: 0.8rem;
   color: var(--vz-emphasis-color);
 }
@@ -917,7 +933,8 @@ select:-moz-focusring {
 }
 
 .lh-session__worked strong {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
   color: var(--primary-green);
   font-size: 0.78rem;
 }
@@ -940,63 +957,43 @@ select:-moz-focusring {
 }
 
 .lh-total-bar__value {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
   font-size: 1rem;
   font-weight: 700;
   color: var(--primary-green);
 }
 
-/* ── 17. Smooth page load ── */
+/* ── 16a. LoginHistory — print layout ── */
 
-.card {
-  animation: cardFadeIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+@media print {
+  .lh-timeline::before { display: none; }
+  .lh-session { padding-left: 0; border-bottom: 1px solid #ddd; }
+  .lh-session__dot { display: none; }
+  .lh-session__worked strong { color: #000; }
+  .lh-total-bar { background: #f5f5f5; border-color: #ddd; }
+  .lh-total-bar__value { color: #000; }
+  .lh-user-strip { background: #f5f5f5; border-color: #ddd; }
+  .card { border: none !important; box-shadow: none !important; }
+  .btn, .no-print { display: none !important; }
 }
 
-@keyframes cardFadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* Stagger cards within a row so the page cascades in instead of popping at once */
-.row > [class*='col'] .card:nth-child(1),
-.row > [class*='col']:nth-child(1) .card { animation-delay: 0ms; }
-.row > [class*='col']:nth-child(2) .card { animation-delay: 40ms; }
-.row > [class*='col']:nth-child(3) .card { animation-delay: 80ms; }
-.row > [class*='col']:nth-child(4) .card { animation-delay: 120ms; }
-.row > [class*='col']:nth-child(5) .card { animation-delay: 160ms; }
-.row > [class*='col']:nth-child(6) .card { animation-delay: 200ms; }
-
-/* Subtle hover lift — professional, not bouncy */
-.card {
-  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
-}
-.card.card-hover-lift:hover,
-a .card:hover,
-[role='button'] .card:hover,
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-[data-bs-theme='dark'] .card.card-hover-lift:hover,
-[data-bs-theme='dark'] a .card:hover,
-[data-bs-theme='dark'] [role='button'] .card:hover,
-[data-bs-theme='dark'] .card:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-}
+/* ── 17. Smooth page load ──
+   Card entrance + hover now live solely in styles/animations.css
+   (cardEntrance with --index stagger — Dashboard feeds --index).
+   The competing cardFadeIn/nth-child stagger and the cast-shadow
+   hover-lift block that lived here were removed as duplicates. */
 
 /* KPI / stat tiles — quick fade-in without the translateY jump (they're small) */
 .kpi-card {
-  animation: fadeIn 0.25s ease both;
+  animation: fadeIn var(--anim-duration-normal) var(--anim-ease-out) both;
 }
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
 
-/* Button press feedback — crisp, no bounce */
-.btn {
-  transition: transform 0.12s ease, background-color 0.15s ease, box-shadow 0.15s ease;
-}
+/* Button press feedback — crisp, no bounce (transition itself owned by animations.css .btn) */
 .btn:active {
   transform: scale(0.97);
 }
@@ -1117,16 +1114,14 @@ a:focus-visible {
 }
 
 /* ── 20. Reduced motion — all animations ── */
+/* Universal prefers-reduced-motion rule consolidated in styles/animations.css
+   (section 9). Selector-specific overrides that rule doesn't reach (animation
+   itself, not just duration) stay here. */
 @media (prefers-reduced-motion: reduce) {
-  .card { animation: none; }
   .kpi-card { animation: none; }
   .lh-session__dot { animation: none; }
   .pipeline-dot { animation: none; }
-  .card.card-hover-lift:hover,
-  a .card:hover,
-  [role='button'] .card:hover { transform: none; }
   .btn:active { transform: none; }
-  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
 
 /* ── 21. Static (fixed) sidebar — no SimpleBar JS is loaded, so Velzon's

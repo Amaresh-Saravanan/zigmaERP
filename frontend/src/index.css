@@ -74,8 +74,12 @@
   --transition-slow: 0.25s ease;
   --transition-slowest: 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 
-  --anim-duration-fast: 0.15s;
-  --anim-ease-out: ease;
+  --anim-duration-fast: 150ms;
+  --anim-duration-normal: 250ms;
+  --anim-duration-slow: 400ms;
+  --anim-ease-out: cubic-bezier(0.25, 1, 0.5, 1);
+  --anim-ease-out-snappy: cubic-bezier(0.22, 1, 0.36, 1);
+  --anim-ease-out-sharp: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* ── Focus & Interaction ── */
   --focus-outline-width: 2px;
@@ -96,28 +100,6 @@ body {
   margin: 0;
   font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
 }
-
-/* Login Page CSS Overrides to match PHP Reference (light mode) */
-.auth-page-content .card.card-bg-fill {
-  background-color: #ffffff !important;
-  border: 1px solid rgba(0, 0, 0, 0.125) !important;
-  box-shadow: 0 4px 24px 0 rgba(15, 34, 58, 0.12) !important;
-}
-
-.auth-page-content h5.text-primary {
-  color: #405189 !important;
-}
-
-.auth-page-content p.text-muted {
-  color: #878a99 !important;
-}
-
-.auth-page-content label.form-label {
-  color: #343a40 !important;
-  font-weight: 500;
-}
-
-/* Dark mode login overrides live in darkmode.css */
 
 /* Force apexcharts donut hover value to be black in light mode */
 [data-theme-mode="light"] .apexcharts-datalabel-value,

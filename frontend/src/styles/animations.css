@@ -4,15 +4,7 @@
    Respects prefers-reduced-motion for accessibility.
    ==================================================================== */
 
-/* ── Timing & Easing Tokens ── */
-:root {
-  --anim-duration-fast: 150ms;
-  --anim-duration-normal: 200ms;
-  --anim-duration-slow: 300ms;
-  --anim-ease-out: cubic-bezier(0.25, 1, 0.5, 1);
-  --anim-ease-out-snappy: cubic-bezier(0.22, 1, 0.36, 1);
-  --anim-ease-out-sharp: cubic-bezier(0.16, 1, 0.3, 1);
-}
+/* Timing & Easing Tokens — single source of truth lives in index.css :root */
 
 /* ────────────────────────────────────────────────────────────────
    1. FORM INTERACTIONS
@@ -42,7 +34,7 @@
   transition: border-color var(--anim-duration-fast) var(--anim-ease-out),
               background-color var(--anim-duration-fast) var(--anim-ease-out),
               box-shadow var(--anim-duration-fast) var(--anim-ease-out),
-              all 0.25s ease-out;
+              all var(--anim-duration-normal) var(--anim-ease-out);
 }
 
 .form-check-input:checked {
@@ -91,19 +83,19 @@
 
 /* All buttons — consistent smooth transitions */
 .btn {
-  transition: background-color 0.2s ease-out,
-              border-color 0.2s ease-out,
-              box-shadow 0.2s ease-out,
-              transform 0.2s ease-out,
-              color 0.2s ease-out;
+  transition: background-color var(--anim-duration-normal) var(--anim-ease-out),
+              border-color var(--anim-duration-normal) var(--anim-ease-out),
+              box-shadow var(--anim-duration-normal) var(--anim-ease-out),
+              transform var(--anim-duration-normal) var(--anim-ease-out),
+              color var(--anim-duration-normal) var(--anim-ease-out);
 }
 
 /* Primary button hover */
 .btn-primary {
-  transition: background-color 0.2s ease-out,
-              border-color 0.2s ease-out,
-              box-shadow 0.2s ease-out,
-              transform 0.2s ease-out;
+  transition: background-color var(--anim-duration-normal) var(--anim-ease-out),
+              border-color var(--anim-duration-normal) var(--anim-ease-out),
+              box-shadow var(--anim-duration-normal) var(--anim-ease-out),
+              transform var(--anim-duration-normal) var(--anim-ease-out);
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -219,7 +211,8 @@ tbody tr:hover {
 }
 
 .badge:hover {
-  box-shadow: 0 0 0 3px rgba(37, 169, 107, 0.2);
+  transform: scale(1.05);
+  box-shadow: 0 0 0 3px rgba(37, 169, 107, 0.15);
 }
 
 /* Status indicator pulse — keyframes defined once in section 11 */
@@ -385,6 +378,10 @@ tbody tr:hover {
     opacity: 1;
   }
 
+  .card:hover {
+    transform: none;
+  }
+
   .nav-link {
     transition: none;
   }
@@ -428,7 +425,7 @@ tbody tr:hover {
 
 /* Page transition fade-in (Phase 5) */
 .page-transition {
-  animation: pageTransitionFade 0.15s ease-out;
+  animation: pageTransitionFade var(--anim-duration-fast) var(--anim-ease-out);
 }
 
 @keyframes pageTransitionFade {
@@ -438,7 +435,7 @@ tbody tr:hover {
 
 /* Card stagger animation on load (Phase 5) */
 .card-stagger {
-  animation: cardStaggerLoad 0.3s ease-out backwards;
+  animation: cardStaggerLoad var(--anim-duration-slow) var(--anim-ease-out) backwards;
 }
 
 @keyframes cardStaggerLoad {
@@ -510,18 +507,10 @@ tbody tr:hover {
 }
 
 /* ────────────────────────────────────────────────────────────────
-   11. BADGE & STATUS ANIMATIONS (Phase 5)
+   11. STATUS ANIMATIONS (Phase 5)
    ──────────────────────────────────────────────────────────────── */
 
-/* Badge hover animation */
-.badge {
-  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, color 0.2s ease-out;
-}
-
-.badge:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 0 3px rgba(37, 169, 107, 0.15);
-}
+/* Badge hover/transition rules consolidated into section 4 above. */
 
 /* Status indicator subtle pulse (Phase 5) */
 .status-indicator {
@@ -541,7 +530,7 @@ tbody tr:hover {
 
 /* Success checkmark animation — smooth scale-in (Phase 5) */
 .success-checkmark {
-  animation: checkmarkScaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: checkmarkScaleIn var(--anim-duration-slow) var(--anim-ease-out-sharp);
 }
 
 @keyframes checkmarkScaleIn {
@@ -557,7 +546,7 @@ tbody tr:hover {
 
 /* Error shake animation (Phase 5) */
 .error-shake {
-  animation: errorShake 0.4s ease-out;
+  animation: errorShake var(--anim-duration-slow) var(--anim-ease-out);
 }
 
 @keyframes errorShake {
@@ -572,7 +561,7 @@ tbody tr:hover {
 
 /* Tooltip fade in */
 .tooltip-fade {
-  animation: tooltipFadeIn 0.15s ease-out;
+  animation: tooltipFadeIn var(--anim-duration-fast) var(--anim-ease-out);
 }
 
 @keyframes tooltipFadeIn {
@@ -586,7 +575,7 @@ tbody tr:hover {
 
 /* Help text slide up (Phase 5) */
 .help-text-slide {
-  animation: helpTextSlideUp 0.2s ease-out;
+  animation: helpTextSlideUp var(--anim-duration-normal) var(--anim-ease-out);
 }
 
 @keyframes helpTextSlideUp {

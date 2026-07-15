@@ -131,8 +131,8 @@ body,
 .form-control,
 .form-select,
 .btn-topbar {
-  transition: background-color 0.2s ease, border-color 0.2s ease,
-    color 0.2s ease, box-shadow 0.2s ease;
+  transition: background-color var(--anim-duration-normal) var(--anim-ease-out), border-color var(--anim-duration-normal) var(--anim-ease-out),
+    color var(--anim-duration-normal) var(--anim-ease-out), box-shadow var(--anim-duration-normal) var(--anim-ease-out);
 }
 
 /* ------------------------------------------------------------------
@@ -362,7 +362,7 @@ body,
   --vz-btn-active-bg: var(--primary-green-darker);
   --vz-btn-color: #ffffff;
   --vz-btn-hover-color: #ffffff;
-  transition: background 0.2s ease-out, border-color 0.2s ease-out, box-shadow 0.2s ease-out, transform 0.2s ease-out;
+  transition: background var(--anim-duration-normal) var(--anim-ease-out), border-color var(--anim-duration-normal) var(--anim-ease-out), box-shadow var(--anim-duration-normal) var(--anim-ease-out), transform var(--anim-duration-normal) var(--anim-ease-out);
 }
 
 [data-bs-theme='dark'] .btn-primary:hover:not(:disabled) {
@@ -645,7 +645,7 @@ body,
 [data-bs-theme='dark'] .btn-topbar,
 [data-bs-theme='dark'] .btn-ghost-secondary {
   border-radius: 6px;
-  transition: all 0.2s ease;
+  transition: all var(--anim-duration-normal) var(--anim-ease-out);
   color: var(--vz-header-item-sub-color);
 }
 
@@ -670,7 +670,7 @@ body,
 /* Avatar initials badge — subtle glow */
 .avatar-initials {
   box-shadow: 0 0 0 1px rgba(37, 169, 107, 0.2), 0 0 8px rgba(37, 169, 107, 0.08) !important;
-  transition: all 0.2s ease;
+  transition: all var(--anim-duration-normal) var(--anim-ease-out);
 }
 
 .topbar-user:hover .avatar-initials {
@@ -693,7 +693,7 @@ body,
   color: var(--vz-body-color);
   font-size: 0.85rem;
   height: 36px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color var(--anim-duration-normal) var(--anim-ease-out), box-shadow var(--anim-duration-normal) var(--anim-ease-out);
 }
 
 .search-bar .form-control:focus {

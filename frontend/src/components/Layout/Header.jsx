@@ -70,7 +70,7 @@ export default function Header() {
               aria-label={sidebarOpen ? 'Close navigation' : 'Open navigation'}
               aria-expanded={sidebarOpen}
             >
-              <span className="hamburger-icon" data-open={sidebarOpen}>
+              <span className={`hamburger-icon${sidebarOpen ? ' open' : ''}`}>
                 <span></span>
                 <span></span>
                 <span></span>
@@ -131,7 +131,8 @@ export default function Header() {
                     border: '1.5px solid rgba(37,169,107,0.4)',
                     color: '#25a96b',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontFamily: 'inherit',
+                    fontVariantNumeric: 'tabular-nums',
                     fontSize: '0.75rem', fontWeight: 700,
                     flexShrink: 0,
                   }}
