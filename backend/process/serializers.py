@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from accounts.models import User
+from core.utils import next_entry_no
 from inventory.models import Item, Pit, Supplier, Tray
 from inventory.serializers import UnitRefSerializer
 from process.models import (
@@ -99,13 +100,7 @@ class MaterialReceivedSerializer(serializers.Serializer):
     def _next_batch_id(cls, item, supplier):
         prefix = f'{cls._batch_prefix(item)}-{(supplier.label or "GEN").upper()}-'
         last = MaterialReceived.objects.filter(batch_id__startswith=prefix).order_by('-created_at').first()
-        last_num = 0
-        if last:
-            try:
-                last_num = int(last.batch_id.rsplit('-', 1)[-1])
-            except ValueError:
-                pass
-        return f'{prefix}{last_num + 1:05d}'
+        return next_entry_no(prefix, last.batch_id if last else None)
 
     def create(self, validated_data):
         return MaterialReceived(
@@ -286,13 +281,7 @@ class EggProcessSerializer(serializers.Serializer):
     @staticmethod
     def _next_entry_no():
         last = EggProcess.objects.order_by('-created_at').first()
-        last_num = 0
-        if last and last.entry_no:
-            try:
-                last_num = int(last.entry_no.rsplit('-', 1)[-1])
-            except ValueError:
-                pass
-        return f'EPC-{last_num + 1:05d}'
+        return next_entry_no('EPC-', last.entry_no if last else None)
 
     def create(self, validated_data):
         addons_data = validated_data.pop('addons', [])
@@ -425,13 +414,7 @@ class PitStatusSerializer(serializers.Serializer):
         suffix = ''.join(c for c in pit.pit_name if c.isalnum())[-2:].upper() or 'PT'
         prefix = f'PIT-{suffix}-'
         last = PitStatus.objects.filter(form_batch_id__startswith=prefix).order_by('-created_at').first()
-        last_num = 0
-        if last:
-            try:
-                last_num = int(last.form_batch_id.rsplit('-', 1)[-1])
-            except ValueError:
-                pass
-        return f'{prefix}{last_num + 1:05d}'
+        return next_entry_no(prefix, last.form_batch_id if last else None)
 
     def create(self, validated_data):
         return PitStatus(
@@ -506,13 +489,7 @@ class FrpStatusUpdateSerializer(serializers.Serializer):
     def _next_entry_no():
         # order by -entry_no (fixed prefix + zero-padded => lexical == numeric); skip legacy docs with no entry_no
         last = FrpStatusUpdate.objects(entry_no__nin=[None, '']).order_by('-entry_no').first()
-        last_num = 0
-        if last and last.entry_no:
-            try:
-                last_num = int(last.entry_no.rsplit('-', 1)[-1])
-            except ValueError:
-                pass
-        return f'FRP-{last_num + 1:05d}'
+        return next_entry_no('FRP-', last.entry_no if last else None)
 
     def create(self, validated_data):
         return FrpStatusUpdate(entry_no=self._next_entry_no(), **validated_data).save()

@@ -6,17 +6,17 @@ def next_entry_no(prefix, last_raw_id=None, fallback_last_num=0):
     Generate the next zero-padded ID in the sequence.
 
     Args:
-        prefix: Base prefix (e.g. 'EPC', 'FRP', 'EGG-SUP-' with trailing hyphen).
+        prefix: Literal prefix including trailing hyphen (e.g. 'EPC-', 'FRP-', 'EGG-SUP-').
         last_raw_id: Last generated ID string (e.g. 'EPC-00005', 'PIT-PT-00001').
                      If None or empty, falls back to fallback_last_num.
         fallback_last_num: Numeric fallback if no last ID exists (default 0).
 
     Returns:
-        Formatted ID string with pattern '{prefix}-{next_num:05d}' (5 digits zero-padded).
+        Formatted ID string with pattern '{prefix}{next_num:05d}' (5 digits zero-padded).
 
     Example:
-        next_entry_no('EPC', 'EPC-00005') => 'EPC-00006'
-        next_entry_no('EPC', fallback_last_num=10) => 'EPC-00011'
+        next_entry_no('EPC-', 'EPC-00005') => 'EPC-00006'
+        next_entry_no('EPC-', fallback_last_num=10) => 'EPC-00011'
     """
     last_num = fallback_last_num
     if last_raw_id:
@@ -24,4 +24,12 @@ def next_entry_no(prefix, last_raw_id=None, fallback_last_num=0):
             last_num = int(last_raw_id.rsplit('-', 1)[-1])
         except (ValueError, IndexError):
             last_num = fallback_last_num
-    return f'{prefix}-{last_num + 1:05d}'
+    return f'{prefix}{last_num + 1:05d}'
+
+
+if __name__ == '__main__':
+    assert next_entry_no('EPC-', 'EPC-00005') == 'EPC-00006'
+    assert next_entry_no('PIT-PT-', 'PIT-PT-00001') == 'PIT-PT-00002'
+    assert next_entry_no('FRP-', None, fallback_last_num=3) == 'FRP-00004'
+    assert next_entry_no('EGG-SUP-', 'EGG-SUP-garbage') == 'EGG-SUP-00001'
+    print('ok')
