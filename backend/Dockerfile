@@ -5,7 +5,7 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DEBUG=False \
-    ALLOWED_HOSTS=zigmaerp.onrender.com \
+    ALLOWED_HOSTS=zigmaerp-1.onrender.com \
     CORS_ALLOWED_ORIGINS=https://zigma-erp-249p.vercel.app
 
 COPY requirements.txt .
