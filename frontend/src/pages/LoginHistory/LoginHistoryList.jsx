@@ -14,7 +14,7 @@ export default function LoginHistoryList() {
   useEffect(() => {
     djangoClient.get('/users', { params: { page_size: 100 } })
       .then(res => {
-        const users = res.data.results || [];
+        const users = res.data.data.results || [];
         setStaffOptions([{ value: '', label: 'All Staff' },
           ...users.map(u => ({ value: u.unique_id, label: u.user_name }))]);
       })
@@ -89,6 +89,7 @@ export default function LoginHistoryList() {
               columns={columns}
               extraParams={extraParams}
               showActiveFilter={false}
+              showExportButtons={true}
             />
           </div>
         </div>

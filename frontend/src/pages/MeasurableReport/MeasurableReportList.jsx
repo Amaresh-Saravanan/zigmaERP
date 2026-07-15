@@ -20,7 +20,7 @@ export default function MeasurableReportList() {
   useEffect(() => {
     djangoClient.get('/pits', { params: { page_size: 100 } })
       .then(res => {
-        const pits = res.data.results || [];
+        const pits = res.data.data.results || [];
         setPitOptions(pits.map(p => ({ value: p.unique_id, label: p.pit_name })));
       })
       .catch(err => console.error('Could not fetch pit options', err));
@@ -57,7 +57,7 @@ export default function MeasurableReportList() {
             </div>
 
             {/* Filters */}
-            <div className="row mt-2 g-2 align-items-end">
+            <div className="row mt-2 g-3 align-items-end">
               <div className="col-6 col-md-2">
                 <label className="form-label mb-1" style={{ fontSize: '0.72rem', color: 'var(--vz-secondary-color)' }}>From Date</label>
                 <DateInput name="from_date" className="form-control form-control-sm"
@@ -92,6 +92,9 @@ export default function MeasurableReportList() {
               columns={columns}
               extraParams={extraParams}
               showActiveFilter={false}
+              showExportButtons
+              exportTitle="Measurable Report"
+              exportFilename="measurable_report"
             />
           </div>
         </div>
