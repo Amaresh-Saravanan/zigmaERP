@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import djangoClient from '../../api/djangoClient';
 import DateInput from '../../components/DateInput';
 import DataTable from '../../components/DataTable';
@@ -12,6 +13,16 @@ const HARVEST_OPTIONS = [
   { value: 'completed', label: 'Completed' },
 ];
 
+const ORG_STATUS_OPTIONS = [
+  { value: '', label: 'All Types' },
+  { value: '1', label: 'Organic Waste Added' },
+  { value: '2', label: 'Baby Larvae Added' },
+  { value: '3', label: 'Aeration Process' },
+  { value: '4', label: 'Measurement' },
+  { value: '5', label: 'Harvesting' },
+  { value: '7', label: 'Tippi' },
+];
+
 const STATUS_BADGES = {
   completed: <span className="badge bg-success">Completed</span>,
   pending: <span className="badge bg-warning text-dark">Pending</span>,
@@ -19,11 +30,13 @@ const STATUS_BADGES = {
 
 // ponytail: rewired from PHP crud.php to Django REST endpoint
 export default function PitStatusReportList() {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState({
     from_date: FIRST_OF_MONTH,
     to_date: TODAY,
     pit_id: '',
     harvest_comp: '',
+    org_status: '',
   });
 
   const [pitOptions, setPitOptions] = useState([]);
@@ -31,7 +44,7 @@ export default function PitStatusReportList() {
   useEffect(() => {
     djangoClient.get('/pits', { params: { page_size: 100 } })
       .then(res => {
-        const pits = res.data.results || [];
+        const pits = res.data.data.results || [];
         setPitOptions([
           { value: '', label: 'All Pits' },
           ...pits.map(p => ({ value: p.unique_id, label: p.pit_name })),
@@ -45,40 +58,43 @@ export default function PitStatusReportList() {
     setFilters(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleExportExcel = async () => {
-    try {
-      const params = Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== ''));
-      const res = await djangoClient.get('/pit-status-report', {
-        params: { ...params, format: 'excel' },
-        responseType: 'blob',
-      });
-      // ponytail: trigger download from blob
-      const url = window.URL.createObjectURL(new Blob([res.data]));
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `pit_status_report_${filters.from_date}_${filters.to_date}.xlsx`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('Excel export error', err);
-      alert('Excel export not yet available');
-    }
+  const handleView = (batchId) => {
+    navigate(`/pit_status_report/print?batch_id=${encodeURIComponent(batchId)}`);
   };
 
   const columns = [
     { label: 'S.No', sno: true },
     { label: 'Pit Number', key: 'pit_name' },
     { label: 'Batch Id', key: 'batch_id' },
-    { label: 'Process Start / End Date', key: 'process_dates' },
-    { label: 'Baby Larvae Added', key: 'baby_larvae' },
-    { label: 'Feeding Qty (Tons)', key: 'feed_qty' },
-    { label: 'Tippi Qty (Kg)', key: 'tippi_qty' },
-    { label: 'Qty of Live Larvae (kg)', key: 'larvae_harvested' },
-    { label: 'Manure(-4mm/+4mm)/Rejects(Kg)', key: 'manure_rejects' },
+    { label: 'Start / End Date', key: 'process_dates' },
+    { label: 'Days', key: 'tot_days' },
+    { label: 'Egg Added (g)', key: 'egg_add' },
+    { label: 'Baby Larvae (kg)', key: 'larvae_added' },
+    { label: 'Feed (Tons)', key: 'feed_qty' },
+    { label: 'Tippi (Kg)', key: 'tippi_qty' },
+    { label: 'Live Larvae (Kg)', key: 'larvae_harvested' },
+    { label: '-4mm / +4mm / Rejects (Kg)', key: 'manure_rejects' },
+    { label: 'In Temp', key: 'in_temp_avg' },
+    { label: 'Out Temp', key: 'out_temp_avg' },
+    { label: 'In Humi', key: 'in_humi_avg' },
+    { label: 'Out Humi', key: 'out_humi_avg' },
     {
-      label: 'Harvest Status',
+      label: 'Harvest',
       key: 'harvest_status',
       render: (val) => STATUS_BADGES[val] || val,
+    },
+    {
+      label: 'View',
+      key: 'batch_id',
+      render: (val) => (
+        <button
+          className="btn btn-sm btn-outline-primary"
+          onClick={() => handleView(val)}
+          title="Print Report"
+        >
+          <i className="ri-printer-line"></i>
+        </button>
+      ),
     },
   ];
 
@@ -115,27 +131,23 @@ export default function PitStatusReportList() {
                   className="form-control form-control-sm"
                 />
               </div>
-              <div className="col-md-3">
+              <div className="col-md-2">
                 <label className="form-label mb-0" style={{fontSize: '12px'}}>Pit Number</label>
                 <select name="pit_id" className="form-select form-select-sm" value={filters.pit_id} onChange={handleFilterChange}>
                   {pitOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
               </div>
-              <div className="col-md-3">
+              <div className="col-md-2">
+                <label className="form-label mb-0" style={{fontSize: '12px'}}>Status Type</label>
+                <select name="org_status" className="form-select form-select-sm" value={filters.org_status} onChange={handleFilterChange}>
+                  {ORG_STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+              <div className="col-md-2">
                 <label className="form-label mb-0" style={{fontSize: '12px'}}>Harvest Status</label>
                 <select name="harvest_comp" className="form-select form-select-sm" value={filters.harvest_comp} onChange={handleFilterChange}>
                   {HARVEST_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
-              </div>
-              <div className="col-md-2 align-self-end text-end">
-                <button
-                  type="button"
-                  className="btn btn-success btn-sm waves-effect waves-light"
-                  onClick={handleExportExcel}
-                  title="Excel Export"
-                >
-                  <i className="ri-file-excel-2-line me-1"></i> Excel Export
-                </button>
               </div>
             </div>
           </div>
@@ -147,6 +159,9 @@ export default function PitStatusReportList() {
               columns={columns}
               extraParams={extraParams}
               showActiveFilter={false}
+              showExportButtons
+              exportTitle="Pit Status Report"
+              exportFilename="pit_status_report"
             />
           </div>
         </div>

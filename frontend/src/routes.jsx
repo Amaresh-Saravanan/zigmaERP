@@ -56,7 +56,10 @@ import LoginHistoryView from './pages/LoginHistory/LoginHistoryView';
 
 import EggProcessReportList from './pages/EggProcessReport/EggProcessReportList';
 import PitStatusReportList from './pages/PitStatusReport/PitStatusReportList';
+import PitStatusPrintView from './pages/PitStatusReport/PitStatusPrintView';
 import RejectsReportList from './pages/RejectsReport/RejectsReportList';
+import RejectsPrintDetail from './pages/RejectsReport/RejectsPrintDetail';
+import RejectsPrintOverall from './pages/RejectsReport/RejectsPrintOverall';
 import MainScreenList from './pages/MainScreen/MainScreenList';
 import MainScreenForm from './pages/MainScreen/MainScreenForm';
 import RejectsImageUploadList from './pages/RejectsImageUpload/RejectsImageUploadList';
@@ -126,7 +129,10 @@ const router = createBrowserRouter([
       { path: 'measurable_report/list', element: <MeasurableReportList /> },
       { path: 'egg_process_report/list', element: <EggProcessReportList /> },
       { path: 'pit_status_report/list', element: <PitStatusReportList /> },
+      { path: 'pit_status_report/print', element: <PitStatusPrintView /> },
       { path: 'rejects_report/list', element: <RejectsReportList /> },
+      { path: 'rejects_report/print', element: <RejectsPrintDetail /> },
+      { path: 'rejects_report/print_overall', element: <RejectsPrintOverall /> },
       { path: 'rejects_image_upload/list', element: <RejectsImageUploadList /> },
       { path: 'rejects_image_upload/form', element: <RejectsImageUploadForm /> },
       { path: 'main_screen/list', element: <MainScreenList /> },
