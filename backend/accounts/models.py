@@ -105,7 +105,7 @@ class LoginHistory(Document):
     sess_user_type = StringField(default='')  # user_type unique_id at login time
     entry_date = DateField(required=True)
     entry_time = StringField(required=True)   # 'HH:MM:SS'
-    log_type = IntField(required=True)        # 1 = login, 2 = logout
+    log_type = IntField(required=True)        # 1 = login, 2 = logout, 3 = session logout, 4 = tab/window closed
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
     updated_at = DateTimeField(default=timezone.now)

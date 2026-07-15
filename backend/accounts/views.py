@@ -91,7 +91,12 @@ def signup(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def logout(request):
-    LoginHistory.record(request.user, log_type=2)
+    """Logout with optional log_type: 2=explicit logout, 3=session logout, 4=tab/window closed."""
+    log_type = request.data.get('log_type', 2)
+    # Validate log_type
+    if log_type not in (2, 3, 4):
+        log_type = 2
+    LoginHistory.record(request.user, log_type=log_type)
     AuthToken.objects(user=request.user).delete()
     return Response({'status': 1, 'msg': 'success_logout', 'data': None, 'error': ''})
 
@@ -121,9 +126,10 @@ def _type_name(uid):
 @permission_classes([IsAuthenticated])
 def login_history_report(request):
     """Replaces legacy login_history/crud.php: one row per user+date with first
-    login, last logout, worked hours. Filters: from_date, to_date, staff_name."""
+    login, last logout, worked hours. Filters: from_date, to_date, staff_name, search."""
     p = request.query_params
     from_date, to_date, staff = p.get('from_date'), p.get('to_date'), p.get('staff_name')
+    search_term = p.get('search', '').strip()
 
     grouped = defaultdict(list)  # (user_uid, entry_date) -> [events]
     for ev in LoginHistory.objects(is_deleted=False):
@@ -138,22 +144,37 @@ def login_history_report(request):
             continue
         grouped[(ev.user, d)].append(ev)
 
+    try:
+        page = max(int(p.get('page', 1) or 1), 1)
+        size = int(p.get('page_size', 10) or 10)
+    except ValueError:
+        return Response(
+            {'status': 0, 'msg': 'validation_error', 'data': None, 'error': 'page and page_size must be integers.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     rows = []
     for (user, d), events in sorted(grouped.items(), key=lambda kv: kv[0][1], reverse=True):
         logins = [e.entry_time for e in events if e.log_type == 1]
         logouts = [e.entry_time for e in events if e.log_type != 1]
+        user_type_name = _type_name(events[0].sess_user_type)
+
+        # Apply search filter on user_name and user_type
+        if search_term:
+            term = search_term.lower()
+            if term not in user.user_name.lower() and term not in user_type_name.lower():
+                continue
+
         rows.append({
             'user_name': user.user_name,
             'entry_date': d,
             'login_time': min(logins) if logins else '',
             'logout_time': max(logouts) if logouts else '',
-            'user_type': _type_name(events[0].sess_user_type),
+            'user_type': user_type_name,
             'total_worked_hours': _worked_hms([(e.entry_time, e.log_type) for e in events]),
             'user_id': user.unique_id,
         })
 
-    page = max(int(p.get('page', 1) or 1), 1)
-    size = int(p.get('page_size', 10) or 10)
     start = (page - 1) * size
     return Response({
         'status': 1,
@@ -172,10 +193,10 @@ def login_history_detail(request):
     if not user or not entry_date:
         return Response({
             'status': 0,
-            'msg': 'error',
-            'data': {'user': {}, 'sessions': [], 'total_worked_hours': ''},
+            'msg': 'not_found',
+            'data': None,
             'error': 'User or date not found.',
-        })
+        }, status=status.HTTP_404_NOT_FOUND)
 
     events = [e for e in LoginHistory.objects(user=user, is_deleted=False)
               if e.entry_date and e.entry_date.isoformat() == entry_date]
@@ -189,13 +210,18 @@ def login_history_detail(request):
             login_at = e.entry_time
         elif login_at is not None:
             worked = _worked_hms([(login_at, 1), (e.entry_time, 2)])
+            # Map log_type to human-readable label
+            logout_type_map = {2: 'Logout', 3: 'Session Logout', 4: 'Tab/Window Closed'}
+            logout_label = logout_type_map.get(e.log_type, 'Logout')
             sessions.append({'sno': len(sessions) + 1, 'date': entry_date,
                              'login': login_at, 'logout': e.entry_time,
-                             'worked': worked, 'type': 'Logout'})
+                             'worked': worked, 'type': logout_label,
+                             'log_type': e.log_type})
             login_at = None
     if login_at is not None:  # open session, no logout yet
         sessions.append({'sno': len(sessions) + 1, 'date': entry_date,
-                         'login': login_at, 'logout': '', 'worked': '', 'type': 'Login'})
+                         'login': login_at, 'logout': '', 'worked': '', 'type': 'Login',
+                         'log_type': 1})
 
     return Response({
         'status': 1,
