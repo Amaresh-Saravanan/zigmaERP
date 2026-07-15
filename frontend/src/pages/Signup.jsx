@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import djangoClient from '../api/djangoClient';
 import Swal from 'sweetalert2';
+import useTheme from '../hooks/useTheme';
 import heroBg from '../assets/images/auth-one-bg.jpg';
 import zigflyLogo from '../assets/images/zigfly-logo-clean.png';
 import './auth.css';
@@ -19,6 +20,7 @@ export default function Signup() {
   const [errors, setErrors] = useState({});
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { isDark, setTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -101,6 +103,27 @@ export default function Signup() {
         </div>
 
         <div className="lp-form-side">
+          {/* Theme toggle — sliding pill, top-right (shared mechanism with Login) */}
+          <div
+            className="lp-theme-toggle"
+            onClick={() => setTheme(isDark ? 'light' : 'dark')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setTheme(isDark ? 'light' : 'dark'); } }}
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            <div className="lp-theme-pill">
+              <div className={`lp-theme-thumb${isDark ? '' : ' light'}`}>
+                {isDark ? (
+                  <i className="ri-moon-line" aria-hidden="true" />
+                ) : (
+                  <i className="ri-sun-line" aria-hidden="true" />
+                )}
+              </div>
+            </div>
+          </div>
+
           <div className="lp-card">
             <svg className="lp-card-dots" aria-hidden="true" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
               {Array.from({ length: 6 }, (_, row) =>
@@ -116,7 +139,7 @@ export default function Signup() {
             <p className="lp-card-sub">Sign up to request access to Zigfly Admin Dashboard.</p>
             <div className="lp-card-rule" aria-hidden="true" />
 
-            <form onSubmit={handleSubmit} autoComplete="off" noValidate>
+            <form onSubmit={handleSubmit} autoComplete="on" noValidate>
               <div className="mb-3">
                 <label className="form-label" htmlFor="su_user">Username <span aria-label="required">*</span></label>
                 <div className="lp-input-wrap">
@@ -129,10 +152,13 @@ export default function Signup() {
                     placeholder="Choose a username"
                     value={form.user_name}
                     onChange={handleChange}
+                    autoComplete="username"
+                    aria-invalid={!!errors.user_name}
+                    aria-describedby={errors.user_name ? 'su_user_err' : undefined}
                     autoFocus
                   />
                 </div>
-                {errors.user_name && <div className="lp-field-error">{errors.user_name}</div>}
+                {errors.user_name && <div className="lp-field-error" id="su_user_err" role="alert">{errors.user_name}</div>}
               </div>
 
               <div className="mb-3">
@@ -147,9 +173,12 @@ export default function Signup() {
                     placeholder="you@example.com"
                     value={form.user_email}
                     onChange={handleChange}
+                    autoComplete="email"
+                    aria-invalid={!!errors.user_email}
+                    aria-describedby={errors.user_email ? 'su_email_err' : undefined}
                   />
                 </div>
-                {errors.user_email && <div className="lp-field-error">{errors.user_email}</div>}
+                {errors.user_email && <div className="lp-field-error" id="su_email_err" role="alert">{errors.user_email}</div>}
               </div>
 
               <div className="mb-3">
@@ -163,9 +192,12 @@ export default function Signup() {
                     placeholder="First name"
                     value={form.first_name}
                     onChange={handleChange}
+                    autoComplete="given-name"
+                    aria-invalid={!!errors.first_name}
+                    aria-describedby={errors.first_name ? 'su_first_err' : undefined}
                   />
                 </div>
-                {errors.first_name && <div className="lp-field-error">{errors.first_name}</div>}
+                {errors.first_name && <div className="lp-field-error" id="su_first_err" role="alert">{errors.first_name}</div>}
               </div>
 
               <div className="mb-3">
@@ -179,9 +211,12 @@ export default function Signup() {
                     placeholder="Last name"
                     value={form.last_name}
                     onChange={handleChange}
+                    autoComplete="family-name"
+                    aria-invalid={!!errors.last_name}
+                    aria-describedby={errors.last_name ? 'su_last_err' : undefined}
                   />
                 </div>
-                {errors.last_name && <div className="lp-field-error">{errors.last_name}</div>}
+                {errors.last_name && <div className="lp-field-error" id="su_last_err" role="alert">{errors.last_name}</div>}
               </div>
 
               <div className="mb-3">
@@ -196,6 +231,9 @@ export default function Signup() {
                     placeholder="Create a password"
                     value={form.password}
                     onChange={handleChange}
+                    autoComplete="new-password"
+                    aria-invalid={!!errors.password}
+                    aria-describedby="su_pass_hint"
                   />
                   <button
                     type="button"
@@ -206,7 +244,13 @@ export default function Signup() {
                     <i className={showPass ? 'ri-eye-off-line' : 'ri-eye-line'} aria-hidden="true" />
                   </button>
                 </div>
-                {errors.password && <div className="lp-field-error">{errors.password}</div>}
+                {errors.password ? (
+                  <div className="lp-field-error" id="su_pass_hint" role="alert">{errors.password}</div>
+                ) : (
+                  <div className="lp-field-hint" id="su_pass_hint">
+                    Min 8 characters with uppercase, lowercase, number, and special character.
+                  </div>
+                )}
               </div>
 
               <div className="mb-3">
@@ -221,9 +265,12 @@ export default function Signup() {
                     placeholder="Re-enter your password"
                     value={form.confirm_password}
                     onChange={handleChange}
+                    autoComplete="new-password"
+                    aria-invalid={!!errors.confirm_password}
+                    aria-describedby={errors.confirm_password ? 'su_confirm_err' : undefined}
                   />
                 </div>
-                {errors.confirm_password && <div className="lp-field-error">{errors.confirm_password}</div>}
+                {errors.confirm_password && <div className="lp-field-error" id="su_confirm_err" role="alert">{errors.confirm_password}</div>}
               </div>
 
               <button className="btn lp-submit w-100" type="submit" disabled={loading}>

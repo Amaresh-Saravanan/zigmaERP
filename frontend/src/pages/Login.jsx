@@ -1,48 +1,39 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import useTheme from '../hooks/useTheme';
 import djangoClient, { mapDjangoUser } from '../api/djangoClient';
-import Swal from 'sweetalert2';
 import heroBg from '../assets/images/auth-one-bg.jpg';
 import zigflyLogo from '../assets/images/zigfly-logo-clean.png';
 import './auth.css';
+
+const DEMO_HINT_VISIBLE = import.meta.env.DEV;
 
 export default function Login() {
   const [form, setForm] = useState({ user: '', password: '' });
   const [showPass, setShowPass] = useState(false);
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState(null); // { kind: 'credentials' | 'server' | 'missing', message }
   const { login } = useAuth();
   const { isDark, setTheme } = useTheme();
   const navigate = useNavigate();
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
-
-  const showIncorrect = () => {
-    setLoading(false);
-    Swal.fire({
-      title: 'Incorrect UserName and Password',
-      icon: 'error',
-      showConfirmButton: true,
-      timer: 2000,
-      timerProgressBar: true
-    });
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+    if (formError) setFormError(null);
   };
 
   const handleSubmit = async (e) => {
     e?.preventDefault();
+    if (loading) return; // guard against double-submit
+
     if (!form.user || !form.password) {
-      Swal.fire({
-        title: 'Enter Username and Password!',
-        icon: 'warning',
-        showConfirmButton: true,
-        timer: 2000,
-        timerProgressBar: true
-      });
+      setFormError({ kind: 'missing', message: 'Enter your username and password.' });
       return;
     }
 
+    setFormError(null);
     setLoading(true);
     const demoUser = {
       userId: 'demo001',
@@ -74,14 +65,16 @@ export default function Login() {
       }
 
       // 2xx but not a success payload — treat as bad credentials
-      showIncorrect();
+      setFormError({ kind: 'credentials', message: 'Incorrect username or password.' });
+      setLoading(false);
       return;
     } catch (err) {
       // Only a 401 means the server actually rejected these credentials.
       // Any other status (404 misrouted proxy, 500, etc.) is a real backend/
       // network problem and must not be shown as "incorrect password".
       if (err.response?.status === 401) {
-        showIncorrect();
+        setFormError({ kind: 'credentials', message: 'Incorrect username or password.' });
+        setLoading(false);
         return;
       }
     }
@@ -90,23 +83,14 @@ export default function Login() {
     if (form.user === 'admin' && form.password === 'admin123') {
       login(demoUser);
       navigate('/');
-    } else {
-      Swal.fire({
-        icon: 'error',
-        title: 'Database Offline / Network Error',
-        html: 'The database is currently unavailable.<br><br>Please use the demo credentials to login:<br><strong>Username:</strong> admin<br><strong>Password:</strong> admin123',
-        showConfirmButton: true,
-        timer: 5000,
-        timerProgressBar: true
-      });
+      return;
     }
+    setFormError({ kind: 'server', message: "Can't reach the server — please try again." });
     setLoading(false);
   };
 
-  const handleKey = (e) => { if (e.key === 'Enter') handleSubmit(); };
-
   return (
-    <div className="lp-root" onKeyUp={handleKey}>
+    <div className="lp-root">
       <div className="lp-split">
 
         {/* ── LEFT: Hero 45% ── */}
@@ -180,7 +164,19 @@ export default function Login() {
             <p className="lp-card-sub">Sign in to continue to Zigfly Admin Dashboard.</p>
             <div className="lp-card-rule" aria-hidden="true" />
 
-            <form onSubmit={handleSubmit} autoComplete="off" noValidate>
+            <form onSubmit={handleSubmit} autoComplete="on" noValidate>
+              {formError && (
+                <div className="lp-form-alert" role="alert" aria-live="assertive">
+                  <i className="ri-error-warning-line" aria-hidden="true" />
+                  <span>
+                    {formError.message}
+                    {formError.kind === 'server' && DEMO_HINT_VISIBLE && (
+                      <> Demo credentials: <strong>admin</strong> / <strong>admin123</strong>.</>
+                    )}
+                  </span>
+                </div>
+              )}
+
               <div className="mb-3">
                 <label className="form-label" htmlFor="lp_user">Username <span aria-label="required">*</span></label>
                 <div className="lp-input-wrap">
@@ -193,6 +189,8 @@ export default function Login() {
                     placeholder="Enter your username"
                     value={form.user}
                     onChange={handleChange}
+                    autoComplete="username"
+                    aria-invalid={formError?.kind === 'credentials' || (formError?.kind === 'missing' && !form.user)}
                     required
                     autoFocus
                   />
@@ -211,6 +209,8 @@ export default function Login() {
                     placeholder="Enter your password"
                     value={form.password}
                     onChange={handleChange}
+                    autoComplete="current-password"
+                    aria-invalid={formError?.kind === 'credentials' || (formError?.kind === 'missing' && !form.password)}
                     required
                   />
                   <button
