@@ -17,12 +17,16 @@
   "dependencies": {
     "apexcharts": "^5.15.2",
     "axios": "^1.18.1",
+    "file-saver": "^2.0.5",
     "flatpickr": "^4.6.13",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "react": "^19.2.7",
     "react-apexcharts": "^2.1.1",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.0",
-    "sweetalert2": "^11.26.25"
+    "sweetalert2": "^11.26.25",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@axe-core/react": "^4.12.1",

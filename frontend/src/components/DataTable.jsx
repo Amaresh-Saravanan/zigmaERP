@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import client from '../api/client';
 import djangoClient from '../api/djangoClient';
+import { copyToClipboard, exportCSV, exportExcel, exportPDF, printTable } from '../utils/tableExport';
 
 // Skeleton row — shown while loading (U-16)
 function SkeletonRows({ cols, rows = 5 }) {
@@ -48,6 +48,9 @@ export default function DataTable({
   onDelete,
   onView,
   showActiveFilter = true,
+  showExportButtons = false,
+  exportTitle = 'Report',
+  exportFilename = 'export',
 }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -61,35 +64,41 @@ export default function DataTable({
   const fetchData = async () => {
     setLoading(true);
     try {
-      if (mode === 'django') {
-        const params = { page: Math.floor(start / length) + 1, page_size: length === -1 ? 100 : length };
-        if (searchQuery) params.search = searchQuery;
-        Object.assign(params, extraParams);
+      // ponytail: mode='php' path removed — every <DataTable> caller passes mode="django" now.
+      const params = { page: Math.floor(start / length) + 1, page_size: length === -1 ? 100 : length };
+      if (searchQuery) params.search = searchQuery;
+      Object.assign(params, extraParams);
 
-        const response = await djangoClient.get(ajaxUrl, { params });
-        setData(response.data.results || []);
-        setTotalRecords(response.data.count || 0);
-        return;
-      }
-
-      const params = new URLSearchParams();
-      params.append('action', 'datatable');
-      params.append('draw', draw.toString());
-      params.append('start', start.toString());
-      params.append('length', length.toString());
-      params.append('search[value]', searchQuery);
-      if (showActiveFilter) params.append('active_status', activeStatus);
-      Object.entries(extraParams).forEach(([k, v]) => params.append(k, v));
-
-      const response = await client.post(ajaxUrl, params);
-      if (response.data) {
-        setData(response.data.data || []);
-        setTotalRecords(response.data.recordsFiltered || 0);
-      }
+      const response = await djangoClient.get(ajaxUrl, { params });
+      setData(response.data.data.results || []);
+      setTotalRecords(response.data.data.count || 0);
     } catch (err) {
       console.error('DataTable fetch error:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAllData = async () => {
+    const params = { page: 1, page_size: 10000 };
+    if (searchQuery) params.search = searchQuery;
+    Object.assign(params, extraParams);
+    const response = await djangoClient.get(ajaxUrl, { params });
+    return response.data.data.results || [];
+  };
+
+  const handleExport = async (type) => {
+    try {
+      const allRows = await fetchAllData();
+      switch (type) {
+        case 'copy':    copyToClipboard(allRows, columns); break;
+        case 'csv':     exportCSV(allRows, columns, exportFilename); break;
+        case 'excel':   exportExcel(allRows, columns, exportFilename); break;
+        case 'pdf':     exportPDF(allRows, columns, exportFilename, exportTitle); break;
+        case 'print':   printTable(allRows, columns, exportTitle); break;
+      }
+    } catch (err) {
+      console.error('Export error:', err);
     }
   };
 
@@ -226,6 +235,17 @@ export default function DataTable({
           </div>
         </div>
       </div>
+
+      {/* ── Export buttons ── */}
+      {showExportButtons && (
+        <div className="dt-export-bar px-3 py-2">
+          <button className="dt-export-btn" onClick={() => handleExport('copy')}>Copy</button>
+          <button className="dt-export-btn" onClick={() => handleExport('csv')}>CSV</button>
+          <button className="dt-export-btn" onClick={() => handleExport('excel')}>Excel</button>
+          <button className="dt-export-btn" onClick={() => handleExport('pdf')}>PDF</button>
+          <button className="dt-export-btn" onClick={() => handleExport('print')}>Print</button>
+        </div>
+      )}
 
       {/* ── Table ── */}
       <div className="card-body pt-0 px-0">
