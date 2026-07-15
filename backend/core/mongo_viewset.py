@@ -1,3 +1,4 @@
+from django.utils import timezone
 from mongoengine.errors import DoesNotExist, ValidationError as MongoValidationError, NotUniqueError
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
@@ -56,9 +57,14 @@ class MongoModelViewSet(ViewSetMixin, APIView):
             queryset = self.filter_search(queryset, search)
 
         paginator = self.pagination_class()
-        page = paginator.paginate_queryset(list(queryset), request)
+        queryset = list(queryset)
+        page = paginator.paginate_queryset(queryset, request)
         serializer = self.serializer_class(page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        return Response({
+            'status': 1, 'msg': 'success',
+            'data': {'count': len(queryset), 'results': serializer.data},
+            'error': '',
+        })
 
     def create(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -96,6 +102,8 @@ class MongoModelViewSet(ViewSetMixin, APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         instance = serializer.save()
+        instance.updated_at = timezone.now()
+        instance.save()
         return Response({'status': 1, 'msg': 'update', 'data': self.serializer_class(instance).data, 'error': ''})
 
     def destroy(self, request, unique_id=None):

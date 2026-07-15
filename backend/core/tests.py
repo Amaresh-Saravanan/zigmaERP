@@ -142,7 +142,7 @@ def test_main_screen_create_and_list():
     assert res.data['data']['description'] == 'All reports'
 
     list_res = client.get('/api/main-screens')
-    assert list_res.data['count'] == 1
+    assert list_res.data['data']['count'] == 1
 
 
 def test_screen_create_rejects_unknown_main_screen():

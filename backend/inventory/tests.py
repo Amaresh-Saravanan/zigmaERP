@@ -57,7 +57,7 @@ def test_unit_create_and_list_with_screens():
 
     list_res = client.get('/api/units')
     assert list_res.status_code == 200
-    assert list_res.data['count'] == 1
+    assert list_res.data['data']['count'] == 1
 
 
 def test_unit_create_denied_without_create_screen():
@@ -136,8 +136,8 @@ def test_item_search_filters_by_name(unit):
     client.post('/api/items', {'item_name': 'Gadget', 'unit': {'unique_id': unit.unique_id}}, format='json')
 
     res = client.get('/api/items', {'search': 'widg'})
-    assert res.data['count'] == 1
-    assert res.data['results'][0]['item_name'] == 'Widget'
+    assert res.data['data']['count'] == 1
+    assert res.data['data']['results'][0]['item_name'] == 'Widget'
 
 
 def test_item_update():
@@ -178,7 +178,7 @@ def test_tray_create_and_list():
     assert res.data['data']['tray_type'] == '1'
 
     list_res = client.get('/api/trays')
-    assert list_res.data['count'] == 1
+    assert list_res.data['data']['count'] == 1
 
 
 # ── Pit ──

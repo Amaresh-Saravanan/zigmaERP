@@ -294,7 +294,7 @@ def test_user_type_create_and_list():
 
     list_res = client.get('/api/user-types')
     # includes the 'Manager' type created by the fixture too
-    names = [t['type_name'] for t in list_res.data['results']]
+    names = [t['type_name'] for t in list_res.data['data']['results']]
     assert 'Operator' in names
 
 
