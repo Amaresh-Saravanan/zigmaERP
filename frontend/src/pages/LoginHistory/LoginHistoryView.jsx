@@ -40,8 +40,10 @@ export default function LoginHistoryView() {
 
   const typeBadgeClass = (type) => {
     if (type === 'Logout') return 'badge-soft-success';
+    if (type === 'Session Logout') return 'badge-soft-warning';
+    if (type === 'Tab/Window Closed') return 'badge-soft-danger';
     if (type === 'Login')  return 'badge-soft-info';
-    return 'badge-soft-warning';
+    return 'badge-soft-secondary';
   };
 
   return (

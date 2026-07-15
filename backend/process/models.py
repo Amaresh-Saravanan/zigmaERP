@@ -20,7 +20,7 @@ from inventory.models import Item, Pit, Supplier, Tray, Unit
 
 # ── Material Received ──
 
-BATCH_STATUS_CHOICES = (('pending', 'Pending'), ('used', 'Used'))
+BATCH_STATUS_CHOICES = (('pending', 'Pending'), ('used', 'Used'), ('closed', 'Closed'))
 
 
 class MaterialReceived(Document):
@@ -148,6 +148,12 @@ class Leachate(Document):
 
 
 # ── Egg Process ──
+
+ALLOWED_ADDON_ITEM_IDS = (
+    '66a3467a54eed94471',  # Chick Feed (kg)
+    '66a7954fcaf3b34759',  # Water (ltr)
+)
+
 
 class EggProcessAddon(EmbeddedDocument):
     """Incubation item consumed for this batch (legacy: egg_process_addon table)."""

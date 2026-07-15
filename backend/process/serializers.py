@@ -245,7 +245,11 @@ class EggProcessAddonSerializer(serializers.Serializer):
     qty = serializers.FloatField()
 
     def validate_item(self, value):
-        return _resolve(Item, value, 'Item')
+        item = _resolve(Item, value, 'Item')
+        from process.models import ALLOWED_ADDON_ITEM_IDS
+        if item.unique_id not in ALLOWED_ADDON_ITEM_IDS:
+            raise serializers.ValidationError('This item is not allowed as an add-on.')
+        return item
 
 
 class EggProcessSerializer(serializers.Serializer):
@@ -267,12 +271,32 @@ class EggProcessSerializer(serializers.Serializer):
         return _resolve(Supplier, value, 'Supplier')
 
     def validate_batch(self, value):
-        return _resolve(MaterialReceived, value, 'Batch')
+        batch = _resolve(MaterialReceived, value, 'Batch')
+        # ponytail: only guard on create — batch isn't in the update whitelist, so it can't
+        # be swapped onto an existing EggProcess anyway.
+        if self.instance is None and batch.batch_status != 'pending':
+            raise serializers.ValidationError('This batch has already been used.')
+        return batch
 
     def validate_trays(self, value):
         return [_resolve(Tray, v, 'Tray') for v in value]
 
     def validate(self, attrs):
+        # Same-day edit restriction (admin exempt via user_type)
+        if self.instance:
+            from datetime import date
+            if self.instance.entry_date != date.today():
+                user = self.context['request'].user
+                if not (user.user_type and user.user_type.type_name == 'Admin'):
+                    raise serializers.ValidationError('Only today\'s records can be edited.')
+            # Block edit if hatching has started
+            has_hatching = StatusUpdate.objects(
+                batch=self.instance.batch,
+                hatching_status__in=['progressing', 'completed'],
+                is_deleted=False
+            ).first()
+            if has_hatching:
+                raise serializers.ValidationError('Cannot edit: hatching is in progress or completed.')
         trays = attrs.get('trays', [])
         if trays and len(trays) != attrs.get('tray_utilized', getattr(self.instance, 'tray_utilized', None)):
             raise serializers.ValidationError({'trays': 'Number of trays must match tray utilized.'})
@@ -456,7 +480,13 @@ class FrpTrayProcessSerializer(serializers.Serializer):
         return attrs
 
     def create(self, validated_data):
-        return FrpTrayProcess(**validated_data).save()
+        instance = FrpTrayProcess(**validated_data).save()
+        # Close the egg process batch (mark as converted to FRP)
+        egg = EggProcess.objects(batch=instance.batch, is_deleted=False).first()
+        if egg:
+            egg.batch.batch_status = 'closed'
+            egg.batch.save()
+        return instance
 
     def update(self, instance, validated_data):
         for field in ('entry_date', 'frp_tray_count', 'trays'):

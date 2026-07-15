@@ -111,6 +111,21 @@ class EggProcessViewSet(MongoModelViewSet):
         obj = self.get_object(unique_id)
         if obj is None:
             return Response({'status': 0, 'msg': 'not_found', 'data': None, 'error': 'Not found.'}, status=404)
+        # Same-day delete restriction (admin exempt via user_type)
+        from datetime import date
+        if obj.entry_date != date.today():
+            user = request.user
+            if not (user.user_type and user.user_type.type_name == 'Admin'):
+                return Response({'status': 0, 'msg': 'error', 'data': None, 'error': 'Only today\'s records can be deleted.'}, status=403)
+        # Block delete if hatching has started
+        from process.models import StatusUpdate
+        has_hatching = StatusUpdate.objects(
+            batch=obj.batch,
+            hatching_status__in=['progressing', 'completed'],
+            is_deleted=False
+        ).first()
+        if has_hatching:
+            return Response({'status': 0, 'msg': 'error', 'data': None, 'error': 'Cannot delete: hatching is in progress or completed.'}, status=403)
         obj.is_deleted = True
         obj.save()
         batch = obj.batch
@@ -151,6 +166,27 @@ class PitStatusViewSet(MongoModelViewSet):
         if org_status:
             qs = qs.filter(org_status=org_status)
         return qs
+
+    def destroy(self, request, unique_id=None):
+        obj = self.get_object(unique_id)
+        if obj is None:
+            return Response({'status': 0, 'msg': 'not_found', 'data': None, 'error': 'Not found.'}, status=404)
+
+        # Soft delete the PitStatus record
+        obj.is_deleted = True
+        obj.save()
+
+        # Cascade: free trays that were assigned to this PitStatus entry
+        # Check if any FrpTrayProcess references these trays
+        if obj.trays:
+            from process.models import FrpTrayProcess
+            for tray_ref in obj.trays:
+                frp = FrpTrayProcess.objects(trays=tray_ref, is_deleted=False).first()
+                if frp:
+                    frp.trays.remove(tray_ref)
+                    frp.save()
+
+        return Response({'status': 1, 'msg': 'success_delete', 'data': None, 'error': ''})
 
 
 class FrpTrayProcessViewSet(MongoModelViewSet):

@@ -237,7 +237,7 @@ def test_dry_process_create_and_list():
     }, format='json')
     assert res.status_code == 201
     assert res.data['data']['image_path'] == 'http://x/dry.jpg'
-    assert client.get('/api/dry-process').data['count'] == 1
+    assert client.get('/api/dry-process').data['data']['count'] == 1
 
 
 def test_leachate_create_and_list():
@@ -247,7 +247,7 @@ def test_leachate_create_and_list():
     }, format='json')
     assert res.status_code == 201
     assert res.data['data']['image_path'] == 'http://x/lea.jpg'
-    assert client.get('/api/leachate').data['count'] == 1
+    assert client.get('/api/leachate').data['data']['count'] == 1
 
 
 # ── Egg Process ──
@@ -269,6 +269,25 @@ def test_egg_process_create_generates_entry_no_and_marks_batch_used(batch, suppl
     assert MaterialReceived.objects.get(unique_id=batch.unique_id).batch_status == 'used'
 
 
+def test_egg_process_create_against_used_batch_returns_400(batch, supplier, tray):
+    staff = make_user(screens=ALL_SCREENS)
+    client = authed_client(staff)
+    payload = {
+        'entry_date': '2026-07-01',
+        'staff': {'unique_id': staff.unique_id},
+        'supplier': {'unique_id': supplier.unique_id},
+        'batch': {'unique_id': batch.unique_id},
+        'tot_qty': 100,
+        'tray_utilized': 1,
+        'trays': [{'unique_id': tray.unique_id}],
+    }
+    res = client.post('/api/egg-process', payload, format='json')
+    assert res.status_code == 201
+
+    res2 = client.post('/api/egg-process', payload, format='json')
+    assert res2.status_code == 400
+
+
 def test_egg_process_trays_length_mismatch_returns_400(batch, supplier, tray):
     staff = make_user(screens=ALL_SCREENS)
     client = authed_client(staff)
@@ -285,10 +304,12 @@ def test_egg_process_trays_length_mismatch_returns_400(batch, supplier, tray):
 
 
 def test_egg_process_delete_reverts_batch_to_pending(batch, supplier, tray):
+    from datetime import date
     staff = make_user(screens=ALL_SCREENS)
     client = authed_client(staff)
+    today = date.today().isoformat()
     created = client.post('/api/egg-process', {
-        'entry_date': '2026-07-01',
+        'entry_date': today,
         'staff': {'unique_id': staff.unique_id},
         'supplier': {'unique_id': supplier.unique_id},
         'batch': {'unique_id': batch.unique_id},
@@ -315,7 +336,7 @@ def test_status_update_create_and_list(batch):
         'hatching_status': 'progressing',
     }, format='json')
     assert res.status_code == 201
-    assert client.get('/api/status-update').data['count'] == 1
+    assert client.get('/api/status-update').data['data']['count'] == 1
 
 
 # ── Pit Status ──
@@ -386,8 +407,8 @@ def test_pit_status_list_filters_by_org_status(pit):
     }, format='json')
 
     res = client.get('/api/pit-status', {'org_status': '6'})
-    assert res.data['count'] == 1
-    assert res.data['results'][0]['org_status'] == '6'
+    assert res.data['data']['count'] == 1
+    assert res.data['data']['results'][0]['org_status'] == '6'
 
 
 # ── FRP Tray Process ──
@@ -442,4 +463,4 @@ def test_frp_status_update_create_and_list(batch, tray):
     }, format='json')
     assert res2.status_code == 201
     assert res2.data['data']['entry_no'] == 'FRP-00002'
-    assert client.get('/api/frp-status-update').data['count'] == 2
+    assert client.get('/api/frp-status-update').data['data']['count'] == 2
