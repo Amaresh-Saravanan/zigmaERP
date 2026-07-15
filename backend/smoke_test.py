@@ -138,16 +138,15 @@ def test_get(name, path, params, shape_ok):
 # ── Dashboard + Reports (GET, read-only checks) ──
 test_get('Dashboard', '/dashboard', {'month': TODAY[:7]},
          lambda j: 'data' in j and 'kpi' in j.get('data', {}) and 'pit_chart' in j.get('data', {}) and 'tray_status' in j.get('data', {}))
-test_get('Measurable Report', '/measurable-report', {'from_date': '2000-01-01', 'to_date': TODAY},
-         lambda j: 'results' in j and 'count' in j)
-test_get('Egg Process Report', '/egg-process-report', {'from_date': '2000-01-01', 'to_date': TODAY},
-         lambda j: 'results' in j and 'count' in j)
-test_get('Pit Status Report', '/pit-status-report', {'from_date': '2000-01-01', 'to_date': TODAY},
-         lambda j: 'results' in j and 'count' in j)
-test_get('Rejects Report', '/rejects-report', {'from_date': '2000-01-01', 'to_date': TODAY},
-         lambda j: 'results' in j and 'count' in j)
-test_get('Login History Report', '/login-history-report', {'from_date': '2000-01-01', 'to_date': TODAY},
-         lambda j: 'data' in j and 'results' in j.get('data', {}) and 'count' in j.get('data', {}))
+def _envelope_list(j):
+    return j.get('status') == 1 and 'results' in j.get('data', {}) and 'count' in j.get('data', {})
+
+
+test_get('Measurable Report', '/measurable-report', {'from_date': '2000-01-01', 'to_date': TODAY}, _envelope_list)
+test_get('Egg Process Report', '/egg-process-report', {'from_date': '2000-01-01', 'to_date': TODAY}, _envelope_list)
+test_get('Pit Status Report', '/pit-status-report', {'from_date': '2000-01-01', 'to_date': TODAY}, _envelope_list)
+test_get('Rejects Report', '/rejects-report', {'from_date': '2000-01-01', 'to_date': TODAY}, _envelope_list)
+test_get('Login History Report', '/login-history-report', {'from_date': '2000-01-01', 'to_date': TODAY}, _envelope_list)
 
 # ── Report ──
 passed = sum(1 for _, ok, _ in results if ok)
