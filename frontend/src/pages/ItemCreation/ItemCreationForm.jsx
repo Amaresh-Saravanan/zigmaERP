@@ -31,7 +31,7 @@ export default function ItemCreationForm() {
   const fetchUnits = async () => {
     try {
       const res = await djangoClient.get('/units', { params: { page_size: 100 } });
-      setUnitOptions((res.data.results || []).map((u) => ({ value: u.unique_id, label: u.unit_name })));
+      setUnitOptions((res.data.data.results || []).map((u) => ({ value: u.unique_id, label: u.unit_name })));
     } catch (error) {
       console.error(error);
     }

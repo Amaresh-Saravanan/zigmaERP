@@ -28,7 +28,7 @@ export default function EggProcessReportList() {
     // Load dropdown options from Django endpoints
     djangoClient.get('/material-received', { params: { page_size: 100 } })
       .then(res => {
-        const batches = res.data.results || [];
+        const batches = res.data.data.results || [];
         setBatchOptions([
           { value: '', label: 'All Batches' },
           ...batches.map(b => ({ value: b.unique_id, label: b.batch_id })),
@@ -38,7 +38,7 @@ export default function EggProcessReportList() {
 
     djangoClient.get('/suppliers', { params: { page_size: 100 } })
       .then(res => {
-        const suppliers = res.data.results || [];
+        const suppliers = res.data.data.results || [];
         setSupplierOptions([
           { value: '', label: 'All Suppliers' },
           ...suppliers.map(s => ({ value: s.supplier_name, label: s.supplier_name })),
@@ -67,6 +67,8 @@ export default function EggProcessReportList() {
       key: 'hatching_status',
       render: (val) => STATUS_BADGES[val] || val,
     },
+    { label: 'Invoice No', key: 'invoice_image' },
+    { label: 'Entry Person', key: 'entry_person' },
   ];
 
   const extraParams = Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== ''));

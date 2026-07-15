@@ -67,7 +67,7 @@ export default function EggProcessForm() {
   const fetchBatches = async () => {
     try {
       const res = await djangoClient.get('/material-received', { params: { page_size: 100 } });
-      setBatchOptions((res.data.results || []).map((b) => ({
+      setBatchOptions((res.data.data.results || []).map((b) => ({
         value: b.unique_id,
         label: b.batch_id,
         supplierId: b.supplier?.unique_id || '',
@@ -82,7 +82,7 @@ export default function EggProcessForm() {
   const fetchTrays = async () => {
     try {
       const res = await djangoClient.get('/trays', { params: { page_size: 100 } });
-      setTrayOptions((res.data.results || []).map((t) => ({ id: t.unique_id, name: t.bin_name })));
+      setTrayOptions((res.data.data.results || []).map((t) => ({ id: t.unique_id, name: t.bin_name })));
     } catch (error) {
       console.error(error);
     }
@@ -91,7 +91,7 @@ export default function EggProcessForm() {
   const fetchItems = async () => {
     try {
       const res = await djangoClient.get('/items', { params: { page_size: 100 } });
-      setItemOptions((res.data.results || []).map((i) => ({ value: i.unique_id, label: i.item_name })));
+      setItemOptions((res.data.data.results || []).map((i) => ({ value: i.unique_id, label: i.item_name })));
     } catch (error) {
       console.error(error);
     }
@@ -293,7 +293,7 @@ export default function EggProcessForm() {
                     />
                   </div>
 
-                  <div className="col-12 col-md-3 mb-3 d-flex align-items-end gap-2">
+                  <div className="col-12 col-md-3 mb-3 d-flex align-items-center gap-2" style={{ marginTop: '3px' }}>
                     <Button type="button" onClick={() => setShowTrayModal(true)}>
                       Select Trays ({selectedTrays.length})
                     </Button>

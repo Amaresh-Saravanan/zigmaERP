@@ -63,7 +63,7 @@ export default function StatusUpdateForm() {
   const fetchBatches = async () => {
     try {
       const res = await djangoClient.get('/material-received', { params: { page_size: 100 } });
-      setBatchOptions((res.data.results || []).map((b) => ({ value: b.unique_id, label: b.batch_id, date: b.date })));
+      setBatchOptions((res.data.data.results || []).map((b) => ({ value: b.unique_id, label: b.batch_id, date: b.date })));
     } catch (err) {
       console.error(err);
     }

@@ -67,7 +67,7 @@ export default function FrpStatusUpdateForm() {
   const fetchBatches = async () => {
     try {
       const res = await djangoClient.get('/frp-tray-process', { params: { page_size: 100 } });
-      setBatchOptions((res.data.results || []).map((f) => ({
+      setBatchOptions((res.data.data.results || []).map((f) => ({
         value: f.unique_id,
         label: f.batch?.batch_id || f.unique_id,
         date: f.entry_date,

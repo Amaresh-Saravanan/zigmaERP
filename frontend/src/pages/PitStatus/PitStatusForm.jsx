@@ -100,16 +100,17 @@ export default function PitStatusForm() {
   const fetchPits = async () => {
     try {
       const res = await djangoClient.get('/pits', { params: { page_size: 100 } });
-      setPitOptions((res.data.results || []).map((p) => ({ value: p.unique_id, label: p.pit_name })));
+      console.log('Pits API response:', res.data);
+      setPitOptions((res.data.data.results || []).map((p) => ({ value: p.unique_id, label: p.pit_name })));
     } catch (error) {
-      console.error(error);
+      console.error('Failed to fetch pits:', error.response?.status, error.message);
     }
   };
 
   const fetchBatches = async () => {
     try {
       const res = await djangoClient.get('/material-received', { params: { page_size: 100 } });
-      setBatchOptions((res.data.results || []).map((b) => ({ value: b.unique_id, label: b.batch_id })));
+      setBatchOptions((res.data.data.results || []).map((b) => ({ value: b.unique_id, label: b.batch_id })));
     } catch (error) {
       console.error(error);
     }
@@ -118,7 +119,7 @@ export default function PitStatusForm() {
   const fetchTrays = async () => {
     try {
       const res = await djangoClient.get('/trays', { params: { page_size: 100 } });
-      setTrayOptions((res.data.results || []).map((t) => ({ value: t.unique_id, label: t.bin_name })));
+      setTrayOptions((res.data.data.results || []).map((t) => ({ value: t.unique_id, label: t.bin_name })));
     } catch (error) {
       console.error(error);
     }
@@ -127,7 +128,7 @@ export default function PitStatusForm() {
   const fetchPitStatusRecords = async () => {
     try {
       const res = await djangoClient.get('/pit-status', { params: { page_size: 100 } });
-      setPitStatusRecords(res.data.results || []);
+      setPitStatusRecords(res.data.data.results || []);
     } catch (error) {
       console.error(error);
     }

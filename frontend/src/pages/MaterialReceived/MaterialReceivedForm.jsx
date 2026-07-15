@@ -41,7 +41,7 @@ export default function MaterialReceivedForm() {
   const fetchSuppliers = async () => {
     try {
       const res = await djangoClient.get('/suppliers', { params: { page_size: 100 } });
-      setSupplierOptions((res.data.results || []).map((s) => ({ value: s.unique_id, label: s.supplier_name })));
+      setSupplierOptions((res.data.data.results || []).map((s) => ({ value: s.unique_id, label: s.supplier_name })));
     } catch (err) {
       console.error(err);
     }
@@ -50,7 +50,7 @@ export default function MaterialReceivedForm() {
   const fetchItems = async () => {
     try {
       const res = await djangoClient.get('/items', { params: { page_size: 100 } });
-      setItemOptions((res.data.results || []).map((i) => ({ value: i.unique_id, label: i.item_name, unit: i.unit })));
+      setItemOptions((res.data.data.results || []).map((i) => ({ value: i.unique_id, label: i.item_name, unit: i.unit })));
     } catch (err) {
       console.error(err);
     }

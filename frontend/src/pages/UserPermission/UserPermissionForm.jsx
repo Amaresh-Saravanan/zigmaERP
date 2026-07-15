@@ -46,7 +46,7 @@ export default function UserPermissionForm() {
   const fetchUserTypes = async () => {
     try {
       const res = await djangoClient.get('/user-types', { params: { page_size: 100 } });
-      setUserTypeOptions((res.data.results || []).map((ut) => ({ value: ut.unique_id, label: ut.type_name })));
+      setUserTypeOptions((res.data.data.results || []).map((ut) => ({ value: ut.unique_id, label: ut.type_name })));
     } catch (error) {
       console.error(error);
     }
@@ -64,7 +64,7 @@ export default function UserPermissionForm() {
   const fetchMainScreens = async () => {
     try {
       const res = await djangoClient.get('/main-screens', { params: { page_size: 100 } });
-      setMainScreens(res.data.results || []);
+      setMainScreens(res.data.data.results || []);
     } catch (error) {
       console.error(error);
     }

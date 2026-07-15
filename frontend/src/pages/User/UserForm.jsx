@@ -34,7 +34,7 @@ export default function UserForm() {
   const fetchUserTypes = async () => {
     try {
       const res = await djangoClient.get('/user-types', { params: { page_size: 100 } });
-      setUserTypeOptions((res.data.results || []).map((ut) => ({ value: ut.unique_id, label: ut.type_name })));
+      setUserTypeOptions((res.data.data.results || []).map((ut) => ({ value: ut.unique_id, label: ut.type_name })));
     } catch (error) {
       console.error(error);
     }

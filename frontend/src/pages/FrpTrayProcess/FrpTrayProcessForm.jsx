@@ -35,7 +35,7 @@ export default function FrpTrayProcessForm() {
   const fetchBatches = async () => {
     try {
       const res = await djangoClient.get('/material-received', { params: { page_size: 100 } });
-      setBatchOptions((res.data.results || []).map((b) => ({ value: b.unique_id, label: b.batch_id })));
+      setBatchOptions((res.data.data.results || []).map((b) => ({ value: b.unique_id, label: b.batch_id })));
     } catch (err) {
       console.error(err);
     }
@@ -44,7 +44,7 @@ export default function FrpTrayProcessForm() {
   const fetchTrays = async () => {
     try {
       const res = await djangoClient.get('/trays', { params: { page_size: 100 } });
-      setTrayOptions((res.data.results || []).map((t) => ({ value: t.unique_id, label: t.bin_name })));
+      setTrayOptions((res.data.data.results || []).map((t) => ({ value: t.unique_id, label: t.bin_name })));
     } catch (err) {
       console.error(err);
     }

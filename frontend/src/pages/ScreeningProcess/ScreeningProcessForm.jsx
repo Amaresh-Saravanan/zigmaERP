@@ -95,7 +95,7 @@ export default function ScreeningProcessForm() {
   const fetchPits = async () => {
     try {
       const res = await djangoClient.get('/pits', { params: { page_size: 100 } });
-      setPitOptions((res.data.results || []).map((p) => ({ value: p.unique_id, label: p.pit_name })));
+      setPitOptions((res.data.data.results || []).map((p) => ({ value: p.unique_id, label: p.pit_name })));
     } catch (err) {
       console.error(err);
     }
