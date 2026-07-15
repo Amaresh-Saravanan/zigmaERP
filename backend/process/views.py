@@ -1,6 +1,7 @@
 from rest_framework.response import Response
 
 from core.mongo_viewset import MongoModelViewSet
+from inventory.models import Pit
 from process.models import (
     CullingProcess,
     DryProcess,
@@ -165,6 +166,10 @@ class PitStatusViewSet(MongoModelViewSet):
         org_status = self.request.query_params.get('org_status')
         if org_status:
             qs = qs.filter(org_status=org_status)
+        pit_uid = self.request.query_params.get('pit')
+        if pit_uid:
+            pit = Pit.objects(unique_id=pit_uid).only('id').first()
+            qs = qs.filter(pit=pit) if pit else qs.none()
         return qs
 
     def destroy(self, request, unique_id=None):

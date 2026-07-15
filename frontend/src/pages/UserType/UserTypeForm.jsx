@@ -17,6 +17,7 @@ export default function UserTypeForm() {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [validated, setValidated] = useState(false);
 
   useEffect(() => {
     if (unique_id) fetchUserType();
@@ -44,6 +45,12 @@ export default function UserTypeForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!e.target.checkValidity()) {
+      setValidated(true);
+      return;
+    }
+
     setIsLoading(true);
 
     const payload = {
@@ -82,7 +89,7 @@ export default function UserTypeForm() {
                 </div>
               </div>
             ) : (
-              <form className="was-validated" onSubmit={handleSubmit} autoComplete="off">
+              <form className={validated ? 'was-validated' : ''} onSubmit={handleSubmit} autoComplete="off" noValidate>
                 <p className="form-section-title">
                   <i className="ri-user-settings-line me-1"></i> User Type Details
                 </p>

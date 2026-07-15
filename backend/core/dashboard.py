@@ -110,7 +110,8 @@ def dashboard(request):
         feed_dates = [r.entry_date for r in batch_rows if r.org_status == '1' and r.entry_date]
         batch_age = (date.today() - min(feed_dates)).days + 1 if feed_dates else 0
         chart.append({'category': pit_name, 'data': batch_age,
-                      'feed_qty': int(feed_qty), 'batch_id': recent_batch})
+                      'feed_qty': int(feed_qty), 'batch_id': recent_batch,
+                      'pit_id': rows[0].pit.unique_id if rows[0].pit else ''})
     chart.sort(key=lambda c: c['category'], reverse=True)
 
     pit_chart = {
@@ -118,6 +119,7 @@ def dashboard(request):
         'data': [c['data'] for c in chart],
         'feed_qty': [c['feed_qty'] for c in chart],
         'batch_ids': [c['batch_id'] for c in chart],
+        'pit_ids': [c['pit_id'] for c in chart],
     }
 
     # ── tray_status: egg-process tray usage bucketed by age (1-5 days, >5) ──
