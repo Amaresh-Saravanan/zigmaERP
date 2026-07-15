@@ -42,9 +42,27 @@ export default function RejectsImageUploadList() {
     {
       label: 'Image',
       key: 'image_path',
-      render: (val) => val
-        ? <a href={val} target="_blank" rel="noreferrer" className="badge bg-success-subtle text-success">View</a>
-        : <span className="text-muted">—</span>,
+      render: (val) => {
+        if (!val) return <span className="text-muted">—</span>;
+        const images = val.split(',').map(s => s.trim()).filter(Boolean);
+        const first = images[0];
+        if (!first) return <span className="text-muted">—</span>;
+        return (
+          <div className="d-flex align-items-center gap-1">
+            <a href={first} target="_blank" rel="noreferrer">
+              <img
+                src={first}
+                alt="thumb"
+                style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: 4, border: '1px solid #ddd' }}
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+            </a>
+            {images.length > 1 && (
+              <span className="badge bg-info-subtle text-info" style={{ fontSize: '0.65rem' }}>+{images.length - 1}</span>
+            )}
+          </div>
+        );
+      },
     },
     { label: 'Action', className: 'text-end', actions: true },
   ];

@@ -28,16 +28,27 @@ export default function RejectsImageUploadForm() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Load ticket options from rejects endpoint
-    djangoClient.get('/rejects', { params: { page_size: 100 } })
+    // Fetch available tickets (excluding already-used ones)
+    djangoClient.get('/rejects-available-tickets')
       .then(res => {
-        const rejects = res.data.results || [];
+        const tickets = res.data?.data || [];
         setTicketOptions([
           { value: '', label: 'Select Ticket' },
-          ...rejects.map(r => ({ value: r.ticket_no, label: r.ticket_no })),
+          ...tickets.map(t => ({ value: t.ticket_no, label: t.ticket_no })),
         ]);
       })
-      .catch(err => console.error('Could not fetch ticket options', err));
+      .catch(() => {
+        // Fallback: fetch all rejects if available-tickets endpoint fails
+        djangoClient.get('/rejects', { params: { page_size: 100 } })
+          .then(res => {
+            const rejects = res.data?.data?.results || [];
+            setTicketOptions([
+              { value: '', label: 'Select Ticket' },
+              ...rejects.map(r => ({ value: r.ticket_no, label: r.ticket_no })),
+            ]);
+          })
+          .catch(err => console.error('Could not fetch ticket options', err));
+      });
 
     if (unique_id) fetchRecord();
   }, [unique_id]);
@@ -68,9 +79,8 @@ export default function RejectsImageUploadForm() {
       return;
     }
     try {
-      // Look up the reject by ticket_no from existing data
       const res = await djangoClient.get('/rejects', { params: { search: ticket_no, page_size: 1 } });
-      const rejects = res.data.results || [];
+      const rejects = res.data?.data?.results || [];
       const match = rejects.find(r => r.ticket_no === ticket_no);
       if (match) {
         setFormData(prev => ({
@@ -117,6 +127,10 @@ export default function RejectsImageUploadForm() {
       setIsLoading(false);
     }
   };
+
+  const imagePaths = formData.image_path
+    ? formData.image_path.split(',').map(s => s.trim()).filter(Boolean)
+    : [];
 
   return (
     <div className="row g-3 mb-3">
@@ -189,26 +203,40 @@ export default function RejectsImageUploadForm() {
                 </div>
 
                 <p className="form-section-title mt-2">
-                  <i className="ri-image-line me-1"></i> Image
+                  <i className="ri-image-line me-1"></i> Images
                 </p>
                 <div className="row">
                   <div className="col-12 col-md-6">
                     <TextInput
-                      label="Image URL / Path"
+                      label="Image URL(s) — comma-separated for multiple"
                       name="image_path"
                       value={formData.image_path}
                       onChange={handleChange}
-                      placeholder="Enter image URL or path"
+                      placeholder="https://example.com/img1.jpg, https://example.com/img2.jpg"
                     />
                   </div>
-                  {formData.image_path && (
-                    <div className="col-12 col-md-6 d-flex align-items-end mb-3">
-                      <a href={formData.image_path} target="_blank" rel="noreferrer" className="btn btn-outline-primary btn-sm">
-                        <i className="ri-eye-line me-1"></i> Preview Image
-                      </a>
-                    </div>
-                  )}
                 </div>
+
+                {/* Image previews */}
+                {imagePaths.length > 0 && (
+                  <div className="row mt-2 mb-3">
+                    <div className="col-12">
+                      <label className="form-label" style={{ fontSize: '12px', color: 'var(--vz-secondary-color)' }}>Preview</label>
+                      <div className="d-flex flex-wrap gap-2">
+                        {imagePaths.map((img, i) => (
+                          <a key={i} href={img} target="_blank" rel="noreferrer">
+                            <img
+                              src={img}
+                              alt={`img-${i}`}
+                              style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 4, border: '1px solid #ddd' }}
+                              onError={(e) => { e.target.style.display = 'none'; }}
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="row mt-3">
                   <div className="col-12 text-end">
