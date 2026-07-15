@@ -74,7 +74,7 @@ def test_measurable_create_and_list():
 
     res = client.get('/api/measurable')
     assert res.status_code == 200
-    assert res.data['count'] == 1
+    assert res.data['data']['count'] == 1
 
 
 def test_measurable_delete_is_soft():
@@ -87,7 +87,7 @@ def test_measurable_delete_is_soft():
     res = client.delete(f'/api/measurable/{unique_id}')
     assert res.status_code == 200
     assert Measurable.objects.get(unique_id=unique_id).is_deleted is True
-    assert client.get('/api/measurable').data['count'] == 0
+    assert client.get('/api/measurable').data['data']['count'] == 0
 
 
 # ── Logsheet ──
@@ -99,7 +99,7 @@ def test_logsheet_create_and_list():
 
     res = client.get('/api/logsheet')
     assert res.status_code == 200
-    assert res.data['count'] == 1
+    assert res.data['data']['count'] == 1
 
 
 # ── DC (Delivery Challan) ──
@@ -159,8 +159,8 @@ def test_pit_status_report_filters_by_date_at_db_level():
     # Query with date range that should only match July record
     res = client.get('/api/pit-status-report?from_date=2026-07-01&to_date=2026-07-31')
     assert res.status_code == 200
-    assert res.data['count'] == 1
-    assert res.data['results'][0]['batch_id'] == 'PIT-01-002'
+    assert res.data['data']['count'] == 1
+    assert res.data['data']['results'][0]['batch_id'] == 'PIT-01-002'
 
 
 def test_rejects_report_eliminates_n_plus_one():
@@ -176,9 +176,17 @@ def test_rejects_report_eliminates_n_plus_one():
 
     res = client.get('/api/rejects-report')
     assert res.status_code == 200
-    assert res.data['count'] == 2
+    assert res.data['data']['count'] == 2
 
     # Find results by ticket_no
-    results = {r['ticket_no']: r for r in res.data['results']}
+    results = {r['ticket_no']: r for r in res.data['data']['results']}
     assert results['TK001']['has_image'] is True
     assert results['TK002']['has_image'] is False
+
+
+def test_rejects_report_bad_page_returns_validation_error():
+    client = authed_client(make_user(screens='rejects_report_view'))
+    res = client.get('/api/rejects-report', {'page': 'abc'})
+    assert res.status_code == 400
+    assert res.data == {'status': 0, 'msg': 'validation_error', 'data': None,
+                         'error': 'page and page_size must be integers.'}

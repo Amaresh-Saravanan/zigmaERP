@@ -39,7 +39,11 @@ from reports.views import (
     measurable_report,
     egg_process_report,
     pit_status_report,
+    pit_status_detail,
     rejects_report,
+    rejects_print_detail,
+    rejects_print_overall,
+    rejects_available_tickets,
 )
 
 
@@ -100,7 +104,11 @@ urlpatterns = [
     path('api/measurable-report', measurable_report, name='measurable-report'),
     path('api/egg-process-report', egg_process_report, name='egg-process-report'),
     path('api/pit-status-report', pit_status_report, name='pit-status-report'),
+    path('api/pit-status-detail', pit_status_detail, name='pit-status-detail'),
     path('api/rejects-report', rejects_report, name='rejects-report'),
+    path('api/rejects-print-detail', rejects_print_detail, name='rejects-print-detail'),
+    path('api/rejects-print-overall', rejects_print_overall, name='rejects-print-overall'),
+    path('api/rejects-available-tickets', rejects_available_tickets, name='rejects-available-tickets'),
     path('api/login-history-report', login_history_report, name='login-history-report'),
     path('api/login-history-detail', login_history_detail, name='login-history-detail'),
     path('api/permission-catalog', permission_catalog, name='permission-catalog'),

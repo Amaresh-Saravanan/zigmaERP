@@ -94,6 +94,7 @@ class DC(Document):
 class Reject(Document):
     unique_id = StringField(unique=True, required=True, default=lambda: str(uuid.uuid4()))
     ticket_no = StringField(unique=True, required=True)
+    serial_no = StringField(default='')
     vehicle_no = StringField(required=True)
     vendor = StringField(required=True)
     date = DateField(required=True)
@@ -101,6 +102,10 @@ class Reject(Document):
     empty_weight = FloatField(default=0)
     loaded_weight = FloatField(default=0)
     net_weight = FloatField(default=0)  # server-computed if omitted
+    empty_weight_date = DateField(null=True)
+    empty_weight_time = StringField(default='')
+    load_weight_date = DateField(null=True)
+    load_weight_time = StringField(default='')
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)
     updated_at = DateTimeField(default=timezone.now)

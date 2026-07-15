@@ -1,4 +1,3 @@
-from django.utils import timezone
 from rest_framework import serializers
 
 from .models import DC, Logsheet, Measurable, Reject, RejectImage
@@ -19,7 +18,6 @@ class MeasurableSerializer(serializers.Serializer):
         for field in ('entry_date', 'location', 'temp', 'humi'):
             setattr(instance, field, validated_data[field])
         instance.remarks = validated_data.get('remarks', instance.remarks)
-        instance.updated_at = timezone.now()
         instance.save()
         return instance
 
@@ -35,7 +33,6 @@ class LogsheetSerializer(serializers.Serializer):
     def update(self, instance, validated_data):
         instance.entry_date = validated_data['entry_date']
         instance.remarks = validated_data.get('remarks', instance.remarks)
-        instance.updated_at = timezone.now()
         instance.save()
         return instance
 
@@ -84,7 +81,6 @@ class DCSerializer(serializers.Serializer):
                 setattr(instance, field, validated_data[field])
         instance.items = items
         instance.grand_total = self._compute_grand_total(items, instance.tax_rate)
-        instance.updated_at = timezone.now()
         instance.save()
         return instance
 
@@ -92,6 +88,7 @@ class DCSerializer(serializers.Serializer):
 class RejectSerializer(serializers.Serializer):
     unique_id = serializers.CharField(read_only=True)
     ticket_no = serializers.CharField()
+    serial_no = serializers.CharField(required=False, allow_blank=True, default='')
     vehicle_no = serializers.CharField()
     vendor = serializers.CharField()
     date = serializers.DateField()
@@ -99,6 +96,10 @@ class RejectSerializer(serializers.Serializer):
     empty_weight = serializers.FloatField(default=0)
     loaded_weight = serializers.FloatField(default=0)
     net_weight = serializers.FloatField(read_only=True)
+    empty_weight_date = serializers.DateField(required=False, allow_null=True)
+    empty_weight_time = serializers.CharField(required=False, allow_blank=True, default='')
+    load_weight_date = serializers.DateField(required=False, allow_null=True)
+    load_weight_time = serializers.CharField(required=False, allow_blank=True, default='')
 
     def create(self, validated_data):
         # ponytail: auto-compute net_weight
@@ -106,11 +107,13 @@ class RejectSerializer(serializers.Serializer):
         return Reject(**validated_data).save()
 
     def update(self, instance, validated_data):
-        for field in ('ticket_no', 'vehicle_no', 'vendor', 'date', 'time', 'empty_weight', 'loaded_weight'):
+        for field in ('ticket_no', 'serial_no', 'vehicle_no', 'vendor', 'date', 'time',
+                       'empty_weight', 'loaded_weight',
+                       'empty_weight_date', 'empty_weight_time',
+                       'load_weight_date', 'load_weight_time'):
             if field in validated_data:
                 setattr(instance, field, validated_data[field])
         instance.net_weight = instance.loaded_weight - instance.empty_weight
-        instance.updated_at = timezone.now()
         instance.save()
         return instance
 
@@ -131,7 +134,6 @@ class RejectImageSerializer(serializers.Serializer):
         for field in ('ticket_no', 'image_path', 'upload_date', 'weigh_date', 'vehicle_no', 'net_weight'):
             if field in validated_data:
                 setattr(instance, field, validated_data[field])
-        instance.updated_at = timezone.now()
         instance.save()
         return instance
 
