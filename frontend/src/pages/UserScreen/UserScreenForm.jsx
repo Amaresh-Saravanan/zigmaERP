@@ -36,7 +36,7 @@ export default function UserScreenForm() {
   const fetchMainScreens = async () => {
     try {
       const res = await djangoClient.get('/main-screens', { params: { page_size: 100 } });
-      setMainScreenOptions((res.data.results || []).map((ms) => ({ value: ms.unique_id, label: ms.screen_main_name })));
+      setMainScreenOptions((res.data.data.results || []).map((ms) => ({ value: ms.unique_id, label: ms.screen_main_name })));
     } catch (error) {
       console.error(error);
     }
@@ -54,6 +54,8 @@ export default function UserScreenForm() {
         order_no: String(s.order_no ?? ''),
         icon_name: s.icon_name || '',
         active_status: s.is_active ? '1' : '0',
+        description: s.description || '',
+        actions: s.actions || { add: false, update: false, list: false, delete: false, view: false, print: false },
       });
     } catch (error) {
       console.error(error);
@@ -217,31 +219,49 @@ export default function UserScreenForm() {
 
                   <div className="col-12 col-md-6">
                     <label className="form-label app-form-label">Actions</label>
-                    <div className="d-flex flex-wrap gap-3">
-                      <div className="form-check">
-                        <input
-                          type="checkbox"
-                          className="form-check-input"
-                          id="action_all"
-                          name="all"
-                          checked={allActionsChecked}
-                          onChange={handleActionChange}
-                        />
-                        <label className="form-check-label" htmlFor="action_all">All</label>
-                      </div>
-                      {ACTION_KEYS.map((key) => (
-                        <div className="form-check" key={key}>
-                          <input
-                            type="checkbox"
-                            className="form-check-input"
-                            id={`action_${key}`}
-                            name={key}
-                            checked={formData.actions[key]}
-                            onChange={handleActionChange}
-                          />
-                          <label className="form-check-label text-capitalize" htmlFor={`action_${key}`}>{key}</label>
-                        </div>
-                      ))}
+                    <div className="d-flex flex-wrap gap-2 align-items-center">
+                      <button
+                        type="button"
+                        title="Select All"
+                        style={{
+                          width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          background: allActionsChecked ? 'var(--bs-primary)' : 'transparent',
+                          color: allActionsChecked ? '#fff' : 'var(--vz-secondary-color)',
+                          border: `1.5px solid ${allActionsChecked ? 'var(--bs-primary)' : 'var(--vz-border-color)'}`,
+                          transition: 'all 0.15s ease', cursor: 'pointer', fontSize: '1rem', padding: 0,
+                        }}
+                        onClick={() => handleActionChange({ target: { name: 'all', checked: !allActionsChecked } })}
+                      >
+                        <i className="ri-check-double-line"></i>
+                      </button>
+                      {ACTION_KEYS.map((key) => {
+                        const active = formData.actions[key];
+                        const iconMap = {
+                          add: 'ri-add-line',
+                          update: 'ri-edit-line',
+                          list: 'ri-list-check',
+                          delete: 'ri-delete-bin-line',
+                          view: 'ri-eye-line',
+                          print: 'ri-printer-line',
+                        };
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            title={key.charAt(0).toUpperCase() + key.slice(1)}
+                            style={{
+                              width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              background: active ? 'var(--bs-primary)' : 'transparent',
+                              color: active ? '#fff' : 'var(--vz-secondary-color)',
+                              border: `1.5px solid ${active ? 'var(--bs-primary)' : 'var(--vz-border-color)'}`,
+                              transition: 'all 0.15s ease', cursor: 'pointer', fontSize: '1rem', padding: 0,
+                            }}
+                            onClick={() => handleActionChange({ target: { name: key, checked: !active } })}
+                          >
+                            <i className={iconMap[key]}></i>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
