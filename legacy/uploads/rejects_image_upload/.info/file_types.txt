@@ -1,1 +1,0 @@
-jpg|jpeg|png|gif|pdf|xls|xlsx|txt
