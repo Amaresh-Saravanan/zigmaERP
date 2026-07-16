@@ -1,4 +1,5 @@
 from django.utils import timezone
+from mongoengine import Document, ListField, ReferenceField
 from mongoengine.errors import DoesNotExist, ValidationError as MongoValidationError, NotUniqueError
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
@@ -7,6 +8,35 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ViewSetMixin
 
 from accounts.permissions import HasScreenPermission
+
+
+# ponytail: audit/event-log models are exempt from the child-guard even though they
+# have is_deleted — they're historical logs expected to outlive the parent they
+# reference (AuthToken access is already cut via User.is_deleted in authentication.py;
+# LoginHistory is a record of past events, not a live business relation). Extend this
+# set only for models with that same "log of what happened" shape, not real children.
+_AUDIT_LOG_MODELS = {'AuthToken', 'LoginHistory'}
+
+
+def _referencing_child(obj):
+    """
+    Find a live, soft-deletable document that still references obj via a ReferenceField.
+    ponytail: walks Document.__subclasses__() instead of a hand-maintained model
+    registry, so every app's models are covered by one guard with no per-model wiring.
+    """
+    for doc_cls in Document.__subclasses__():
+        if doc_cls.__name__ in _AUDIT_LOG_MODELS:
+            continue
+        fields = getattr(doc_cls, '_fields', None)
+        if not fields or 'is_deleted' not in fields:
+            continue
+        for field_name, field in fields.items():
+            ref_field = field.field if isinstance(field, ListField) else field
+            if not (isinstance(ref_field, ReferenceField) and ref_field.document_type == type(obj)):
+                continue
+            if doc_cls.objects(is_deleted=False, **{field_name: obj}).first():
+                return doc_cls
+    return None
 
 
 class DataTablePagination(PageNumberPagination):
@@ -110,6 +140,12 @@ class MongoModelViewSet(ViewSetMixin, APIView):
         obj = self.get_object(unique_id)
         if obj is None:
             return Response({'status': 0, 'msg': 'not_found', 'data': None, 'error': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        blocker = _referencing_child(obj)
+        if blocker is not None:
+            return Response({
+                'status': 0, 'msg': 'has_dependents', 'data': None,
+                'error': f'Cannot delete: still referenced by {blocker.__name__}.',
+            }, status=status.HTTP_400_BAD_REQUEST)
         obj.is_deleted = True
         obj.save()
         return Response({'status': 1, 'msg': 'success_delete', 'data': None, 'error': ''})

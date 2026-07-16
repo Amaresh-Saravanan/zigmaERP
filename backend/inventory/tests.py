@@ -243,3 +243,26 @@ def test_supplier_delete_is_soft():
     client.delete(f'/api/suppliers/{supplier_id}')
     assert Supplier.objects.get(unique_id=supplier_id).is_deleted is True
     assert client.get(f'/api/suppliers/{supplier_id}').status_code == 404
+
+
+# ── destroy() child-reference guard ──
+
+def test_unit_delete_blocked_while_item_still_references_it(unit):
+    client = authed_client(make_user(screens='item_create,unit_delete'))
+    client.post('/api/items', {'item_name': 'Widget', 'unit': {'unique_id': unit.unique_id}}, format='json')
+
+    res = client.delete(f'/api/units/{unit.unique_id}')
+
+    assert res.status_code == 400
+    assert Unit.objects.get(unique_id=unit.unique_id).is_deleted is False
+
+
+def test_unit_delete_succeeds_once_referencing_item_is_deleted(unit):
+    client = authed_client(make_user(screens='item_create,item_delete,unit_delete'))
+    created = client.post('/api/items', {'item_name': 'Widget', 'unit': {'unique_id': unit.unique_id}}, format='json')
+    client.delete(f"/api/items/{created.data['data']['unique_id']}")
+
+    res = client.delete(f'/api/units/{unit.unique_id}')
+
+    assert res.status_code == 200
+    assert Unit.objects.get(unique_id=unit.unique_id).is_deleted is True

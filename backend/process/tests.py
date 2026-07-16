@@ -215,6 +215,15 @@ def test_oven_process_running_hours_handles_overnight_shift():
     assert res.data['data']['running_hours'] == 4.0
 
 
+def test_oven_process_rejects_malformed_time():
+    client = authed_client(make_user(screens=ALL_SCREENS))
+    res = client.post('/api/oven-process', {
+        'entry_date': '2026-07-01', 'starting_time': 'not-a-time', 'closing_time': '14:30',
+        'diesel_topup': 5, 'raw_larvae_process': 10, 'dried_larvae_production': 3, 'dried_larvae_stock': 3,
+    }, format='json')
+    assert res.status_code == 400
+
+
 def test_oven_process_auto_calculates():
     """Test that explicit 0.0 running_hours is persisted, not overwritten by auto-calc."""
     client = authed_client(make_user(screens=ALL_SCREENS))
@@ -267,6 +276,26 @@ def test_egg_process_create_generates_entry_no_and_marks_batch_used(batch, suppl
     assert res.status_code == 201
     assert res.data['data']['entry_no'] == 'EPC-00001'
     assert MaterialReceived.objects.get(unique_id=batch.unique_id).batch_status == 'used'
+
+
+def test_tray_delete_blocked_while_egg_process_still_references_it(batch, supplier, tray):
+    """destroy()'s child-guard must also catch ListField(ReferenceField(...)) membership, not just plain refs."""
+    staff = make_user(screens=ALL_SCREENS + ',tray_delete')
+    client = authed_client(staff)
+    client.post('/api/egg-process', {
+        'entry_date': '2026-07-01',
+        'staff': {'unique_id': staff.unique_id},
+        'supplier': {'unique_id': supplier.unique_id},
+        'batch': {'unique_id': batch.unique_id},
+        'tot_qty': 100,
+        'tray_utilized': 1,
+        'trays': [{'unique_id': tray.unique_id}],
+    }, format='json')
+
+    res = client.delete(f'/api/trays/{tray.unique_id}')
+
+    assert res.status_code == 400
+    assert Tray.objects.get(unique_id=tray.unique_id).is_deleted is False
 
 
 def test_egg_process_create_against_used_batch_returns_400(batch, supplier, tray):

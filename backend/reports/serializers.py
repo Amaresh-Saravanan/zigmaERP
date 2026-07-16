@@ -43,7 +43,7 @@ class DCItemSerializer(serializers.Serializer):
     qty = serializers.FloatField(default=0)
     unit = serializers.CharField(default='Kgs')
     rate = serializers.FloatField(default=0)
-    amount = serializers.FloatField(default=0)
+    amount = serializers.FloatField(read_only=True)  # server-computed: qty * rate, never trust the client copy
 
 
 class DCSerializer(serializers.Serializer):
@@ -62,17 +62,23 @@ class DCSerializer(serializers.Serializer):
     grand_total = serializers.FloatField(read_only=True)
 
     @staticmethod
+    def _price_items(items):
+        for item in items:
+            item['amount'] = item['qty'] * item['rate']
+        return items
+
+    @staticmethod
     def _compute_grand_total(items, tax_rate):
-        sub_total = sum(item['qty'] * item['rate'] for item in items)
+        sub_total = sum(item['amount'] for item in items)
         return round(sub_total * (1 + tax_rate / 100), 2)
 
     def create(self, validated_data):
-        items = validated_data.pop('items')
+        items = self._price_items(validated_data.pop('items'))
         grand_total = self._compute_grand_total(items, validated_data.get('tax_rate', 18))
         return DC(items=items, grand_total=grand_total, **validated_data).save()
 
     def update(self, instance, validated_data):
-        items = validated_data.pop('items')
+        items = self._price_items(validated_data.pop('items'))
         for field in (
             'dc_number', 'po_date', 'dispatch_date', 'challan_date', 'po_ref',
             'challan_type', 'bill_to_company', 'bill_to_address', 'bill_to_gst', 'tax_rate',

@@ -121,6 +121,20 @@ def test_dc_create_computes_grand_total():
     assert res.data['data']['grand_total'] == 1475.0
 
 
+def test_dc_item_amount_is_server_computed_and_ignores_client_value():
+    client = authed_client(make_user(screens=ALL_SCREENS))
+    res = client.post('/api/dc', {
+        'dc_number': 'BSF/LAR/24-25/003',
+        'challan_date': '2026-07-03',
+        'bill_to_company': 'Acme Co',
+        'items': [
+            {'desc': 'Larvae Meal', 'qty': 10, 'rate': 100, 'amount': 0},
+        ],
+    }, format='json')
+    assert res.status_code == 201
+    assert res.data['data']['items'][0]['amount'] == 1000.0
+
+
 def test_dc_duplicate_dc_number_returns_400():
     client = authed_client(make_user(screens=ALL_SCREENS))
     payload = {

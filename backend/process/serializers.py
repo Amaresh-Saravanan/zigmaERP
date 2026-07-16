@@ -1,3 +1,4 @@
+from django.core.validators import RegexValidator
 from rest_framework import serializers
 
 from accounts.models import User
@@ -156,11 +157,14 @@ class CullingProcessSerializer(serializers.Serializer):
 
 # ── Oven Process ──
 
+_HH_MM = RegexValidator(r'^\d{2}:\d{2}$', message='Expected HH:MM.')
+
+
 class OvenProcessSerializer(serializers.Serializer):
     unique_id = serializers.CharField(read_only=True)
     entry_date = serializers.DateField()
-    starting_time = serializers.CharField()
-    closing_time = serializers.CharField()
+    starting_time = serializers.CharField(validators=[_HH_MM])
+    closing_time = serializers.CharField(validators=[_HH_MM])
     running_hours = serializers.FloatField(required=False)
     diesel_topup = serializers.FloatField()
     raw_larvae_process = serializers.FloatField()
