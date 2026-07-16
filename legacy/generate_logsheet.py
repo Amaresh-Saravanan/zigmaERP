@@ -1,7 +1,7 @@
 import re
 import os
 
-html_path = r'C:\Users\DELL\House work\Internship\erp\erp\folders\logsheet\list.php'
+html_path = r'C:\Users\DELL\House work\Internship\erp\erp\legacy\folders\logsheet\list.php'
 jsx_path = r'C:\Users\DELL\House work\Internship\erp\erp\frontend\src\pages\Logsheet\LogsheetList.jsx'
 css_path = r'C:\Users\DELL\House work\Internship\erp\erp\frontend\src\pages\Logsheet\LogsheetList.css'
 
@@ -18,8 +18,9 @@ os.makedirs(os.path.dirname(jsx_path), exist_ok=True)
 with open(css_path, 'w', encoding='utf-8') as f:
     f.write(styles)
 
-# Extract body
-body_match = re.search(r'<body>(.*?)</body>', content, re.DOTALL)
+# Extract body — list.php has an opening <body> but no closing tag (file just
+# ends), so fall back to "everything after <body>" when the closing tag is absent.
+body_match = re.search(r'<body>(.*?)</body>', content, re.DOTALL) or re.search(r'<body>(.*)', content, re.DOTALL)
 body_html = body_match.group(1) if body_match else ''
 
 # Clean up PHP logic that might be in the html just in case

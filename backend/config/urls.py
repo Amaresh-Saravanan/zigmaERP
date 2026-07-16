@@ -16,7 +16,7 @@ from accounts.views import (
     signup,
 )
 from core.dashboard import dashboard
-from core.views import MainScreenViewSet, ScreenViewSet, menu
+from core.views import MainScreenViewSet, ScreenViewSet
 from inventory.views import ItemViewSet, PitViewSet, SupplierViewSet, TrayViewSet, UnitViewSet
 from process.views import (
     CullingProcessViewSet,
@@ -99,7 +99,6 @@ urlpatterns = [
     path('api/auth/signup', signup, name='signup'),
     path('api/auth/logout', logout, name='logout'),
     path('api/auth/me', me, name='me'),
-    path('api/menu', menu, name='menu'),
     path('api/dashboard', dashboard, name='dashboard'),
     path('api/measurable-report', measurable_report, name='measurable-report'),
     path('api/egg-process-report', egg_process_report, name='egg-process-report'),

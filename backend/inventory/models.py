@@ -40,7 +40,7 @@ TRAY_TYPE_CHOICES = (('1', 'EGG Tray'), ('2', 'FRP Tray'))
 class Tray(Document):
     unique_id = StringField(unique=True, required=True, default=lambda: str(uuid.uuid4()))
     tray_type = StringField(required=True, choices=TRAY_TYPE_CHOICES)
-    bin_name = StringField(required=True)
+    bin_name = StringField(required=True, unique=True)
     is_active = BooleanField(default=True)
     is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=timezone.now)

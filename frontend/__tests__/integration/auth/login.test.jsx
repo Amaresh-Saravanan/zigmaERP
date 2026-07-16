@@ -71,11 +71,7 @@ describe('Integration: Login Flow', () => {
     await userEvent.click(screen.getByRole('button', { name: /sign in/i }));
     
     await waitFor(() => {
-      expect(Swal.fire).toHaveBeenCalledWith(
-        expect.objectContaining({
-          title: expect.stringMatching(/incorrect/i)
-        })
-      );
+      expect(screen.getByText(/incorrect username or password/i)).toBeInTheDocument();
     });
   });
 });

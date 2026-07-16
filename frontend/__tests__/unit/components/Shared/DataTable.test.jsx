@@ -2,41 +2,44 @@ import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import DataTable from '../../../../src/components/DataTable';
-import client from '../../../../src/api/client';
+import djangoClient from '../../../../src/api/djangoClient';
 
 describe('Unit: DataTable Component', () => {
   beforeEach(() => {
     cleanup();
     vi.clearAllMocks();
-    vi.spyOn(client, 'post');
+    vi.spyOn(djangoClient, 'get');
   });
 
   const columns = [
-    { label: 'S.No' },
-    { label: 'Name' },
-    { label: 'Status' }
+    { label: 'S.No', sno: true },
+    { label: 'Name', key: 'item_name' },
+    { label: 'Status', key: 'is_active', render: (v) => (v ? 'Active' : 'Inactive') },
   ];
 
   test('renders column headers', () => {
-    render(<DataTable ajaxUrl="test/url" columns={columns} />);
+    render(<DataTable mode="django" ajaxUrl="/items" columns={columns} />);
     expect(screen.getByText('S.No')).toBeInTheDocument();
     expect(screen.getByText('Name')).toBeInTheDocument();
     expect(screen.getByText('Status')).toBeInTheDocument();
   });
 
   test('shows rows fetched from backend', async () => {
-    client.post.mockResolvedValue({
+    djangoClient.get.mockResolvedValue({
       data: {
-        draw: 1,
-        recordsTotal: 1,
-        recordsFiltered: 1,
-        data: [
-          [1, 'Item 1', 'Active']
-        ]
-      }
+        status: 1,
+        msg: 'success',
+        data: {
+          count: 1,
+          results: [
+            { unique_id: '1', item_name: 'Item 1', is_active: true },
+          ],
+        },
+        error: '',
+      },
     });
 
-    render(<DataTable ajaxUrl="test/url" columns={columns} />);
+    render(<DataTable mode="django" ajaxUrl="/items" columns={columns} />);
 
     await waitFor(() => {
       expect(screen.getByText(/Item 1/i)).toBeInTheDocument();
@@ -45,24 +48,29 @@ describe('Unit: DataTable Component', () => {
   });
 
   test('filters on search input', async () => {
-    client.post.mockResolvedValue({
+    djangoClient.get.mockResolvedValue({
       data: {
-        draw: 1,
-        recordsTotal: 2,
-        recordsFiltered: 1,
-        data: [
-          [1, 'Filtered Item', 'Active']
-        ]
-      }
+        status: 1,
+        msg: 'success',
+        data: {
+          count: 2,
+          results: [
+            { unique_id: '1', item_name: 'Filtered Item', is_active: true },
+          ],
+        },
+        error: '',
+      },
     });
 
-    render(<DataTable ajaxUrl="test/url" columns={columns} />);
+    render(<DataTable mode="django" ajaxUrl="/items" columns={columns} />);
 
     const searchInput = screen.getByPlaceholderText(/search/i);
     await userEvent.type(searchInput, 'Filtered');
 
     await waitFor(() => {
-      expect(client.post).toHaveBeenCalledWith('test/url', expect.any(URLSearchParams));
+      expect(djangoClient.get).toHaveBeenCalledWith('/items', {
+        params: expect.objectContaining({ search: 'Filtered' }),
+      });
       expect(screen.getByText(/Filtered Item/i)).toBeInTheDocument();
     });
   });

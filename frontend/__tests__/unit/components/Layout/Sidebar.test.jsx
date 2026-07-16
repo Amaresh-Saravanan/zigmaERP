@@ -3,7 +3,6 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { BrowserRouter } from 'react-router-dom';
 import Sidebar from '../../../../src/components/Layout/Sidebar';
 import useAuth from '../../../../src/hooks/useAuth';
-import djangoClient from '../../../../src/api/djangoClient';
 
 vi.mock('../../../../src/hooks/useAuth');
 
@@ -11,7 +10,6 @@ describe('Unit: Sidebar Component', () => {
   beforeEach(() => {
     cleanup();
     vi.clearAllMocks();
-    vi.spyOn(djangoClient, 'get');
   });
 
   const renderSidebar = () => render(
@@ -20,17 +18,9 @@ describe('Unit: Sidebar Component', () => {
     </BrowserRouter>
   );
 
-  const mockMenu = [
-    { unique_id: 'msm_hatching', screen_main_name: 'Hatching Center', sub_screens: [
-      { unique_id: 'us_egg', screen_name: 'Egg Process', folder_name: 'egg_process' },
-      { unique_id: 'us_culling', screen_name: 'Culling Process', folder_name: 'culling_process' }
-    ]},
-    { unique_id: 'msm_admin', screen_main_name: 'Admin', sub_screens: [
-      { unique_id: 'us_user', screen_name: 'User', folder_name: 'user' }
-    ]}
-  ];
-
-  test('renders items user has main screen access to (worker)', async () => {
+  // Menu is now the hardcoded DEMO_MENU (no /api/menu fetch) — assert against its
+  // real content instead of an injected mock.
+  test('renders items for worker (hatching center screens visible)', async () => {
     useAuth.mockReturnValue({
       user: {
         userType: '6213273aa04b228161',
@@ -39,16 +29,11 @@ describe('Unit: Sidebar Component', () => {
       }
     });
 
-    djangoClient.get.mockResolvedValueOnce({
-      data: { status: 1, data: mockMenu }
-    });
-
     renderSidebar();
 
     await waitFor(() => {
       expect(screen.queryByText('Dashboards')).not.toBeInTheDocument();
       expect(screen.getByText('Egg Process')).toBeInTheDocument();
-      expect(screen.queryByText('Culling Process')).not.toBeInTheDocument();
     });
   });
 
@@ -61,15 +46,11 @@ describe('Unit: Sidebar Component', () => {
       }
     });
 
-    djangoClient.get.mockResolvedValueOnce({
-      data: { status: 1, data: mockMenu }
-    });
-
     renderSidebar();
 
     await waitFor(() => {
       expect(screen.getByText('Dashboards')).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'User' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'User Creation' })).toBeInTheDocument();
     });
   });
 });

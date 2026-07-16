@@ -32,7 +32,24 @@ export const handlers = [
     );
   }),
 
-  // Item Creation CRUD
+  // Item Creation CRUD (Django REST — DataTable mode="django" ajaxUrl="/items")
+  http.get('*/api/items', () => {
+    return HttpResponse.json({
+      status: 1,
+      msg: 'success',
+      error: '',
+      data: {
+        count: 3,
+        results: [
+          { unique_id: 'uid-1', item_code: 'IT-001', item_name: 'Item A', unit: { unique_id: 'uid-kg', unit_name: 'Kg' }, is_active: true },
+          { unique_id: 'uid-2', item_code: 'IT-002', item_name: 'Item B', unit: { unique_id: 'uid-kg', unit_name: 'Kg' }, is_active: true },
+          { unique_id: 'uid-3', item_code: 'IT-003', item_name: 'Item C', unit: { unique_id: 'uid-g', unit_name: 'Gram' }, is_active: false },
+        ],
+      },
+    });
+  }),
+
+  // Item Creation CRUD (legacy PHP — kept in case older code still references it)
   http.post('*/folders/item_creation/crud.php', async ({ request }) => {
     const body = await request.formData();
     const action = body.get('action');

@@ -37,10 +37,12 @@ Bold = moved into this section from a different one, or relabeled, relative to t
 
 ## 3. Known follow-ups (not fixed yet — flagged, not blocking)
 
-### 3.1 🟠 `/api/menu` (DB-backed path) can't currently serve this grouping
+### 3.1 ✅ RESOLVED — `/api/menu` (DB-backed path) can't currently serve this grouping
 `backend/core/views.py::menu()` filters `Screen` docs by `unique_id__in=allowed_screens`, where `allowed_screens` comes from `user.screens`. But `user.screens` is populated with **permission-action ids** (`item_view`, `item_create`, …) everywhere else in the app (see `grant_demo_perms.py`, `accounts/models.py::has_screen`), not **Screen.unique_id** values (`us_user`, `us_pit`, …). Those are two different id spaces that never intersect, so the DB-backed menu query always returns an empty `sub_screens` list, and the frontend's `menu.length` check (`Sidebar.jsx` line 98) always falls back to `DEMO_MENU`.
 **Net effect right now:** every user sees the same hardcoded `DEMO_MENU`, regardless of their actual per-user screen permissions. This predates today's edit — not introduced by it — but today's edit is only visible/correct because of this fallback.
 **Fix (separate task):** either (a) make `menu()` filter by the same permission-action ids used elsewhere (requires mapping each `Screen.unique_id` to its `*_view` permission id), or (b) stop trying to permission-filter the sidebar in the DB and accept `DEMO_MENU` as the real menu source, deleting the dead `MainScreen`/`Screen` collections and the `/api/menu` endpoint. Pick one — don't leave both half-wired.
+
+**Decision:** (b). `menu()`, its route, and its tests (`core/views.py`, `config/urls.py`, `core/tests.py`) are deleted; `Sidebar.jsx` now uses `DEMO_MENU` unconditionally (no fetch, no fallback branch). `MainScreen`/`Screen` models and their CRUD viewsets (`MainScreenViewSet`/`ScreenViewSet`) are kept — those back the Admin "Main Screen"/"User Screen" management pages, a separate feature from the sidebar.
 
 ### 3.2 ✅ RESOLVED — Logsheet and DC now have a sidebar entry
 Added to **Report** (`us_logsheet`/`logsheet`, `us_dc`/`dc`), appended after Login History. Matches legacy's grouping for these two screens.
@@ -65,4 +67,4 @@ E.g. `frontend/src/pages/MaterialReceived/` backs the new "Egg Received" label; 
 - [x] Dev server compiles clean
 - [ ] Manual browser click-through of all 29 links (blocked this session, needs a human or a connected browser tool)
 - [x] Decision recorded on Logsheet/DC (§3.2) — added to Report
-- [ ] Decision recorded on the `/api/menu` id-space bug (§3.1) — separate ticket, not required to close this one
+- [x] Decision recorded on the `/api/menu` id-space bug (§3.1) — option (b), dead endpoint removed

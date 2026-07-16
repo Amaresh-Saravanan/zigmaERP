@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
-import djangoClient from '../../api/djangoClient';
 import zigFlyLogo from '../../assets/images/zig-fly-logo.png';
 import faviIcon from '../../assets/images/favi-icon.png';
 
@@ -11,7 +10,8 @@ import faviIcon from '../../assets/images/favi-icon.png';
 const matchesFolder = (pathname, folder) =>
   pathname === `/${folder}` || pathname.startsWith(`/${folder}/`);
 
-// ponytail: static fallback shown when /api/menu is unavailable (backend offline / demo mode)
+// Hardcoded, not DB-driven: /api/menu had an id-space bug making it dead code
+// (always empty) and has been removed server-side — see Sidebar_Menu_Migration_Tracker.md §3.1.
 // unique_ids here match db_setup/menu_setup.sql so permissions work when DB is live.
 // Grouping matches the official ZigmaERP sidebar spec (screen_name labels + section
 // placement below reflect that spec, not the legacy PHP grouping — see Migration_Tracker.md).
@@ -88,21 +88,11 @@ function useIsCollapsed() {
 
 export default function Sidebar() {
   const { user } = useAuth();
-  const [menu, setMenu] = useState([]);
   const [openId, setOpenId] = useState(null); // ponytail: single-accordion
   const location = useLocation();
   const isCollapsed = useIsCollapsed();
 
-  useEffect(() => {
-    djangoClient.get('/menu', { suppressError: true }).then(res => {
-      if (res.data?.status === 1 && res.data.data?.length) {
-        setMenu(res.data.data);
-      }
-    }).catch(() => { });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const activeMenu = menu.length ? menu : DEMO_MENU;
+  const activeMenu = DEMO_MENU;
 
   // Auto-open the section containing the current route (e.g. deep link, back/forward nav).
   useEffect(() => {
@@ -114,16 +104,7 @@ export default function Sidebar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, activeMenu]);
 
-  const hasScreen = (id) => {
-    if (!user?.screens) return false;
-    if (Array.isArray(user.screens)) return user.screens.includes(id);
-    return user.screens.split(',').includes(id);
-  };
-
-  const visibleSubs = (main) =>
-    menu.length
-      ? (main.sub_screens?.filter(s => hasScreen(s.unique_id)) ?? [])
-      : (main.sub_screens ?? []);
+  const visibleSubs = (main) => main.sub_screens ?? [];
 
   const isWorker = user?.userType === '6213273aa04b228161';
   const toggle = (id) => setOpenId(prev => (prev === id ? null : id));

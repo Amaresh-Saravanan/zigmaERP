@@ -181,6 +181,14 @@ def test_tray_create_and_list():
     assert list_res.data['data']['count'] == 1
 
 
+def test_tray_bin_name_duplicate_returns_400():
+    client = authed_client(make_user(screens='tray_create'))
+    client.post('/api/trays', {'tray_type': '1', 'bin_name': 'Bin A'}, format='json')
+    res = client.post('/api/trays', {'tray_type': '1', 'bin_name': 'Bin A'}, format='json')
+    assert res.status_code == 400
+    assert res.data['status'] == 0
+
+
 # ── Pit ──
 
 def test_pit_volume_is_server_computed_and_ignores_client_value():
