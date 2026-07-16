@@ -3,13 +3,13 @@ import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { describe, test, expect, vi, beforeAll } from 'vitest';
 import ItemCreationForm from '../../../../src/pages/ItemCreation/ItemCreationForm';
-import client from '../../../../src/api/client';
+import djangoClient from '../../../../src/api/djangoClient';
 
 expect.extend(toHaveNoViolations);
 
 // ponytail: stub form.php response so axe doesn't race with a network fetch
 beforeAll(() => {
-  vi.spyOn(client, 'get').mockResolvedValue({
+  vi.spyOn(djangoClient, 'get').mockResolvedValue({
     data: `<html><body>
       <input id="item_code" value="IT-001" />
       <input id="item_name" value="" />

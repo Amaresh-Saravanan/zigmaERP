@@ -4,7 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { describe, test, expect, vi } from 'vitest';
 import Sidebar from '../../../../src/components/Layout/Sidebar';
 import useAuth from '../../../../src/hooks/useAuth';
-import client from '../../../../src/api/client';
+import djangoClient from '../../../../src/api/djangoClient';
 
 vi.mock('../../../../src/hooks/useAuth');
 expect.extend(toHaveNoViolations);
@@ -27,7 +27,7 @@ const renderSidebar = () => {
       screens: ['us_user']
     }
   });
-  vi.spyOn(client, 'get').mockResolvedValue({
+  vi.spyOn(djangoClient, 'get').mockResolvedValue({
     data: { status: 1, menu: mockMenu }
   });
   return render(

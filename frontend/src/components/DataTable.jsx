@@ -42,7 +42,7 @@ function EmptyState({ cols, isFiltered }) {
 export default function DataTable({
   columns,
   ajaxUrl,
-  mode = 'php', // 'php' (legacy crud.php, array-of-HTML rows) | 'django' (REST JSON objects)
+  mode = 'django',
   extraParams = {},
   onEdit,
   onDelete,
@@ -108,16 +108,6 @@ export default function DataTable({
   const handleLengthChange  = (e) => { setLength(Number(e.target.value)); setStart(0); setDraw(d => d + 1); };
   const handleStatusChange  = (e) => { setActiveStatus(e.target.value); setStart(0); setDraw(d => d + 1); };
 
-  const extractUniqueId = (row) => {
-    for (const cell of row) {
-      if (typeof cell === 'string') {
-        const m = cell.match(/unique_id=([^"&'\s>]+)/) || cell.match(/_delete\(['"]([^'"]+)['"]\)/);
-        if (m) return m[1];
-      }
-    }
-    return null;
-  };
-
   const renderActionButtons = (uniqueId) => (
     <div className="hstack gap-1 justify-content-end">
       {onView && (
@@ -151,20 +141,6 @@ export default function DataTable({
     return col.render ? col.render(value, row) : value;
   };
 
-  const renderCell = (cell, colIndex, row) => {
-    const isActionsCol = colIndex === row.length - 1;
-    const uniqueId = extractUniqueId(row);
-
-    if (isActionsCol && uniqueId) {
-      return renderActionButtons(uniqueId);
-    }
-
-    if (typeof cell === 'string' && /<[a-z][\s\S]*>/i.test(cell)) {
-      return <span dangerouslySetInnerHTML={{ __html: cell }} />;
-    }
-    return cell;
-  };
-
   const currentPage = Math.floor(start / length) + 1;
   const totalPages  = Math.ceil(totalRecords / length) || 1;
 
@@ -187,7 +163,6 @@ export default function DataTable({
     return pages;
   };
 
-  // ponytail: reusable DataTable component communicating with legacy PHP same-origin endpoints
   return (
     <div className="card dt-card">
 
@@ -272,11 +247,7 @@ export default function DataTable({
                       <tr key={rIdx} className="dt-row" style={{ '--index': rIdx }}>
                         {columns.map((col, cIdx) => (
                           <td key={cIdx} className={`dt-td ${col.className || ''}`}>
-                            {mode === 'django'
-                              ? renderDjangoCell(col, row, rIdx)
-                              : col.render
-                                ? col.render(row[cIdx], row, extractUniqueId(row))
-                                : renderCell(row[cIdx], cIdx, row)}
+                            {renderDjangoCell(col, row, rIdx)}
                           </td>
                         ))}
                       </tr>

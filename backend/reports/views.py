@@ -1,8 +1,5 @@
-import csv
 from collections import defaultdict
 from datetime import date, timedelta
-
-from django.http import HttpResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response

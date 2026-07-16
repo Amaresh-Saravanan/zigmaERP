@@ -4,13 +4,13 @@ import { BrowserRouter } from 'react-router-dom';
 import { describe, test, expect, beforeAll } from 'vitest';
 import Login from '../../../../src/pages/Login';
 import { AuthProvider } from '../../../../src/context/AuthContext';
-import client from '../../../../src/api/client';
+import djangoClient from '../../../../src/api/djangoClient';
 import { vi } from 'vitest';
 
 expect.extend(toHaveNoViolations);
 
 beforeAll(() => {
-  vi.spyOn(client, 'get').mockResolvedValue({ data: { isAuthenticated: false } });
+  vi.spyOn(djangoClient, 'get').mockResolvedValue({ data: { status: 0 } });
 });
 
 const renderLogin = () => render(

@@ -4,13 +4,13 @@ import { BrowserRouter } from 'react-router-dom';
 import { describe, test, expect, vi } from 'vitest';
 import Header from '../../../../src/components/Layout/Header';
 import useAuth from '../../../../src/hooks/useAuth';
-import client from '../../../../src/api/client';
+import djangoClient from '../../../../src/api/djangoClient';
 
 vi.mock('../../../../src/hooks/useAuth');
 expect.extend(toHaveNoViolations);
 
 const renderHeader = () => {
-  vi.spyOn(client, 'get').mockResolvedValue({ data: { isAuthenticated: false } });
+  vi.spyOn(djangoClient, 'get').mockResolvedValue({ data: { isAuthenticated: false } });
   useAuth.mockReturnValue({
     user: { userName: 'testuser', userImage: 'img/user.jpg' },
     logout: vi.fn()
