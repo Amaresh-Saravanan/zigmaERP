@@ -63,12 +63,12 @@ class SignupSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 'Username may only contain letters, numbers, and underscores.'
             )
-        if User.objects(user_name__iexact=value, is_deleted=False).first():
+        if User.objects.filter(user_name__iexact=value, is_deleted=False).first():
             raise serializers.ValidationError('This username is already taken.')
         return value
 
     def validate_user_email(self, value):
-        if User.objects(user_email__iexact=value, is_deleted=False).first():
+        if User.objects.filter(user_email__iexact=value, is_deleted=False).first():
             raise serializers.ValidationError('An account with this email already exists.')
         return value
 

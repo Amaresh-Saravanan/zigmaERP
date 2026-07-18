@@ -1,8 +1,6 @@
 """
-Menu endpoint tests — run against mongomock, not the real Atlas cluster in .env.
+Menu endpoint tests — run against the real Django test DB (MariaDB).
 """
-import mongoengine as me
-import mongomock
 import pytest
 from django.contrib.auth.hashers import make_password
 from rest_framework.test import APIClient
@@ -10,18 +8,7 @@ from rest_framework.test import APIClient
 from accounts.models import AuthToken, User, UserType
 from core.models import MainScreen, Screen
 
-
-@pytest.fixture(autouse=True)
-def mongomock_connection():
-    me.disconnect()
-    me.connect(db='zigma_erp_test', mongo_client_class=mongomock.MongoClient)
-    yield
-    UserType.drop_collection()
-    User.drop_collection()
-    AuthToken.drop_collection()
-    MainScreen.drop_collection()
-    Screen.drop_collection()
-    me.disconnect()
+pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture

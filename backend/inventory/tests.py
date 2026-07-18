@@ -1,36 +1,20 @@
 """
-Item/Unit CRUD tests — run against mongomock, not the real Atlas cluster in .env.
+Item/Unit CRUD tests — run against the real Django test database (MariaDB).
 """
 import time
-import mongoengine as me
-import mongomock
 import pytest
 from django.contrib.auth.hashers import make_password
 from rest_framework.test import APIClient
 
-from accounts.models import AuthToken, User, UserType
+from accounts.models import User, UserType
 from inventory.models import Item, Pit, Supplier, Tray, Unit
 
-
-@pytest.fixture(autouse=True)
-def mongomock_connection():
-    me.disconnect()
-    me.connect(db='zigma_erp_test', mongo_client_class=mongomock.MongoClient)
-    yield
-    UserType.drop_collection()
-    User.drop_collection()
-    AuthToken.drop_collection()
-    Unit.drop_collection()
-    Item.drop_collection()
-    Tray.drop_collection()
-    Pit.drop_collection()
-    Supplier.drop_collection()
-    me.disconnect()
+pytestmark = pytest.mark.django_db
 
 
 def make_user(screens=''):
-    ut = UserType(type_name='Tester').save()
-    return User(user_name='tester', password_hash=make_password('pw'), user_type=ut, screens=screens).save()
+    ut = UserType.objects.create(type_name='Tester')
+    return User.objects.create(user_name='tester', password_hash=make_password('pw'), user_type=ut, screens=screens)
 
 
 def authed_client(user):
@@ -78,7 +62,7 @@ def test_unit_name_duplicate_returns_400():
 
 @pytest.fixture
 def unit():
-    return Unit(unit_name='Kilogram').save()
+    return Unit.objects.create(unit_name='Kilogram')
 
 
 def test_item_create_auto_generates_sequential_codes(unit):
@@ -143,7 +127,7 @@ def test_item_search_filters_by_name(unit):
 def test_item_update():
     """Test that updated_at is set on every item update."""
     client = authed_client(make_user(screens='item_create,item_view,item_edit'))
-    unit = Unit(unit_name='Kilogram').save()
+    unit = Unit.objects.create(unit_name='Kilogram')
 
     created = client.post('/api/items', {'item_name': 'Widget', 'unit': {'unique_id': unit.unique_id}}, format='json')
     item_id = created.data['data']['unique_id']

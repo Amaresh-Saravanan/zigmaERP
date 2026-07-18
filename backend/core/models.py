@@ -1,44 +1,45 @@
 import uuid
 
+from django.db import models
 from django.utils import timezone
-from mongoengine import BooleanField, DateTimeField, DictField, Document, IntField, ReferenceField, StringField
+from core.base import BaseModel
 
 
-class MainScreen(Document):
+def _default_unique_id():
+    return str(uuid.uuid4())
+
+
+class MainScreen(BaseModel):
     """Top-level sidebar category (legacy: user_screen_main table)."""
-    unique_id = StringField(unique=True, required=True, default=lambda: str(uuid.uuid4()))
-    screen_main_name = StringField(required=True)
-    screen_type = StringField(default='')  # ponytail: free-form; frontend offers menu/report placeholders, no enforced enum until the domain defines real types
-    icon_name = StringField(default='')
-    order_no = IntField(default=0)
-    description = StringField(default='')
-    is_active = BooleanField(default=True)
-    is_deleted = BooleanField(default=False)
-    created_at = DateTimeField(default=timezone.now)
+    unique_id = models.CharField(max_length=64, unique=True, default=_default_unique_id)
+    screen_main_name = models.CharField(max_length=255)
+    screen_type = models.CharField(max_length=64, default='', blank=True)  # ponytail: free-form; frontend offers menu/report placeholders, no enforced enum until the domain defines real types
+    icon_name = models.CharField(max_length=128, default='', blank=True)
+    order_no = models.IntegerField(default=0)
+    description = models.CharField(max_length=1024, default='', blank=True)
+    is_active = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
 
-    meta = {
-        'collection': 'main_screens',
-        'indexes': ['unique_id', '-created_at'],
-    }
+    class Meta:
+        db_table = 'main_screens'
 
 
-class Screen(Document):
+class Screen(BaseModel):
     """Sidebar sub-item under a MainScreen (legacy: user_screen table)."""
-    unique_id = StringField(unique=True, required=True, default=lambda: str(uuid.uuid4()))
-    screen_name = StringField(required=True)
-    folder_name = StringField(required=True)  # matches frontend route slug, e.g. 'item_creation'
-    icon_name = StringField(default='')
-    main_screen = ReferenceField(MainScreen, required=True)
-    order_no = IntField(default=0)
-    description = StringField(default='')
+    unique_id = models.CharField(max_length=64, unique=True, default=_default_unique_id)
+    screen_name = models.CharField(max_length=255)
+    folder_name = models.CharField(max_length=255)  # matches frontend route slug, e.g. 'item_creation'
+    icon_name = models.CharField(max_length=128, default='', blank=True)
+    main_screen = models.ForeignKey(MainScreen, on_delete=models.PROTECT)
+    order_no = models.IntegerField(default=0)
+    description = models.CharField(max_length=1024, default='', blank=True)
     # ponytail: persists the create-form action checkboxes (add/update/list/delete/view/print) as UI state.
     # NOT permission enforcement — actual per-user grants live in user.screens / permission_catalog.
-    actions = DictField(default=dict)
-    is_active = BooleanField(default=True)
-    is_deleted = BooleanField(default=False)
-    created_at = DateTimeField(default=timezone.now)
+    actions = models.JSONField(default=dict)
+    is_active = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
 
-    meta = {
-        'collection': 'screens',
-        'indexes': ['unique_id', 'main_screen', 'order_no', '-created_at'],
-    }
+    class Meta:
+        db_table = 'screens'

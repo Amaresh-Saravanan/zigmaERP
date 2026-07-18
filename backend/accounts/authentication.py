@@ -4,9 +4,9 @@ from rest_framework.exceptions import AuthenticationFailed
 from accounts.models import AuthToken
 
 
-class MongoTokenAuthentication(BaseAuthentication):
-    """Expects `Authorization: Token <key>`. Looks the key up in AuthToken (MongoEngine),
-    not DRF's built-in rest_framework.authtoken (which needs a relational DB we don't have)."""
+class AuthTokenAuthentication(BaseAuthentication):
+    """Expects `Authorization: Token <key>`. Looks the key up in AuthToken, not
+    DRF's built-in rest_framework.authtoken (which needs its own app installed)."""
 
     keyword = b'token'
 
@@ -20,7 +20,7 @@ class MongoTokenAuthentication(BaseAuthentication):
             raise AuthenticationFailed('Invalid token header.')
 
         key = auth[1].decode()
-        token = AuthToken.objects(key=key).first()
+        token = AuthToken.objects.filter(key=key).first()
         if token is None:
             raise AuthenticationFailed('Invalid or expired token.')
 

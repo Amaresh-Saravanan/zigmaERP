@@ -68,25 +68,25 @@ def dashboard(request):
         month_end = date(y, m + 1, 1)
 
     # ponytail: overall loads all records (inherent without aggregation pipeline).
-    # Upgrade path: use MongoDB aggregation for _kpi_from sums.
-    pit_all = list(PitStatus.objects(is_deleted=False).only(
-        'entry_date', 'pit', 'org_status', 'form_batch_id',
+    # Upgrade path: use a DB-side aggregate for _kpi_from sums.
+    pit_all = list(PitStatus.objects.filter(is_deleted=False).select_related('pit').only(
+        'entry_date', 'pit__pit_name', 'pit__unique_id', 'org_status', 'form_batch_id',
         'feed_qty', 'larvae_qty', 'larvae_qty_in', 'qty_rejets', 'qty_manure_1', 'qty_manure_2'
     ))
-    egg_all = list(EggProcess.objects(is_deleted=False).only(
+    egg_all = list(EggProcess.objects.filter(is_deleted=False).only(
         'entry_date', 'tot_qty', 'tray_utilized'
     ))
 
     # Month-filtered rows: query at DB, not Python
-    pit_month = list(PitStatus.objects(
+    pit_month = list(PitStatus.objects.filter(
         is_deleted=False,
         entry_date__gte=month_start,
         entry_date__lt=month_end
-    ).only(
-        'entry_date', 'pit', 'org_status', 'form_batch_id',
+    ).select_related('pit').only(
+        'entry_date', 'pit__pit_name', 'pit__unique_id', 'org_status', 'form_batch_id',
         'feed_qty', 'larvae_qty', 'larvae_qty_in', 'qty_rejets', 'qty_manure_1', 'qty_manure_2'
     ))
-    egg_month = list(EggProcess.objects(
+    egg_month = list(EggProcess.objects.filter(
         is_deleted=False,
         entry_date__gte=month_start,
         entry_date__lt=month_end
@@ -135,10 +135,10 @@ def dashboard(request):
             above_five += e.tray_utilized or 0
     buckets.append({'tray_age': 'Above 5 Days', 'tray_utilized': above_five})
 
-    # ponytail: Mongo Tray has no "used" flag; count active non-TEST trays as the
+    # ponytail: Tray has no "used" flag; count active non-TEST trays as the
     # unutilized pool. Add a used/free field on Tray if this needs to be exact.
-    unutilized = Tray.objects(is_active=True, is_deleted=False,
-                              bin_name__not__icontains='test').count()
+    unutilized = Tray.objects.filter(is_active=True, is_deleted=False).exclude(
+        bin_name__icontains='test').count()
 
     return Response({
         'status': 1,

@@ -1,10 +1,10 @@
 from core.models import MainScreen, Screen
-from core.mongo_viewset import MongoModelViewSet
+from core.viewset import BaseModelViewSet
 from core.serializers import MainScreenSerializer, ScreenSerializer
 
 
-class MainScreenViewSet(MongoModelViewSet):
-    document_class = MainScreen
+class MainScreenViewSet(BaseModelViewSet):
+    queryset = MainScreen.objects.all()
     serializer_class = MainScreenSerializer
     required_screens = {
         'list': 'main_screen_view',
@@ -18,8 +18,8 @@ class MainScreenViewSet(MongoModelViewSet):
         return queryset.filter(screen_main_name__icontains=term)
 
 
-class ScreenViewSet(MongoModelViewSet):
-    document_class = Screen
+class ScreenViewSet(BaseModelViewSet):
+    queryset = Screen.objects.all()
     serializer_class = ScreenSerializer
     required_screens = {
         'list': 'screen_view',

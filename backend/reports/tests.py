@@ -1,45 +1,21 @@
 """
-Reports module CRUD tests — run against mongomock, not the real Atlas cluster in .env.
+Reports module CRUD tests — run against the real Django test DB (MariaDB).
 """
-import mongoengine as me
-import mongomock
 import pytest
 from django.contrib.auth.hashers import make_password
 from rest_framework.test import APIClient
 
-from accounts.models import AuthToken, User, UserType
-from inventory.models import Pit, Supplier, Unit, Item
-from process.models import EggProcess, PitStatus, MaterialReceived, StatusUpdate
-from reports.models import DC, Logsheet, Measurable, Reject, RejectImage
+from accounts.models import User, UserType
+from inventory.models import Pit
+from process.models import PitStatus
+from reports.models import Measurable, Reject, RejectImage
 
-
-@pytest.fixture(autouse=True)
-def mongomock_connection():
-    me.disconnect()
-    me.connect(db='zigma_erp_test', mongo_client_class=mongomock.MongoClient)
-    yield
-    UserType.drop_collection()
-    User.drop_collection()
-    AuthToken.drop_collection()
-    Measurable.drop_collection()
-    Logsheet.drop_collection()
-    DC.drop_collection()
-    Reject.drop_collection()
-    RejectImage.drop_collection()
-    PitStatus.drop_collection()
-    EggProcess.drop_collection()
-    MaterialReceived.drop_collection()
-    StatusUpdate.drop_collection()
-    Pit.drop_collection()
-    Supplier.drop_collection()
-    Unit.drop_collection()
-    Item.drop_collection()
-    me.disconnect()
+pytestmark = pytest.mark.django_db
 
 
 def make_user(screens=''):
-    ut = UserType(type_name='Tester').save()
-    return User(user_name='tester', password_hash=make_password('pw'), user_type=ut, screens=screens).save()
+    ut = UserType.objects.create(type_name='Tester')
+    return User.objects.create(user_name='tester', password_hash=make_password('pw'), user_type=ut, screens=screens)
 
 
 def authed_client(user):
@@ -154,21 +130,21 @@ def test_pit_status_report_filters_by_date_at_db_level():
     """Verify pit_status_report filters date range at DB, not Python."""
     client = authed_client(make_user(screens='pit_status_report_view'))
 
-    pit = Pit(pit_name='Pit-01').save()
+    pit = Pit.objects.create(pit_name='Pit-01')
 
     # Create PitStatus records for different dates
-    PitStatus(
+    PitStatus.objects.create(
         entry_date='2026-06-01', pit=pit, org_status='1',
         form_batch_id='PIT-01-001', feed_qty=10
-    ).save()
-    PitStatus(
+    )
+    PitStatus.objects.create(
         entry_date='2026-07-15', pit=pit, org_status='1',
         form_batch_id='PIT-01-002', feed_qty=20
-    ).save()
-    PitStatus(
+    )
+    PitStatus.objects.create(
         entry_date='2026-08-01', pit=pit, org_status='1',
         form_batch_id='PIT-01-003', feed_qty=30
-    ).save()
+    )
 
     # Query with date range that should only match July record
     res = client.get('/api/pit-status-report?from_date=2026-07-01&to_date=2026-07-31')
@@ -182,11 +158,11 @@ def test_rejects_report_eliminates_n_plus_one():
     client = authed_client(make_user(screens='rejects_report_view'))
 
     # Create reject records
-    r1 = Reject(ticket_no='TK001', vehicle_no='VH001', vendor='Vendor A', date='2026-07-10').save()
-    r2 = Reject(ticket_no='TK002', vehicle_no='VH002', vendor='Vendor B', date='2026-07-11').save()
+    Reject.objects.create(ticket_no='TK001', vehicle_no='VH001', vendor='Vendor A', date='2026-07-10')
+    Reject.objects.create(ticket_no='TK002', vehicle_no='VH002', vendor='Vendor B', date='2026-07-11')
 
     # Add image only for r1
-    RejectImage(ticket_no='TK001', image_path='/path/to/img1.jpg', upload_date='2026-07-10').save()
+    RejectImage.objects.create(ticket_no='TK001', image_path='/path/to/img1.jpg', upload_date='2026-07-10')
 
     res = client.get('/api/rejects-report')
     assert res.status_code == 200

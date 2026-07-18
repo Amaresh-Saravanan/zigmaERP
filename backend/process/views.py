@@ -1,6 +1,6 @@
 from rest_framework.response import Response
 
-from core.mongo_viewset import MongoModelViewSet
+from core.viewset import BaseModelViewSet
 from inventory.models import Pit
 from process.models import (
     CullingProcess,
@@ -28,8 +28,8 @@ from process.serializers import (
 )
 
 
-class MaterialReceivedViewSet(MongoModelViewSet):
-    document_class = MaterialReceived
+class MaterialReceivedViewSet(BaseModelViewSet):
+    queryset = MaterialReceived.objects.all()
     serializer_class = MaterialReceivedSerializer
     required_screens = {
         'list': 'material_received_view',
@@ -43,8 +43,8 @@ class MaterialReceivedViewSet(MongoModelViewSet):
         return queryset.filter(batch_id__icontains=term)
 
 
-class CullingProcessViewSet(MongoModelViewSet):
-    document_class = CullingProcess
+class CullingProcessViewSet(BaseModelViewSet):
+    queryset = CullingProcess.objects.all()
     serializer_class = CullingProcessSerializer
     required_screens = {
         'list': 'culling_process_view',
@@ -58,8 +58,8 @@ class CullingProcessViewSet(MongoModelViewSet):
         return queryset.filter(cylinder_no__icontains=term)
 
 
-class OvenProcessViewSet(MongoModelViewSet):
-    document_class = OvenProcess
+class OvenProcessViewSet(BaseModelViewSet):
+    queryset = OvenProcess.objects.all()
     serializer_class = OvenProcessSerializer
     required_screens = {
         'list': 'oven_process_view',
@@ -70,8 +70,8 @@ class OvenProcessViewSet(MongoModelViewSet):
     }
 
 
-class DryProcessViewSet(MongoModelViewSet):
-    document_class = DryProcess
+class DryProcessViewSet(BaseModelViewSet):
+    queryset = DryProcess.objects.all()
     serializer_class = DryProcessSerializer
     required_screens = {
         'list': 'dry_process_view',
@@ -82,8 +82,8 @@ class DryProcessViewSet(MongoModelViewSet):
     }
 
 
-class LeachateViewSet(MongoModelViewSet):
-    document_class = Leachate
+class LeachateViewSet(BaseModelViewSet):
+    queryset = Leachate.objects.all()
     serializer_class = LeachateSerializer
     required_screens = {
         'list': 'leachate_view',
@@ -94,8 +94,8 @@ class LeachateViewSet(MongoModelViewSet):
     }
 
 
-class EggProcessViewSet(MongoModelViewSet):
-    document_class = EggProcess
+class EggProcessViewSet(BaseModelViewSet):
+    queryset = EggProcess.objects.all()
     serializer_class = EggProcessSerializer
     required_screens = {
         'list': 'egg_process_view',
@@ -108,8 +108,8 @@ class EggProcessViewSet(MongoModelViewSet):
     def filter_search(self, queryset, term):
         return queryset.filter(entry_no__icontains=term)
 
-    def destroy(self, request, unique_id=None):
-        obj = self.get_object(unique_id)
+    def destroy(self, request, *args, **kwargs):
+        obj = self.get_object_or_none()
         if obj is None:
             return Response({'status': 0, 'msg': 'not_found', 'data': None, 'error': 'Not found.'}, status=404)
         # Same-day delete restriction (admin exempt via user_type)
@@ -120,7 +120,7 @@ class EggProcessViewSet(MongoModelViewSet):
                 return Response({'status': 0, 'msg': 'error', 'data': None, 'error': 'Only today\'s records can be deleted.'}, status=403)
         # Block delete if hatching has started
         from process.models import StatusUpdate
-        has_hatching = StatusUpdate.objects(
+        has_hatching = StatusUpdate.objects.filter(
             batch=obj.batch,
             hatching_status__in=['progressing', 'completed'],
             is_deleted=False
@@ -135,8 +135,8 @@ class EggProcessViewSet(MongoModelViewSet):
         return Response({'status': 1, 'msg': 'success_delete', 'data': None, 'error': ''})
 
 
-class StatusUpdateViewSet(MongoModelViewSet):
-    document_class = StatusUpdate
+class StatusUpdateViewSet(BaseModelViewSet):
+    queryset = StatusUpdate.objects.all()
     serializer_class = StatusUpdateSerializer
     required_screens = {
         'list': 'status_update_view',
@@ -147,8 +147,8 @@ class StatusUpdateViewSet(MongoModelViewSet):
     }
 
 
-class PitStatusViewSet(MongoModelViewSet):
-    document_class = PitStatus
+class PitStatusViewSet(BaseModelViewSet):
+    queryset = PitStatus.objects.all()
     serializer_class = PitStatusSerializer
     required_screens = {
         'list': 'pit_status_view',
@@ -168,12 +168,12 @@ class PitStatusViewSet(MongoModelViewSet):
             qs = qs.filter(org_status=org_status)
         pit_uid = self.request.query_params.get('pit')
         if pit_uid:
-            pit = Pit.objects(unique_id=pit_uid).only('id').first()
+            pit = Pit.objects.filter(unique_id=pit_uid).only('id').first()
             qs = qs.filter(pit=pit) if pit else qs.none()
         return qs
 
-    def destroy(self, request, unique_id=None):
-        obj = self.get_object(unique_id)
+    def destroy(self, request, *args, **kwargs):
+        obj = self.get_object_or_none()
         if obj is None:
             return Response({'status': 0, 'msg': 'not_found', 'data': None, 'error': 'Not found.'}, status=404)
 
@@ -183,19 +183,18 @@ class PitStatusViewSet(MongoModelViewSet):
 
         # Cascade: free trays that were assigned to this PitStatus entry
         # Check if any FrpTrayProcess references these trays
-        if obj.trays:
+        if obj.trays.exists():
             from process.models import FrpTrayProcess
-            for tray_ref in obj.trays:
-                frp = FrpTrayProcess.objects(trays=tray_ref, is_deleted=False).first()
+            for tray_ref in obj.trays.all():
+                frp = FrpTrayProcess.objects.filter(trays=tray_ref, is_deleted=False).first()
                 if frp:
-                    frp.trays.remove(tray_ref)
-                    frp.save()
+                    frp.trays.remove(tray_ref)  # M2M .remove() persists immediately
 
         return Response({'status': 1, 'msg': 'success_delete', 'data': None, 'error': ''})
 
 
-class FrpTrayProcessViewSet(MongoModelViewSet):
-    document_class = FrpTrayProcess
+class FrpTrayProcessViewSet(BaseModelViewSet):
+    queryset = FrpTrayProcess.objects.all()
     serializer_class = FrpTrayProcessSerializer
     required_screens = {
         'list': 'frp_tray_process_view',
@@ -206,8 +205,8 @@ class FrpTrayProcessViewSet(MongoModelViewSet):
     }
 
 
-class FrpStatusUpdateViewSet(MongoModelViewSet):
-    document_class = FrpStatusUpdate
+class FrpStatusUpdateViewSet(BaseModelViewSet):
+    queryset = FrpStatusUpdate.objects.all()
     serializer_class = FrpStatusUpdateSerializer
     required_screens = {
         'list': 'frp_status_update_view',

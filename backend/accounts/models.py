@@ -1,70 +1,67 @@
 import secrets
 import uuid
 
+from django.db import models
 from django.utils import timezone
-from mongoengine import (
-    BooleanField,
-    DateField,
-    DateTimeField,
-    Document,
-    IntField,
-    ReferenceField,
-    StringField,
-)
+from core.base import BaseModel
 
 
-class UserType(Document):
-    unique_id = StringField(unique=True, required=True, default=lambda: str(uuid.uuid4()))
-    type_name = StringField(unique=True, required=True)
-    description = StringField(default='')
-    main_screens = StringField(default='')  # comma-separated ids; role's default permission set
-    screens = StringField(default='')
-    is_active = BooleanField(default=True)
-    is_deleted = BooleanField(default=False)
-    created_at = DateTimeField(default=timezone.now)
-    updated_at = DateTimeField(default=timezone.now)
+def _default_unique_id():
+    return str(uuid.uuid4())
 
-    meta = {
-        'collection': 'user_types',
-        'indexes': ['unique_id'],
-    }
+
+def _default_token_key():
+    return secrets.token_hex(32)
+
+
+class UserType(BaseModel):
+    unique_id = models.CharField(max_length=64, unique=True, default=_default_unique_id)
+    type_name = models.CharField(max_length=255, unique=True)
+    description = models.CharField(max_length=255, default='', blank=True)
+    main_screens = models.CharField(max_length=1024, default='', blank=True)  # comma-separated ids; role's default permission set
+    screens = models.CharField(max_length=2048, default='', blank=True)
+    is_active = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = 'user_types'
 
     @classmethod
     def get_or_create_pending(cls):
         """Zero-permission role auto-assigned to self-service signups until an
         admin reviews the account and assigns a real role."""
-        existing = cls.objects(type_name='Pending Signup', is_deleted=False).first()
+        existing = cls.objects.filter(type_name='Pending Signup', is_deleted=False).first()
         if existing:
             return existing
-        return cls(
+        return cls.objects.create(
             type_name='Pending Signup',
             description='Auto-assigned to self-registered accounts pending admin review.',
             screens='',
             main_screens='',
-        ).save()
+        )
 
 
-class User(Document):
-    unique_id = StringField(unique=True, required=True, default=lambda: str(uuid.uuid4()))
-    emp_id = StringField(default='')
-    user_name = StringField(unique=True, required=True)
-    password_hash = StringField(required=True)
-    first_name = StringField(default='')
-    last_name = StringField(default='')
-    user_type = ReferenceField(UserType, required=True)
-    user_email = StringField(default='')
-    user_image = StringField(default='')
-    main_screens = StringField(default='')  # comma-separated ids, mirrors legacy PHP
-    screens = StringField(default='')
-    is_active = BooleanField(default=True)
-    is_deleted = BooleanField(default=False)
-    created_at = DateTimeField(default=timezone.now)
-    updated_at = DateTimeField(default=timezone.now)
+class User(BaseModel):
+    unique_id = models.CharField(max_length=64, unique=True, default=_default_unique_id)
+    emp_id = models.CharField(max_length=64, default='', blank=True)
+    user_name = models.CharField(max_length=150, unique=True)
+    password_hash = models.CharField(max_length=255)
+    first_name = models.CharField(max_length=150, default='', blank=True)
+    last_name = models.CharField(max_length=150, default='', blank=True)
+    user_type = models.ForeignKey(UserType, on_delete=models.PROTECT)
+    user_email = models.CharField(max_length=255, default='', blank=True)
+    user_image = models.CharField(max_length=255, default='', blank=True)
+    main_screens = models.CharField(max_length=1024, default='', blank=True)  # comma-separated ids, mirrors legacy PHP
+    screens = models.CharField(max_length=2048, default='', blank=True)
+    is_active = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
 
-    meta = {
-        'collection': 'users',
-        'indexes': ['unique_id', 'user_name', '-created_at'],
-    }
+    class Meta:
+        db_table = 'users'
 
     # Minimal contract DRF's permission checks expect (request.user.is_authenticated).
     # Always True: this attribute only exists on a User fetched via a valid token.
@@ -77,51 +74,47 @@ class User(Document):
         return screen_id in (s.strip() for s in self.screens.split(',') if s.strip())
 
 
-class AuthToken(Document):
-    """MongoEngine-backed session token — DRF's rest_framework.authtoken needs a
-    relational table, which this project doesn't have (DATABASES = {})."""
-    key = StringField(unique=True, required=True, default=lambda: secrets.token_hex(32))
-    user = ReferenceField(User, required=True, unique=True)
-    created_at = DateTimeField(default=timezone.now)
-    updated_at = DateTimeField(default=timezone.now)
+class AuthToken(BaseModel):
+    """Session token — DRF's rest_framework.authtoken app isn't installed, so this
+    is a plain table storing the same shape."""
+    key = models.CharField(max_length=64, unique=True, default=_default_token_key)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
 
-    meta = {
-        'collection': 'auth_tokens',
-        'indexes': ['key', 'user'],
-    }
+    class Meta:
+        db_table = 'auth_tokens'
 
     @classmethod
     def for_user(cls, user):
         """One token per user — re-login reuses the existing token instead of piling up rows."""
-        token = cls.objects(user=user).first()
-        return token or cls(user=user).save()
+        token = cls.objects.filter(user=user).first()
+        return token or cls.objects.create(user=user)
 
 
-class LoginHistory(Document):
+class LoginHistory(BaseModel):
     """One row per login/logout event (legacy: user_login_details). The report
     groups these by user+date into first-login / last-logout / worked-hours."""
-    unique_id = StringField(unique=True, required=True, default=lambda: str(uuid.uuid4()))
-    user = ReferenceField(User, required=True)
-    sess_user_type = StringField(default='')  # user_type unique_id at login time
-    entry_date = DateField(required=True)
-    entry_time = StringField(required=True)   # 'HH:MM:SS'
-    log_type = IntField(required=True)        # 1 = login, 2 = logout, 3 = session logout, 4 = tab/window closed
-    is_deleted = BooleanField(default=False)
-    created_at = DateTimeField(default=timezone.now)
-    updated_at = DateTimeField(default=timezone.now)
+    unique_id = models.CharField(max_length=64, unique=True, default=_default_unique_id)
+    user = models.ForeignKey(User, on_delete=models.PROTECT)
+    sess_user_type = models.CharField(max_length=64, default='', blank=True)  # user_type unique_id at login time
+    entry_date = models.DateField()
+    entry_time = models.CharField(max_length=16)   # 'HH:MM:SS'
+    log_type = models.IntegerField()        # 1 = login, 2 = logout, 3 = session logout, 4 = tab/window closed
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
 
-    meta = {
-        'collection': 'user_login_details',
-        'indexes': ['unique_id', 'user', 'entry_date', '-created_at'],
-    }
+    class Meta:
+        db_table = 'user_login_details'
 
     @classmethod
     def record(cls, user, log_type):
         now = timezone.localtime()
-        return cls(
+        return cls.objects.create(
             user=user,
             sess_user_type=user.user_type.unique_id if user.user_type else '',
             entry_date=now.date(),
             entry_time=now.strftime('%H:%M:%S'),
             log_type=log_type,
-        ).save()
+        )

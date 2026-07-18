@@ -6,11 +6,11 @@ from rest_framework import status
 from collections import defaultdict
 from datetime import datetime
 
-from mongoengine.errors import NotUniqueError
+from django.db import IntegrityError
 
 from accounts.models import AuthToken, LoginHistory, User, UserType
 from accounts.serializers import LoginSerializer, SignupSerializer, UserManageSerializer, UserSerializer, UserTypeManageSerializer
-from core.mongo_viewset import MongoModelViewSet
+from core.viewset import BaseModelViewSet
 
 
 @api_view(['POST'])
@@ -72,7 +72,7 @@ def signup(request):
 
     try:
         user = serializer.save()
-    except NotUniqueError:
+    except IntegrityError:
         return Response({
             'status': 0,
             'msg': 'error',
@@ -97,7 +97,7 @@ def logout(request):
     if log_type not in (2, 3, 4):
         log_type = 2
     LoginHistory.record(request.user, log_type=log_type)
-    AuthToken.objects(user=request.user).delete()
+    AuthToken.objects.filter(user=request.user).delete()
     return Response({'status': 1, 'msg': 'success_logout', 'data': None, 'error': ''})
 
 
@@ -118,7 +118,7 @@ def _worked_hms(pairs):
 
 
 def _type_name(uid):
-    ut = UserType.objects(unique_id=uid).first() if uid else None
+    ut = UserType.objects.filter(unique_id=uid).first() if uid else None
     return ut.type_name if ut else ''
 
 
@@ -132,7 +132,7 @@ def login_history_report(request):
     search_term = p.get('search', '').strip()
 
     grouped = defaultdict(list)  # (user_uid, entry_date) -> [events]
-    for ev in LoginHistory.objects(is_deleted=False):
+    for ev in LoginHistory.objects.filter(is_deleted=False):
         if not ev.user:
             continue
         d = ev.entry_date.isoformat() if ev.entry_date else ''
@@ -189,7 +189,7 @@ def login_history_report(request):
 def login_history_detail(request):
     """Session breakdown for one user on one date (legacy view.php)."""
     user_id, entry_date = request.query_params.get('unique_id'), request.query_params.get('entry_date')
-    user = User.objects(unique_id=user_id).first()
+    user = User.objects.filter(unique_id=user_id).first()
     if not user or not entry_date:
         return Response({
             'status': 0,
@@ -198,7 +198,7 @@ def login_history_detail(request):
             'error': 'User or date not found.',
         }, status=status.HTTP_404_NOT_FOUND)
 
-    events = [e for e in LoginHistory.objects(user=user, is_deleted=False)
+    events = [e for e in LoginHistory.objects.filter(user=user, is_deleted=False)
               if e.entry_date and e.entry_date.isoformat() == entry_date]
     events.sort(key=lambda e: e.entry_time)
 
@@ -250,8 +250,8 @@ def me(request):
     })
 
 
-class UserTypeViewSet(MongoModelViewSet):
-    document_class = UserType
+class UserTypeViewSet(BaseModelViewSet):
+    queryset = UserType.objects.all()
     serializer_class = UserTypeManageSerializer
     required_screens = {
         'list': 'user_type_view',
@@ -265,8 +265,8 @@ class UserTypeViewSet(MongoModelViewSet):
         return queryset.filter(type_name__icontains=term)
 
 
-class UserViewSet(MongoModelViewSet):
-    document_class = User
+class UserViewSet(BaseModelViewSet):
+    queryset = User.objects.all()
     serializer_class = UserManageSerializer
     required_screens = {
         'list': 'user_view',

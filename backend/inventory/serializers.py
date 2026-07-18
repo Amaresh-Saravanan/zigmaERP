@@ -44,7 +44,7 @@ class ItemSerializer(serializers.Serializer):
         # looking at just the newest row breaks when it's a non-IT- code (e.g. a
         # seeded ITM-DEMO-###), which reset the counter to IT-001 and collided.
         last_num = 0
-        for it in Item.objects(item_code__startswith='IT-').only('item_code'):
+        for it in Item.objects.filter(item_code__startswith='IT-').only('item_code'):
             try:
                 last_num = max(last_num, int(it.item_code.split('-')[1]))
             except (IndexError, ValueError):

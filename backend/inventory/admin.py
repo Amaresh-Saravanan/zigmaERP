@@ -1,1 +1,1 @@
-# MongoEngine models not registered here — Django admin not used with MongoDB backend.
+# Models not registered here — Django admin not used for this app.

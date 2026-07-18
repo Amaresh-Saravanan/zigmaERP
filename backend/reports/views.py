@@ -1,10 +1,13 @@
+import csv
 from collections import defaultdict
 from datetime import date, timedelta
+
+from django.http import HttpResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from core.mongo_viewset import MongoModelViewSet
+from core.viewset import BaseModelViewSet
 from process.models import EggProcess, MaterialReceived, PitStatus, StatusUpdate
 from reports.models import DC, Logsheet, Measurable, Reject, RejectImage
 from reports.serializers import (
@@ -72,11 +75,11 @@ def measurable_report(request):
         ps_filter['entry_date__lte'] = to_date
 
     by_date = defaultdict(list)
-    for m in Measurable.objects(is_deleted=False):
+    for m in Measurable.objects.filter(is_deleted=False):
         by_date[m.entry_date].append(m)
 
     rows = []
-    for ps in PitStatus.objects(**ps_filter).order_by('entry_date'):
+    for ps in PitStatus.objects.filter(**ps_filter).order_by('entry_date'):
         if pit_id and (not ps.pit or ps.pit.unique_id != pit_id):
             continue
         d = ps.entry_date.isoformat() if ps.entry_date else ''
@@ -124,18 +127,18 @@ def egg_process_report(request):
 
     # ponytail: load all status updates once, index by batch unique_id
     status_by_batch = defaultdict(list)
-    for su in StatusUpdate.objects(is_deleted=False):
+    for su in StatusUpdate.objects.filter(is_deleted=False):
         if su.batch:
             status_by_batch[su.batch.unique_id].append(su)
 
     # ponytail: load pit_status org_status='2' (baby larvae added) indexed by batch
     pit_by_batch = defaultdict(list)
-    for ps in PitStatus.objects(is_deleted=False, org_status='2'):
+    for ps in PitStatus.objects.filter(is_deleted=False, org_status='2'):
         if ps.batch:
             pit_by_batch[ps.batch.unique_id].append(ps)
 
     rows = []
-    for ep in EggProcess.objects(**ep_filter).order_by('-entry_date'):
+    for ep in EggProcess.objects.filter(**ep_filter).order_by('-entry_date'):
         batch_uid = ep.batch.unique_id if ep.batch else ''
         if batch_id and batch_uid != batch_id:
             continue
@@ -209,7 +212,7 @@ def pit_status_report(request):
     if to_date:
         ps_filter['entry_date__lte'] = to_date
 
-    all_ps = PitStatus.objects(**ps_filter).order_by('entry_date')
+    all_ps = PitStatus.objects.filter(**ps_filter).order_by('entry_date')
 
     # Group by pit + form_batch_id prefix (PIT-<suffix>)
     batches = defaultdict(list)
@@ -230,7 +233,7 @@ def pit_status_report(request):
     if to_date:
         meas_filter['entry_date__lte'] = to_date
     meas_by_date = defaultdict(lambda: {'temps': [], 'humis': []})
-    for m in Measurable.objects(**meas_filter):
+    for m in Measurable.objects.filter(**meas_filter):
         d = m.entry_date
         meas_by_date[d]['temps'].append(m.temp)
         meas_by_date[d]['humis'].append(m.humi)
@@ -243,7 +246,7 @@ def pit_status_report(request):
                 batch_ids.add(e.batch.unique_id)
     egg_by_batch = {}
     if batch_ids:
-        for mr in MaterialReceived.objects(unique_id__in=batch_ids, is_deleted=False):
+        for mr in MaterialReceived.objects.filter(unique_id__in=batch_ids, is_deleted=False):
             egg_by_batch[mr.unique_id] = mr.qty or 0
 
     rows = []
@@ -398,7 +401,7 @@ def pit_status_detail(request):
     if not batch_id:
         return _validation_error('batch_id is required.')
 
-    entries = PitStatus.objects(form_batch_id=batch_id, is_deleted=False).order_by('entry_date')
+    entries = PitStatus.objects.filter(form_batch_id=batch_id, is_deleted=False).order_by('entry_date')
     if not entries:
         return _validation_error(f'No records found for batch {batch_id}.')
 
@@ -437,7 +440,7 @@ def pit_status_detail(request):
     if end_date:
         meas_filter['entry_date__lte'] = end_date
     temps_all, humis_all = [], []
-    for m in Measurable.objects(**meas_filter):
+    for m in Measurable.objects.filter(**meas_filter):
         temps_all.append(m.temp)
         humis_all.append(m.humi)
     out_temp_avg = round(sum(temps_all) / len(temps_all), 1) if temps_all else 0
@@ -447,7 +450,7 @@ def pit_status_detail(request):
     egg_add = 0
     batch_uid = entries[0].batch.unique_id if entries[0].batch else ''
     if batch_uid:
-        mr = MaterialReceived.objects(unique_id=batch_uid, is_deleted=False).first()
+        mr = MaterialReceived.objects.filter(unique_id=batch_uid, is_deleted=False).first()
         if mr:
             egg_add = mr.qty or 0
 
@@ -504,8 +507,8 @@ def pit_status_detail(request):
     })
 
 
-class MeasurableViewSet(MongoModelViewSet):
-    document_class = Measurable
+class MeasurableViewSet(BaseModelViewSet):
+    queryset = Measurable.objects.all()
     serializer_class = MeasurableSerializer
     required_screens = {
         'list': 'measurable_view',
@@ -519,8 +522,8 @@ class MeasurableViewSet(MongoModelViewSet):
         return queryset.filter(location__icontains=term)
 
 
-class LogsheetViewSet(MongoModelViewSet):
-    document_class = Logsheet
+class LogsheetViewSet(BaseModelViewSet):
+    queryset = Logsheet.objects.all()
     serializer_class = LogsheetSerializer
     required_screens = {
         'list': 'logsheet_view',
@@ -531,8 +534,8 @@ class LogsheetViewSet(MongoModelViewSet):
     }
 
 
-class DCViewSet(MongoModelViewSet):
-    document_class = DC
+class DCViewSet(BaseModelViewSet):
+    queryset = DC.objects.all()
     serializer_class = DCSerializer
     required_screens = {
         'list': 'dc_view',
@@ -546,8 +549,8 @@ class DCViewSet(MongoModelViewSet):
         return queryset.filter(dc_number__icontains=term)
 
 
-class RejectViewSet(MongoModelViewSet):
-    document_class = Reject
+class RejectViewSet(BaseModelViewSet):
+    queryset = Reject.objects.all()
     serializer_class = RejectSerializer
     required_screens = {
         'list': 'rejects_report_view',
@@ -582,10 +585,12 @@ def rejects_report(request):
         r_filter['date__lte'] = to_date
 
     # ponytail: pre-fetch all images once, indexed by ticket_no (eliminates N+1)
-    img_tickets = set(RejectImage.objects(is_deleted=False).distinct('ticket_no'))
+    img_tickets = set(
+        RejectImage.objects.filter(is_deleted=False).values_list('ticket_no', flat=True).distinct()
+    )
 
     rows = []
-    for r in Reject.objects(**r_filter).order_by('-date'):
+    for r in Reject.objects.filter(**r_filter).order_by('-date'):
         d = r.date.isoformat() if r.date else ''
         has_image = r.ticket_no in img_tickets
         rows.append({
@@ -607,8 +612,8 @@ def rejects_report(request):
     return _paginate(request, rows)
 
 
-class RejectImageViewSet(MongoModelViewSet):
-    document_class = RejectImage
+class RejectImageViewSet(BaseModelViewSet):
+    queryset = RejectImage.objects.all()
     serializer_class = RejectImageSerializer
     required_screens = {
         'list': 'rejects_image_upload_view',
@@ -641,9 +646,9 @@ def _build_cam_urls(serial_no):
 
 def _ticket_print_payload(r):
     """Build a single ticket dict suitable for the print view."""
-    images = list(RejectImage.objects(
+    images = list(RejectImage.objects.filter(
         ticket_no=r.ticket_no, is_deleted=False
-    ).distinct('image_path'))
+    ).values_list('image_path', flat=True).distinct())
     cam_urls = _build_cam_urls(r.serial_no)
     return {
         'ticket_no': r.ticket_no,
@@ -671,7 +676,7 @@ def rejects_print_detail(request):
     ticket_no = request.query_params.get('ticket_no')
     if not ticket_no:
         return _validation_error('ticket_no is required.')
-    r = Reject.objects(ticket_no=ticket_no, is_deleted=False).first()
+    r = Reject.objects.filter(ticket_no=ticket_no, is_deleted=False).first()
     if not r:
         return _validation_error(f'Ticket "{ticket_no}" not found.')
     return Response({'status': 1, 'data': _ticket_print_payload(r), 'error': ''})
@@ -695,7 +700,7 @@ def rejects_print_overall(request):
     if to_date:
         r_filter['date__lte'] = to_date
 
-    tickets = [_ticket_print_payload(r) for r in Reject.objects(**r_filter).order_by('-date')]
+    tickets = [_ticket_print_payload(r) for r in Reject.objects.filter(**r_filter).order_by('-date')]
     return Response({'status': 1, 'data': tickets, 'error': ''})
 
 
@@ -704,9 +709,9 @@ def rejects_print_overall(request):
 def rejects_available_tickets(request):
     """Return ticket numbers from Reject that are NOT yet used in RejectImage.
     Replaces the legacy form.php filtering logic."""
-    used = set(RejectImage.objects(is_deleted=False).distinct('ticket_no'))
+    used = set(RejectImage.objects.filter(is_deleted=False).values_list('ticket_no', flat=True).distinct())
     tickets = (
-        Reject.objects(is_deleted=False)
+        Reject.objects.filter(is_deleted=False)
         .order_by('-ticket_no')
         .only('ticket_no', 'vehicle_no', 'date', 'net_weight')
     )

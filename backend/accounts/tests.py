@@ -1,25 +1,15 @@
 """
-Model + API smoke tests — run against mongomock, not the real Atlas cluster in .env.
+Model + API smoke tests — run against the real Django test DB (MariaDB).
 """
-import mongoengine as me
-import mongomock
 import pytest
 from django.contrib.auth.hashers import check_password, make_password
+from django.db import IntegrityError
 from rest_framework.test import APIClient, APIRequestFactory
 
 from accounts.models import AuthToken, User, UserType
 from accounts.permissions import HasScreenPermission
 
-
-@pytest.fixture(autouse=True)
-def mongomock_connection():
-    me.disconnect()
-    me.connect(db='zigma_erp_test', mongo_client_class=mongomock.MongoClient)
-    yield
-    UserType.drop_collection()
-    User.drop_collection()
-    AuthToken.drop_collection()
-    me.disconnect()
+pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
@@ -56,7 +46,7 @@ def test_user_requires_type_and_defaults_active_not_deleted():
 def test_user_name_must_be_unique():
     ut = UserType(type_name='Admin').save()
     User(user_name='dupe', password_hash='x', user_type=ut).save()
-    with pytest.raises(me.NotUniqueError):
+    with pytest.raises(IntegrityError):
         User(user_name='dupe', password_hash='y', user_type=ut).save()
 
 
@@ -68,7 +58,7 @@ def test_user_type_get_or_create_pending_is_idempotent():
     assert first.type_name == 'Pending Signup'
     assert first.screens == ''
     assert first.main_screens == ''
-    assert UserType.objects(type_name='Pending Signup').count() == 1
+    assert UserType.objects.filter(type_name='Pending Signup').count() == 1
 
 
 from accounts.serializers import SignupSerializer
@@ -190,7 +180,7 @@ def test_login_reuses_existing_token(client, active_user):
     first = client.post('/api/auth/login', {'user_name': 'admin1', 'password': 'correcthorse'}, format='json')
     second = client.post('/api/auth/login', {'user_name': 'admin1', 'password': 'correcthorse'}, format='json')
     assert first.data['data']['access_token'] == second.data['data']['access_token']
-    assert AuthToken.objects(user=active_user).count() == 1
+    assert AuthToken.objects.filter(user=active_user).count() == 1
 
 
 def test_me_requires_valid_token(client, active_user):

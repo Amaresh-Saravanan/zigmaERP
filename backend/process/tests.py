@@ -1,13 +1,11 @@
 """
-Process module CRUD tests — run against mongomock, not the real Atlas cluster in .env.
+Process module CRUD tests — run against the real Django test DB (MariaDB).
 """
-import mongoengine as me
-import mongomock
 import pytest
 from django.contrib.auth.hashers import make_password
 from rest_framework.test import APIClient
 
-from accounts.models import AuthToken, User, UserType
+from accounts.models import User, UserType
 from inventory.models import Item, Pit, Supplier, Tray, Unit
 from process.models import (
     CullingProcess,
@@ -22,36 +20,12 @@ from process.models import (
     StatusUpdate,
 )
 
-
-@pytest.fixture(autouse=True)
-def mongomock_connection():
-    me.disconnect()
-    me.connect(db='zigma_erp_test', mongo_client_class=mongomock.MongoClient)
-    yield
-    UserType.drop_collection()
-    User.drop_collection()
-    AuthToken.drop_collection()
-    Unit.drop_collection()
-    Item.drop_collection()
-    Tray.drop_collection()
-    Pit.drop_collection()
-    Supplier.drop_collection()
-    MaterialReceived.drop_collection()
-    CullingProcess.drop_collection()
-    OvenProcess.drop_collection()
-    DryProcess.drop_collection()
-    Leachate.drop_collection()
-    EggProcess.drop_collection()
-    StatusUpdate.drop_collection()
-    PitStatus.drop_collection()
-    FrpTrayProcess.drop_collection()
-    FrpStatusUpdate.drop_collection()
-    me.disconnect()
+pytestmark = pytest.mark.django_db
 
 
 def make_user(screens=''):
-    ut = UserType(type_name='Tester').save()
-    return User(user_name='tester', password_hash=make_password('pw'), user_type=ut, screens=screens).save()
+    ut = UserType.objects.create(type_name='Tester')
+    return User.objects.create(user_name='tester', password_hash=make_password('pw'), user_type=ut, screens=screens)
 
 
 def authed_client(user):
@@ -73,39 +47,39 @@ ALL_SCREENS = ','.join(
 
 @pytest.fixture
 def supplier():
-    return Supplier(supplier_name='Acme Co', label='ABC').save()
+    return Supplier.objects.create(supplier_name='Acme Co', label='ABC')
 
 
 @pytest.fixture
 def unit():
-    return Unit(unit_name='Kilogram').save()
+    return Unit.objects.create(unit_name='Kilogram')
 
 
 @pytest.fixture
 def egg_item(unit):
-    return Item(item_name='Egg', item_code='IT-001', unit=unit).save()
+    return Item.objects.create(item_name='Egg', item_code='IT-001', unit=unit)
 
 
 @pytest.fixture
 def generic_item(unit):
-    return Item(item_name='Widget', item_code='IT-002', unit=unit).save()
+    return Item.objects.create(item_name='Widget', item_code='IT-002', unit=unit)
 
 
 @pytest.fixture
 def pit():
-    return Pit(pit_name='Pit 1', length=1, width=1, height=1).save()
+    return Pit.objects.create(pit_name='Pit 1', length=1, width=1, height=1)
 
 
 @pytest.fixture
 def tray():
-    return Tray(tray_type='1', bin_name='Bin A').save()
+    return Tray.objects.create(tray_type='1', bin_name='Bin A')
 
 
 @pytest.fixture
 def batch(supplier, egg_item, unit):
-    return MaterialReceived(
+    return MaterialReceived.objects.create(
         date='2026-07-01', supplier=supplier, item=egg_item, qty=10, unit=unit, batch_id='EGG-ABC-00001',
-    ).save()
+    )
 
 
 # ── Material Received ──
@@ -279,7 +253,7 @@ def test_egg_process_create_generates_entry_no_and_marks_batch_used(batch, suppl
 
 
 def test_tray_delete_blocked_while_egg_process_still_references_it(batch, supplier, tray):
-    """destroy()'s child-guard must also catch ListField(ReferenceField(...)) membership, not just plain refs."""
+    """destroy()'s child-guard must also catch ManyToManyField membership, not just plain FK refs."""
     staff = make_user(screens=ALL_SCREENS + ',tray_delete')
     client = authed_client(staff)
     client.post('/api/egg-process', {
@@ -469,7 +443,8 @@ def test_frp_tray_process_trays_length_mismatch(batch, tray):
 def test_frp_status_update_create_and_list(batch, tray):
     staff = make_user(screens=ALL_SCREENS)
     client = authed_client(staff)
-    frp = FrpTrayProcess(entry_date='2026-07-01', batch=batch, frp_tray_count=1, trays=[tray]).save()
+    frp = FrpTrayProcess.objects.create(entry_date='2026-07-01', batch=batch, frp_tray_count=1)
+    frp.trays.set([tray])
 
     res = client.post('/api/frp-status-update', {
         'entry_date': '2026-07-02',

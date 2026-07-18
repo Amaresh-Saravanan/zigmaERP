@@ -1,10 +1,10 @@
-from core.mongo_viewset import MongoModelViewSet
+from core.viewset import BaseModelViewSet
 from inventory.models import Item, Pit, Supplier, Tray, Unit
 from inventory.serializers import ItemSerializer, PitSerializer, SupplierSerializer, TraySerializer, UnitSerializer
 
 
-class UnitViewSet(MongoModelViewSet):
-    document_class = Unit
+class UnitViewSet(BaseModelViewSet):
+    queryset = Unit.objects.all()
     serializer_class = UnitSerializer
     required_screens = {
         'list': 'unit_view',
@@ -18,8 +18,8 @@ class UnitViewSet(MongoModelViewSet):
         return queryset.filter(unit_name__icontains=term)
 
 
-class ItemViewSet(MongoModelViewSet):
-    document_class = Item
+class ItemViewSet(BaseModelViewSet):
+    queryset = Item.objects.all()
     serializer_class = ItemSerializer
     required_screens = {
         'list': 'item_view',
@@ -33,8 +33,8 @@ class ItemViewSet(MongoModelViewSet):
         return queryset.filter(item_name__icontains=term)
 
 
-class TrayViewSet(MongoModelViewSet):
-    document_class = Tray
+class TrayViewSet(BaseModelViewSet):
+    queryset = Tray.objects.all()
     serializer_class = TraySerializer
     required_screens = {
         'list': 'tray_view',
@@ -48,8 +48,8 @@ class TrayViewSet(MongoModelViewSet):
         return queryset.filter(bin_name__icontains=term)
 
 
-class PitViewSet(MongoModelViewSet):
-    document_class = Pit
+class PitViewSet(BaseModelViewSet):
+    queryset = Pit.objects.all()
     serializer_class = PitSerializer
     required_screens = {
         'list': 'pit_view',
@@ -63,8 +63,8 @@ class PitViewSet(MongoModelViewSet):
         return queryset.filter(pit_name__icontains=term)
 
 
-class SupplierViewSet(MongoModelViewSet):
-    document_class = Supplier
+class SupplierViewSet(BaseModelViewSet):
+    queryset = Supplier.objects.all()
     serializer_class = SupplierSerializer
     required_screens = {
         'list': 'supplier_view',

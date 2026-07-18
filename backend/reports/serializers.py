@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import DC, Logsheet, Measurable, Reject, RejectImage
+from .models import DC, DCItem, Logsheet, Measurable, Reject, RejectImage
 
 
 class MeasurableSerializer(serializers.Serializer):
@@ -12,7 +12,7 @@ class MeasurableSerializer(serializers.Serializer):
     remarks = serializers.CharField(required=False, allow_blank=True)
 
     def create(self, validated_data):
-        return Measurable(**validated_data).save()
+        return Measurable.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
         for field in ('entry_date', 'location', 'temp', 'humi'):
@@ -28,7 +28,7 @@ class LogsheetSerializer(serializers.Serializer):
     remarks = serializers.CharField(required=False, allow_blank=True)
 
     def create(self, validated_data):
-        return Logsheet(**validated_data).save()
+        return Logsheet.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
         instance.entry_date = validated_data['entry_date']
@@ -75,7 +75,10 @@ class DCSerializer(serializers.Serializer):
     def create(self, validated_data):
         items = self._price_items(validated_data.pop('items'))
         grand_total = self._compute_grand_total(items, validated_data.get('tax_rate', 18))
-        return DC(items=items, grand_total=grand_total, **validated_data).save()
+        instance = DC.objects.create(grand_total=grand_total, **validated_data)
+        for item in items:
+            DCItem.objects.create(dc=instance, **item)
+        return instance
 
     def update(self, instance, validated_data):
         items = self._price_items(validated_data.pop('items'))
@@ -85,9 +88,11 @@ class DCSerializer(serializers.Serializer):
         ):
             if field in validated_data:
                 setattr(instance, field, validated_data[field])
-        instance.items = items
         instance.grand_total = self._compute_grand_total(items, instance.tax_rate)
         instance.save()
+        instance.items.all().delete()
+        for item in items:
+            DCItem.objects.create(dc=instance, **item)
         return instance
 
 

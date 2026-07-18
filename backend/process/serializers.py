@@ -6,17 +6,29 @@ from core.utils import next_entry_no
 from inventory.models import Item, Pit, Supplier, Tray
 from inventory.serializers import UnitRefSerializer
 from process.models import (
+    ALLOWED_ADDON_ITEM_IDS,
+    BATCH_STATUS_CHOICES,
     CullingProcess,
+    CYLINDER_TYPE_CHOICES,
     DryProcess,
+    DRY_TYPE_CHOICES,
+    DRYING_METHOD_CHOICES,
     EggProcess,
     EggProcessAddon,
+    FRP_BATCH_STATUS_CHOICES,
     FrpStatusUpdate,
     FrpTrayProcess,
+    HARVEST_COMP_CHOICES,
+    HATCHING_STATUS_CHOICES,
     Leachate,
     MaterialReceived,
+    MEASURE_TIME_CHOICES,
+    ORG_STATUS_CHOICES,
     OvenProcess,
     PitStatus,
+    SHIFT_TYPE_CHOICES,
     StatusUpdate,
+    WORK_DONE_CHOICES,
 )
 
 # ── Small ref serializers: {unique_id} on write, display field on read ──
@@ -76,7 +88,7 @@ class MaterialReceivedSerializer(serializers.Serializer):
     invoice_no = serializers.CharField(required=False, allow_blank=True)
     invoice_date = serializers.DateField(required=False, allow_null=True)
     batch_id = serializers.CharField(read_only=True)
-    batch_status = serializers.ChoiceField(choices=MaterialReceived.batch_status.choices, read_only=True)
+    batch_status = serializers.ChoiceField(choices=BATCH_STATUS_CHOICES, read_only=True)
 
     def validate_supplier(self, value):
         return _resolve(Supplier, value, 'Supplier')
@@ -104,10 +116,10 @@ class MaterialReceivedSerializer(serializers.Serializer):
         return next_entry_no(prefix, last.batch_id if last else None)
 
     def create(self, validated_data):
-        return MaterialReceived(
+        return MaterialReceived.objects.create(
             batch_id=self._next_batch_id(validated_data['item'], validated_data['supplier']),
             **validated_data,
-        ).save()
+        )
 
     def update(self, instance, validated_data):
         for field in ('date', 'supplier', 'item', 'qty', 'unit', 'invoice_no', 'invoice_date'):
@@ -122,15 +134,15 @@ class MaterialReceivedSerializer(serializers.Serializer):
 class CullingProcessSerializer(serializers.Serializer):
     unique_id = serializers.CharField(read_only=True)
     entry_date = serializers.DateField()
-    shift_type = serializers.ChoiceField(choices=CullingProcess.shift_type.choices)
-    cylinder_type = serializers.ChoiceField(choices=CullingProcess.cylinder_type.choices)
+    shift_type = serializers.ChoiceField(choices=SHIFT_TYPE_CHOICES)
+    cylinder_type = serializers.ChoiceField(choices=CYLINDER_TYPE_CHOICES)
     cylinder_no = serializers.CharField()
     starting_weight = serializers.FloatField()
     ending_weight = serializers.FloatField()
     fuel_consumption = serializers.FloatField(required=False)
     raw_material_weight = serializers.FloatField()
     final_larvae_weight = serializers.FloatField()
-    work_done = serializers.ChoiceField(choices=CullingProcess.work_done.choices)
+    work_done = serializers.ChoiceField(choices=WORK_DONE_CHOICES)
     others_remarks = serializers.CharField(required=False, allow_blank=True)
 
     def validate(self, attrs):
@@ -141,7 +153,7 @@ class CullingProcessSerializer(serializers.Serializer):
         return attrs
 
     def create(self, validated_data):
-        return CullingProcess(**validated_data).save()
+        return CullingProcess.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
         for field in (
@@ -187,7 +199,7 @@ class OvenProcessSerializer(serializers.Serializer):
         return attrs
 
     def create(self, validated_data):
-        return OvenProcess(**validated_data).save()
+        return OvenProcess.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
         for field in (
@@ -205,14 +217,14 @@ class OvenProcessSerializer(serializers.Serializer):
 class DryProcessSerializer(serializers.Serializer):
     unique_id = serializers.CharField(read_only=True)
     date = serializers.DateField()
-    type = serializers.ChoiceField(choices=DryProcess.type.choices)
-    drying_method = serializers.ChoiceField(choices=DryProcess.drying_method.choices)
+    type = serializers.ChoiceField(choices=DRY_TYPE_CHOICES)
+    drying_method = serializers.ChoiceField(choices=DRYING_METHOD_CHOICES)
     quantity = serializers.FloatField()
     qty_manure = serializers.FloatField(required=False)
     image_path = serializers.CharField(required=False, allow_blank=True)
 
     def create(self, validated_data):
-        return DryProcess(**validated_data).save()
+        return DryProcess.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
         for field in ('date', 'type', 'drying_method', 'quantity', 'qty_manure', 'image_path'):
@@ -232,7 +244,7 @@ class LeachateSerializer(serializers.Serializer):
     image_path = serializers.CharField(required=False, allow_blank=True)
 
     def create(self, validated_data):
-        return Leachate(**validated_data).save()
+        return Leachate.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
         for field in ('entry_date', 'qty_leachate', 'remarks', 'image_path'):
@@ -250,7 +262,6 @@ class EggProcessAddonSerializer(serializers.Serializer):
 
     def validate_item(self, value):
         item = _resolve(Item, value, 'Item')
-        from process.models import ALLOWED_ADDON_ITEM_IDS
         if item.unique_id not in ALLOWED_ADDON_ITEM_IDS:
             raise serializers.ValidationError('This item is not allowed as an add-on.')
         return item
@@ -294,7 +305,7 @@ class EggProcessSerializer(serializers.Serializer):
                 if not (user.user_type and user.user_type.type_name == 'Admin'):
                     raise serializers.ValidationError('Only today\'s records can be edited.')
             # Block edit if hatching has started
-            has_hatching = StatusUpdate.objects(
+            has_hatching = StatusUpdate.objects.filter(
                 batch=self.instance.batch,
                 hatching_status__in=['progressing', 'completed'],
                 is_deleted=False
@@ -313,24 +324,29 @@ class EggProcessSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         addons_data = validated_data.pop('addons', [])
+        trays_data = validated_data.pop('trays', [])
         batch = validated_data['batch']
-        instance = EggProcess(
-            entry_no=self._next_entry_no(),
-            addons=[EggProcessAddon(**addon) for addon in addons_data],
-            **validated_data,
-        ).save()
+        instance = EggProcess.objects.create(entry_no=self._next_entry_no(), **validated_data)
+        instance.trays.set(trays_data)
+        for addon in addons_data:
+            EggProcessAddon.objects.create(egg_process=instance, **addon)
         batch.batch_status = 'used'
         batch.save()
         return instance
 
     def update(self, instance, validated_data):
         addons_data = validated_data.pop('addons', None)
-        for field in ('entry_date', 'staff', 'supplier', 'tot_qty', 'tray_utilized', 'trays'):
+        trays_data = validated_data.pop('trays', None)
+        for field in ('entry_date', 'staff', 'supplier', 'tot_qty', 'tray_utilized'):
             if field in validated_data:
                 setattr(instance, field, validated_data[field])
-        if addons_data is not None:
-            instance.addons = [EggProcessAddon(**addon) for addon in addons_data]
         instance.save()
+        if trays_data is not None:
+            instance.trays.set(trays_data)
+        if addons_data is not None:
+            instance.addons.all().delete()
+            for addon in addons_data:
+                EggProcessAddon.objects.create(egg_process=instance, **addon)
         return instance
 
 
@@ -342,7 +358,7 @@ class StatusUpdateSerializer(serializers.Serializer):
     staff = UserRefSerializer()
     batch = MaterialReceivedRefSerializer()
     day = serializers.IntegerField()
-    hatching_status = serializers.ChoiceField(choices=StatusUpdate.hatching_status.choices, default='pending')
+    hatching_status = serializers.ChoiceField(choices=HATCHING_STATUS_CHOICES, default='pending')
     remarks = serializers.CharField(required=False, allow_blank=True)
 
     def validate_staff(self, value):
@@ -352,7 +368,7 @@ class StatusUpdateSerializer(serializers.Serializer):
         return _resolve(MaterialReceived, value, 'Batch')
 
     def create(self, validated_data):
-        return StatusUpdate(**validated_data).save()
+        return StatusUpdate.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
         for field in ('entry_date', 'staff', 'day', 'hatching_status', 'remarks'):
@@ -390,7 +406,7 @@ class PitStatusSerializer(serializers.Serializer):
     unique_id = serializers.CharField(read_only=True)
     entry_date = serializers.DateField()
     pit = PitRefSerializer()
-    org_status = serializers.ChoiceField(choices=PitStatus.org_status.choices)
+    org_status = serializers.ChoiceField(choices=ORG_STATUS_CHOICES)
     notes = serializers.CharField(required=False, allow_blank=True)
     form_batch_id = serializers.CharField(read_only=True)
 
@@ -403,7 +419,7 @@ class PitStatusSerializer(serializers.Serializer):
 
     method = serializers.CharField(required=False, allow_blank=True)
 
-    measure_time = serializers.ChoiceField(choices=PitStatus.measure_time.choices, required=False, allow_null=True)
+    measure_time = serializers.ChoiceField(choices=MEASURE_TIME_CHOICES, required=False, allow_null=True)
     temp_start = serializers.FloatField(required=False, allow_null=True)
     temp_mid = serializers.FloatField(required=False, allow_null=True)
     temp_end = serializers.FloatField(required=False, allow_null=True)
@@ -416,7 +432,7 @@ class PitStatusSerializer(serializers.Serializer):
     qty_manure_2 = serializers.FloatField(required=False, allow_null=True)
     qty_manure_3 = serializers.FloatField(required=False, allow_null=True)
     qty_rejets = serializers.FloatField(required=False, allow_null=True)
-    harvest_comp = serializers.ChoiceField(choices=PitStatus.harvest_comp.choices, required=False, allow_null=True)
+    harvest_comp = serializers.ChoiceField(choices=HARVEST_COMP_CHOICES, required=False, allow_null=True)
 
     tippi_qty = serializers.FloatField(required=False, allow_null=True)
 
@@ -432,7 +448,12 @@ class PitStatusSerializer(serializers.Serializer):
     def validate(self, attrs):
         org_status = attrs.get('org_status', getattr(self.instance, 'org_status', None))
         for field in _PIT_STATUS_REQUIRED_FIELDS.get(org_status, ()):
-            value = attrs.get(field, getattr(self.instance, field, None) if self.instance else None)
+            if field in attrs:
+                value = attrs[field]
+            elif field == 'trays' and self.instance is not None:
+                value = list(self.instance.trays.all())
+            else:
+                value = getattr(self.instance, field, None) if self.instance else None
             if value in (None, '', []):
                 raise serializers.ValidationError({field: 'Required for this status.'})
         return attrs
@@ -445,19 +466,26 @@ class PitStatusSerializer(serializers.Serializer):
         return next_entry_no(prefix, last.form_batch_id if last else None)
 
     def create(self, validated_data):
-        return PitStatus(
+        trays_data = validated_data.pop('trays', None)
+        instance = PitStatus.objects.create(
             form_batch_id=self._next_form_batch_id(validated_data['pit']),
             **validated_data,
-        ).save()
+        )
+        if trays_data is not None:
+            instance.trays.set(trays_data)
+        return instance
 
     def update(self, instance, validated_data):
         # ponytail: explicit field whitelist per org_status closes mass-assignment hole.
         # org_status, entry_date, pit, form_batch_id are never updated (immutable identity fields).
         editable = _PIT_STATUS_EDITABLE_FIELDS.get(instance.org_status, ())
+        trays_data = validated_data.pop('trays', None) if 'trays' in editable else None
         for field in editable:
             if field in validated_data:
                 setattr(instance, field, validated_data[field])
         instance.save()
+        if trays_data is not None:
+            instance.trays.set(trays_data)
         return instance
 
 
@@ -469,7 +497,7 @@ class FrpTrayProcessSerializer(serializers.Serializer):
     batch = MaterialReceivedRefSerializer()
     frp_tray_count = serializers.IntegerField()
     trays = TrayRefSerializer(many=True, required=False)
-    batch_status = serializers.ChoiceField(choices=FrpTrayProcess.batch_status.choices, read_only=True)
+    batch_status = serializers.ChoiceField(choices=FRP_BATCH_STATUS_CHOICES, read_only=True)
 
     def validate_batch(self, value):
         return _resolve(MaterialReceived, value, 'Batch')
@@ -484,19 +512,24 @@ class FrpTrayProcessSerializer(serializers.Serializer):
         return attrs
 
     def create(self, validated_data):
-        instance = FrpTrayProcess(**validated_data).save()
+        trays_data = validated_data.pop('trays', [])
+        instance = FrpTrayProcess.objects.create(**validated_data)
+        instance.trays.set(trays_data)
         # Close the egg process batch (mark as converted to FRP)
-        egg = EggProcess.objects(batch=instance.batch, is_deleted=False).first()
+        egg = EggProcess.objects.filter(batch=instance.batch, is_deleted=False).first()
         if egg:
             egg.batch.batch_status = 'closed'
             egg.batch.save()
         return instance
 
     def update(self, instance, validated_data):
-        for field in ('entry_date', 'frp_tray_count', 'trays'):
+        trays_data = validated_data.pop('trays', None)
+        for field in ('entry_date', 'frp_tray_count'):
             if field in validated_data:
                 setattr(instance, field, validated_data[field])
         instance.save()
+        if trays_data is not None:
+            instance.trays.set(trays_data)
         return instance
 
 
@@ -509,7 +542,7 @@ class FrpStatusUpdateSerializer(serializers.Serializer):
     staff = UserRefSerializer()
     batch = FrpTrayProcessRefSerializer()
     day = serializers.IntegerField()
-    hatching_status = serializers.ChoiceField(choices=FrpStatusUpdate.hatching_status.choices, default='pending')
+    hatching_status = serializers.ChoiceField(choices=HATCHING_STATUS_CHOICES, default='pending')
     remarks = serializers.CharField(required=False, allow_blank=True)
     image_path = serializers.CharField(required=False, allow_blank=True)
 
@@ -522,11 +555,11 @@ class FrpStatusUpdateSerializer(serializers.Serializer):
     @staticmethod
     def _next_entry_no():
         # order by -entry_no (fixed prefix + zero-padded => lexical == numeric); skip legacy docs with no entry_no
-        last = FrpStatusUpdate.objects(entry_no__nin=[None, '']).order_by('-entry_no').first()
+        last = FrpStatusUpdate.objects.exclude(entry_no__in=[None, '']).order_by('-entry_no').first()
         return next_entry_no('FRP-', last.entry_no if last else None)
 
     def create(self, validated_data):
-        return FrpStatusUpdate(entry_no=self._next_entry_no(), **validated_data).save()
+        return FrpStatusUpdate.objects.create(entry_no=self._next_entry_no(), **validated_data)
 
     def update(self, instance, validated_data):
         for field in ('entry_date', 'staff', 'day', 'hatching_status', 'remarks', 'image_path'):

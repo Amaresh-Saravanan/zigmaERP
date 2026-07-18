@@ -1,18 +1,17 @@
 """
-Django settings for config project — MongoEngine-backed, no relational DB.
+Django settings for config project — MariaDB-backed via the Django ORM.
 """
 
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-import mongoengine as me
 
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-# ponytail: same fail-loud pattern as MONGODB_URI below — a real key is required
+# ponytail: same fail-loud pattern as the DB_* vars below — a real key is required
 # outside DEBUG so production can never silently run on the insecure placeholder.
 SECRET_KEY = os.getenv('SECRET_KEY') or ('dev-secret-key-change-in-production' if DEBUG else None)
 if SECRET_KEY is None:
@@ -53,19 +52,26 @@ CORS_ALLOWED_ORIGINS = os.getenv(
 ROOT_URLCONF = 'config.urls'
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# No relational DB — MongoEngine/Atlas is the only store.
-DATABASES = {}
-
-# ponytail: MONGODB_URI is required in every environment (dev/staging/prod),
-# each pointing at its own Atlas cluster/database — no local Mongo fallback.
-me.connect(host=os.environ['MONGODB_URI'])
+# ponytail: DB_* vars are required in every environment (dev/staging/prod),
+# each pointing at its own MariaDB instance — no sqlite/local-file fallback.
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.environ['DB_NAME'],
+        'USER': os.environ['DB_USER'],
+        'PASSWORD': os.environ['DB_PASSWORD'],
+        'HOST': os.environ['DB_HOST'],
+        'PORT': os.environ['DB_PORT'],
+        'OPTIONS': {'charset': 'utf8mb4'},
+    }
+}
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'accounts.authentication.MongoTokenAuthentication',
+        'accounts.authentication.AuthTokenAuthentication',
     ],
-    # No django.contrib.auth installed (no relational DB) — skip DRF's
-    # AnonymousUser fallback, which otherwise imports contenttypes.
+    # No django.contrib.auth installed — skip DRF's AnonymousUser fallback,
+    # which otherwise imports contenttypes.
     'UNAUTHENTICATED_USER': None,
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,

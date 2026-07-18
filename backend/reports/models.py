@@ -1,36 +1,29 @@
 import uuid
 
+from django.db import models
 from django.utils import timezone
-from mongoengine import (
-    BooleanField,
-    DateField,
-    DateTimeField,
-    Document,
-    EmbeddedDocument,
-    EmbeddedDocumentListField,
-    FloatField,
-    IntField,
-    StringField,
-)
+from core.base import BaseModel
+
+
+def _default_unique_id():
+    return str(uuid.uuid4())
 
 
 # ── Measurable (temperature/humidity readings) ──
 
-class Measurable(Document):
-    unique_id = StringField(unique=True, required=True, default=lambda: str(uuid.uuid4()))
-    entry_date = DateField(required=True)
-    location = StringField(required=True)
-    temp = FloatField(required=True)
-    humi = FloatField(required=True)
-    remarks = StringField(default='')
-    is_deleted = BooleanField(default=False)
-    created_at = DateTimeField(default=timezone.now)
-    updated_at = DateTimeField(default=timezone.now)
+class Measurable(BaseModel):
+    unique_id = models.CharField(max_length=64, unique=True, default=_default_unique_id)
+    entry_date = models.DateField()
+    location = models.CharField(max_length=255)
+    temp = models.FloatField()
+    humi = models.FloatField()
+    remarks = models.CharField(max_length=1024, default='', blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
 
-    meta = {
-        'collection': 'measurable',
-        'indexes': ['unique_id', '-created_at'],
-    }
+    class Meta:
+        db_table = 'measurable'
 
 
 # ── Logsheet ──
@@ -38,99 +31,95 @@ class Measurable(Document):
 # API calls at all (see generate_logsheet.py) — no real field contract exists yet.
 # Minimal model so the route works; extend once the frontend actually consumes it.
 
-class Logsheet(Document):
-    unique_id = StringField(unique=True, required=True, default=lambda: str(uuid.uuid4()))
-    entry_date = DateField(required=True)
-    remarks = StringField(default='')
-    is_deleted = BooleanField(default=False)
-    created_at = DateTimeField(default=timezone.now)
-    updated_at = DateTimeField(default=timezone.now)
+class Logsheet(BaseModel):
+    unique_id = models.CharField(max_length=64, unique=True, default=_default_unique_id)
+    entry_date = models.DateField()
+    remarks = models.CharField(max_length=1024, default='', blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
 
-    meta = {
-        'collection': 'logsheet',
-        'indexes': ['unique_id', '-entry_date'],
-    }
+    class Meta:
+        db_table = 'logsheet'
 
 
 # ── DC (Delivery Challan) ──
 # Field names match frontend/src/pages/DC/DCForm.jsx exactly — that form is the
 # only real contract for this module (DCList.jsx: "Backend not connected yet").
 
-class DCItem(EmbeddedDocument):
-    desc = StringField(required=True)
-    hsn = StringField(default='')
-    qty = FloatField(default=0)
-    unit = StringField(default='Kgs')
-    rate = FloatField(default=0)
-    amount = FloatField(default=0)
+class DC(BaseModel):
+    unique_id = models.CharField(max_length=64, unique=True, default=_default_unique_id)
+    dc_number = models.CharField(max_length=64, unique=True)
+    po_date = models.DateField(null=True, blank=True)
+    dispatch_date = models.DateField(null=True, blank=True)
+    challan_date = models.DateField()
+    po_ref = models.CharField(max_length=255, default='', blank=True)
+    challan_type = models.CharField(max_length=64, default='Supply of Goods')
+    bill_to_company = models.CharField(max_length=255)
+    bill_to_address = models.CharField(max_length=1024, default='', blank=True)
+    bill_to_gst = models.CharField(max_length=32, default='', blank=True)
+    tax_rate = models.FloatField(default=18)
+    grand_total = models.FloatField(default=0)  # server-computed, see serializer
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
+    # NOTE: 'items' is a reverse FK relation from DCItem (see below), not a field here.
+
+    class Meta:
+        db_table = 'dc'
 
 
-class DC(Document):
-    unique_id = StringField(unique=True, required=True, default=lambda: str(uuid.uuid4()))
-    dc_number = StringField(unique=True, required=True)
-    po_date = DateField(null=True)
-    dispatch_date = DateField(null=True)
-    challan_date = DateField(required=True)
-    po_ref = StringField(default='')
-    challan_type = StringField(default='Supply of Goods')
-    bill_to_company = StringField(required=True)
-    bill_to_address = StringField(default='')
-    bill_to_gst = StringField(default='')
-    tax_rate = FloatField(default=18)
-    items = EmbeddedDocumentListField(DCItem)
-    grand_total = FloatField(default=0)  # server-computed, see serializer
-    is_deleted = BooleanField(default=False)
-    created_at = DateTimeField(default=timezone.now)
-    updated_at = DateTimeField(default=timezone.now)
+class DCItem(BaseModel):
+    dc = models.ForeignKey(DC, related_name='items', on_delete=models.CASCADE)
+    desc = models.CharField(max_length=255)
+    hsn = models.CharField(max_length=64, default='', blank=True)
+    qty = models.FloatField(default=0)
+    unit = models.CharField(max_length=32, default='Kgs')
+    rate = models.FloatField(default=0)
+    amount = models.FloatField(default=0)
 
-    meta = {
-        'collection': 'dc',
-        'indexes': ['unique_id', 'dc_number', '-created_at'],
-    }
+    class Meta:
+        db_table = 'dc_item'
 
 
 # ── Reject (weigh-bridge ticket) ──
 
-class Reject(Document):
-    unique_id = StringField(unique=True, required=True, default=lambda: str(uuid.uuid4()))
-    ticket_no = StringField(unique=True, required=True)
-    serial_no = StringField(default='')
-    vehicle_no = StringField(required=True)
-    vendor = StringField(required=True)
-    date = DateField(required=True)
-    time = StringField(default='')
-    empty_weight = FloatField(default=0)
-    loaded_weight = FloatField(default=0)
-    net_weight = FloatField(default=0)  # server-computed if omitted
-    empty_weight_date = DateField(null=True)
-    empty_weight_time = StringField(default='')
-    load_weight_date = DateField(null=True)
-    load_weight_time = StringField(default='')
-    is_deleted = BooleanField(default=False)
-    created_at = DateTimeField(default=timezone.now)
-    updated_at = DateTimeField(default=timezone.now)
+class Reject(BaseModel):
+    unique_id = models.CharField(max_length=64, unique=True, default=_default_unique_id)
+    ticket_no = models.CharField(max_length=64, unique=True)
+    serial_no = models.CharField(max_length=64, default='', blank=True)
+    vehicle_no = models.CharField(max_length=64)
+    vendor = models.CharField(max_length=255)
+    date = models.DateField()
+    time = models.CharField(max_length=32, default='', blank=True)
+    empty_weight = models.FloatField(default=0)
+    loaded_weight = models.FloatField(default=0)
+    net_weight = models.FloatField(default=0)  # server-computed if omitted
+    empty_weight_date = models.DateField(null=True, blank=True)
+    empty_weight_time = models.CharField(max_length=32, default='', blank=True)
+    load_weight_date = models.DateField(null=True, blank=True)
+    load_weight_time = models.CharField(max_length=32, default='', blank=True)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
 
-    meta = {
-        'collection': 'reject',
-        'indexes': ['unique_id', 'ticket_no', '-created_at'],
-    }
+    class Meta:
+        db_table = 'reject'
 
 
 # ── Reject Image Upload ──
 
-class RejectImage(Document):
-    unique_id = StringField(unique=True, required=True, default=lambda: str(uuid.uuid4()))
-    ticket_no = StringField(required=True)  # ponytail: string ref to Reject.ticket_no, not FK
-    image_path = StringField(default='')
-    upload_date = DateField(required=True)
-    weigh_date = DateField(null=True)
-    vehicle_no = StringField(default='')
-    net_weight = FloatField(default=0)
-    is_deleted = BooleanField(default=False)
-    created_at = DateTimeField(default=timezone.now)
-    updated_at = DateTimeField(default=timezone.now)
+class RejectImage(BaseModel):
+    unique_id = models.CharField(max_length=64, unique=True, default=_default_unique_id)
+    ticket_no = models.CharField(max_length=64)  # ponytail: string ref to Reject.ticket_no, not FK
+    image_path = models.CharField(max_length=1024, default='', blank=True)
+    upload_date = models.DateField()
+    weigh_date = models.DateField(null=True, blank=True)
+    vehicle_no = models.CharField(max_length=64, default='', blank=True)
+    net_weight = models.FloatField(default=0)
+    is_deleted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(default=timezone.now)
 
-    meta = {
-        'collection': 'reject_image',
-        'indexes': ['unique_id', 'ticket_no', '-created_at'],
-    }
+    class Meta:
+        db_table = 'reject_image'
